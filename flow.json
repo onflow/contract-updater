@@ -1,0 +1,32 @@
+{
+	"contracts": {
+		"ContractUpdater": "./contracts/ContractUpdater.cdc",
+		"Foo": "./contracts/Foo.cdc"
+	},
+	"networks": {
+		"emulator": "127.0.0.1:3569",
+		"mainnet": "access.mainnet.nodes.onflow.org:9000",
+		"sandboxnet": "access.sandboxnet.nodes.onflow.org:9000",
+		"testnet": "access.devnet.nodes.onflow.org:9000"
+	},
+	"accounts": {
+		"emulator-account": {
+			"address": "f8d6e0586b0a20c7",
+			"key": "a08c990a1f7adb14c290d05df0f397d2de2f4d0cb18cdffed592f611f95f5d08"
+		},
+		"foo": {
+			"address": "e03daebed8ca0615",
+			"key": "e9b7b36e9d16f47501db73e84c68e441609475ee482ee808411b2fe0bd2329da"
+		}
+	},
+	"deployments": {
+		"emulator": {
+			"emulator-account": [
+				"ContractUpdater"
+			],
+			"foo": [
+				"Foo"
+			]
+		}
+	}
+}

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Create foo account e03daebed8ca0615 with private key e9b7b36e9d16f47501db73e84c68e441609475ee482ee808411b2fe0bd2329da
+flow accounts create --key "3bfabba47056a7ce4d1fe258f2dbf824c27e36dc1118335aaab5ba6362bf2f7d23eb9662ccd4d82d732966bd7dc4730da6e3c7ca0b72dd827be8d62271c5ae1b"
+
+# Deploy contracts
+flow deploy
