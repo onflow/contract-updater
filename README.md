@@ -55,3 +55,7 @@
     ```sh
     flow scripts execute ./scripts/foo.cdc
     ```
+
+## TODO
+
+- [ ] Implement Delegatee scripts & txns
