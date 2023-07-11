@@ -27,8 +27,8 @@ transaction(blockUpdateBoundary: UInt64, contractName: String, code: String) {
             to: ContractUpdater.UpdaterStoragePath
         )
         signer.unlink(ContractUpdater.UpdaterPublicPath)
-        signer.unlink(ContractUpdater.UpdaterPrivatePath)
-        signer.link<&{ContractUpdater.UpdaterPublic}>(ContractUpdater.UpdaterPublicPath, target: ContractUpdater.UpdaterStoragePath)
-        signer.link<&ContractUpdater.Updater>(ContractUpdater.UpdaterPrivatePath, target: ContractUpdater.UpdaterStoragePath)
+        signer.unlink(ContractUpdater.DelegatedUpdaterPrivatePath)
+        signer.link<&ContractUpdater.Updater{ContractUpdater.UpdaterPublic}>(ContractUpdater.UpdaterPublicPath, target: ContractUpdater.UpdaterStoragePath)
+        signer.link<&ContractUpdater.Updater{ContractUpdater.DelegatedUpdater, ContractUpdater.UpdaterPublic}>(ContractUpdater.DelegatedUpdaterPrivatePath, target: ContractUpdater.UpdaterStoragePath)
     }
 }
