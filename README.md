@@ -28,7 +28,7 @@
     flow transactions send ./transactions/setup_updater.cdc 10 "Foo" 70756220636f6e747261637420466f6f207b0a202020207075622066756e20666f6f28293a20537472696e67207b0a202020202020202072657475726e2022626172220a202020207d0a7d --signer foo
     ```
 
-1. Simulate block creation, running transactions to iterate over blocks ot the pre-configured block update height:
+1. Simulate block creation, running transactions to iterate over blocks to the pre-configured block update height:
 
     ```sh
     sh tick_tock.sh
