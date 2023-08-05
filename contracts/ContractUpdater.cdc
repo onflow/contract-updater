@@ -235,32 +235,22 @@ pub contract ContractUpdater {
 
         /// Executes update on the specified Updater
         ///
-        // TODO: Reconsider this signature - how can we ensure failed updates don't prevent others from updating?
-        pub fun update(updaters: {Address: [UInt64]}): {Address: [UInt64]} {
-            let failed: {Address: [UInt64]} = {}
+        pub fun update(updaterIDs: [UInt64]): [UInt64] {
+            let failed: [UInt64] = []
 
-            for address in updaters.keys {
-                // If nothing found for address, skip
-                if updaters[address] == nil {
-                    failed[address] = []
+            for id in updaterIDs {
+                if self.delegatedUpdaters[id] == nil {
+                    failed.append(id)
                     continue
                 }
-                let ids = updaters[address]!
-                for id in ids {
-                    let updaterCap = self.delegatedUpdaters[id]!
-                    if !updaterCap.check() {
-                        failed[address]!.append(id)
-                        continue
-                    }
-                    let success = updaterCap.borrow()!.update()
-                    if !success && !failed.containsKey(address) {
-                        failed.insert(key: address, [id])
-                    } else if !success && failed.containsKey(address) {
-                        failed[address]!.append(id)
-                    } else {
-                        // Updater updated, can now be removed
-                        self.removeDelegatedUpdater(id: id)
-                    }
+                let updaterCap = self.delegatedUpdaters[id]!
+                if !updaterCap.check() {
+                    failed.append(id)
+                    continue
+                }
+                let success = updaterCap.borrow()!.update()
+                if !success {
+                    failed.append(id)
                 }
             }
             return failed
