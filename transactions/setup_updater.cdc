@@ -1,4 +1,5 @@
 #allowAccountLinking
+
 import "ContractUpdater"
 
 /// Configures and Updater resource, assuming signing account is the account with the contract to update
@@ -20,9 +21,14 @@ transaction(blockUpdateBoundary: UInt64, contractName: String, code: String) {
         signer.save(
             <- ContractUpdater.createNewUpdater(
                 blockUpdateBoundary: blockUpdateBoundary,
-                contractAccount: accountCap,
-                contractName: contractName,
-                code: code.decodeHex()
+                accounts: [accountCap],
+                deployment: [
+                    ContractUpdater.ContractUpdate(
+                        address: signer.address,
+                        name: contractName,
+                        code: code.decodeHex()
+                    )
+                ]
             ),
             to: ContractUpdater.UpdaterStoragePath
         )
