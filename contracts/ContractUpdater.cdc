@@ -282,6 +282,10 @@ pub contract ContractUpdater {
         }
     }
 
+    pub fun getContractAddress(): Address {
+        return self.account.address
+    }
+
     /// Returns a new Updater resource
     ///
     pub fun createNewUpdater(
@@ -304,6 +308,6 @@ pub contract ContractUpdater {
         self.DelegateePublicPath = PublicPath(identifier: "ContractUpdaterDelegateePublic_".concat(self.account.address.toString()))!
 
         self.account.save(<-create Delegatee(), to: self.DelegateeStoragePath)
-        self.account.link<&{DelegateePublic}>(self.DelegateePublicPath, target: self.DelegateePrivatePath)
+        self.account.link<&Delegatee{DelegateePublic}>(self.DelegateePublicPath, target: self.DelegateeStoragePath)
     }
 }
