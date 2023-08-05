@@ -1,5 +1,6 @@
 pub contract ContractUpdater {
 
+    /* --- Canonical Paths --- */
     pub let UpdaterStoragePath: StoragePath
     pub let DelegatedUpdaterPrivatePath: PrivatePath
     pub let UpdaterPublicPath: PublicPath
@@ -8,8 +9,42 @@ pub contract ContractUpdater {
     pub let DelegateePrivatePath: PrivatePath
     pub let DelegateePublicPath: PublicPath
 
-    pub event UpdaterUpdated(updaterUUID: UInt64, blockUpdateBoundary: UInt64, contractAccountAddress: Address, contractName: String, updated: Bool)
-    pub event UpdaterDelegationChanged(updaterUUID: UInt64, contractAccountAddress: Address, contractName: String?, delegated: Bool)
+    /* --- Events --- */
+    pub event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64)
+    pub event UpdaterUpdated(
+        updaterUUID: UInt64,
+        updaterAddress: Address?,
+        blockUpdateBoundary: UInt64,
+        updatedAddresses: [Address],
+        updatedContracts: [String],
+        failedAddresses: [Address],
+        failedContracts: [String]
+    )
+    pub event UpdaterDelegationChanged(updaterUUID: UInt64, updaterAddress: Address?, delegated: Bool)
+
+    /// Represents contract and its corresponding code
+    ///
+    pub struct ContractUpdate {
+        pub let address: Address
+        pub let name: String
+        pub let code: [UInt8]
+
+        init(address: Address, name: String, code: [UInt8]) {
+            self.address = address
+            self.name = name
+            self.code = code
+        }
+
+        /// Serializes the address and name into a string
+        pub fun toString(): String {
+            return self.address.toString().concat(".").concat(self.name)
+        }
+
+        /// Returns code as a String
+        pub fun stringifyCode(): String {
+            return String.fromUTF8(self.code) ?? panic("Problem stringifying code!")
+        }
+    }
 
     /* --- Updater --- */
     //
@@ -24,55 +59,105 @@ pub contract ContractUpdater {
     pub resource interface UpdaterPublic {
         pub fun getID(): UInt64
         pub fun getBlockUpdateBoundary(): UInt64
-        pub fun getContractAccountAddress(): Address
-        pub fun getContractName(): String
-        pub fun getContractCode(): String
-        pub fun getContractCodeAsBytes(): [UInt8]
+        pub fun getContractAccountAddresses(): [Address]
+        pub fun getDeployment(): [ContractUpdate]
         pub fun hasBeenUpdated(): Bool
     }
 
     /// Resource that enables delayed contract updates to a wrapped account at or beyond a specified block height
     ///
-    // TODO: Consider mapping of contractName: code to enable multi-contract updates within updater - simplifies delegatee resource on per account basis instead of multi-mapping
     pub resource Updater : UpdaterPublic, DelegatedUpdater {
         /// Update to occur at or beyond this block height
+        // TODO: Consider making this a contract-owned value as it's reflective of the spork height
         access(self) let blockUpdateBoundary: UInt64
-        /// Capability to the account where the contract will be updated
-        access(self) let contractAccount: Capability<&AuthAccount>
-        /// Name of the contract to be updated
-        access(self) let contractName: String
-        /// Code to update the contract to
-        access(self) var code: [UInt8]
-        /// Has the update occurred?
+        /// Update status for each contract
         access(self) var updated: Bool
-        
-        init(blockUpdateBoundary: UInt64, contractAccount: Capability<&AuthAccount>, contractName: String, code: [UInt8]) {
-            pre {
-                contractAccount.check(): "Invalid AuthAccount Capability!"
-            }
+        /// Capabilities for contract hosting accounts
+        access(self) let accounts: {Address: Capability<&AuthAccount>}
+        /// Order of updates to be performed
+        /// NOTE: Dev should be careful to validate their dependency tree such that updates are performed from root 
+        /// to leaf dependencies
+        access(self) let deployment: [ContractUpdate]
+
+        init(
+            blockUpdateBoundary: UInt64,
+            accounts: [Capability<&AuthAccount>],
+            deployment: [ContractUpdate]
+        ) {
             self.blockUpdateBoundary = blockUpdateBoundary
-            self.contractAccount = contractAccount
-            self.contractName = contractName
-            self.code = code
             self.updated = false
+            self.accounts = {}
+            // Validate given Capabilities
+            for account in accounts {
+                if !account.check() {
+                    panic("Account capability is invalid for account: ".concat(account.address.toString()))
+                }
+                self.accounts.insert(key: account.borrow()!.address, account)
+            }
+            // Validate given deployment
+            for contractUpdate in deployment {
+                if !self.accounts.containsKey(contractUpdate.address) {
+                    panic("Contract address not found in given accounts: ".concat(contractUpdate.address.toString()))
+                }
+            }
+            self.deployment = deployment
         }
 
-        /// Executes the update using Account.Contracts.update__experimental(), returning true if the update completed
+        /// Executes the update using Account.Contracts.update__experimental() for all contracts defined in deployment,
+        /// returning true if either update was previously completed or all updates succeed, and false if any update
+        /// fails
         ///
         pub fun update(): Bool {
-            if self.updated || self.blockUpdateBoundary > getCurrentBlock().height {
-                return false
+            // Return early if we've already updated
+            if self.updated {
+                return true
             }
-            self.borrowAccount().contracts.update__experimental(name: self.getContractName(), code: self.getContractCodeAsBytes())
-            self.updated = true
+            
+            let updatedAddresses: [Address] = []
+            let failedAddresses: [Address] = []
+            let updatedContracts: [String] = []
+            let failedContracts: [String] = []
+
+            // Update the contracts as specified in the deployment
+            for contractUpdate in self.deployment {
+                // Borrow the contract account
+                if let account = self.accounts[contractUpdate.address]!.borrow() {
+                    // Update the contract
+                    // TODO: Swap out optional/Bool API tryUpdate() (or similar) and do stuff if update fails
+                    // if account.contracts.tryUpdate(name: contractUpdate.name, code: contractUpdate.code) == false {
+                    //     failedAddresses.append(account.address)
+                    //     failedContracts.append(contractUpdate.toString())
+                    //     continue
+                    // } else {
+                    //     if !updatedAddresses.contains(account.address) {
+                    //         updatedAddresses.append(account.address)
+                    //     }
+                    //     if !updatedContracts.contains(contractUpdate.toString()) {
+                    //         updatedContracts.append(contractUpdate.toString())
+                    //     }
+                    // }
+                    account.contracts.update__experimental(name: contractUpdate.name, code: contractUpdate.code)
+                    if !updatedAddresses.contains(account.address) {
+                        updatedAddresses.append(account.address)
+                    }
+                    if !updatedContracts.contains(contractUpdate.toString()) {
+                        updatedContracts.append(contractUpdate.toString())
+                    }
+                }
+            }
+            if failedContracts.length == 0 {
+                self.updated = true
+            }
             emit UpdaterUpdated(
                 updaterUUID: self.uuid,
+                updaterAddress: self.owner?.address,
                 blockUpdateBoundary: self.blockUpdateBoundary,
-                contractAccountAddress: self.contractAccount.address,
-                contractName: self.contractName,
-                updated: self.updated
+                updatedAddresses: updatedAddresses,
+                updatedContracts: updatedContracts,
+                failedAddresses: failedAddresses,
+                failedContracts: failedContracts
             )
-            return true
+            return self.updated
         }
 
         /* --- Public getters --- */
@@ -85,36 +170,16 @@ pub contract ContractUpdater {
             return self.blockUpdateBoundary
         }
 
-        pub fun getContractAccountAddress(): Address {
-            return self.contractAccount.address
+        pub fun getContractAccountAddresses(): [Address] {
+            return self.accounts.keys
         }
 
-        pub fun getContractName(): String {
-            return self.contractName
-        }
-
-        pub fun getContractCode(): String {
-            return String.fromUTF8(self.code) ?? panic("Problem stringifying code!")
-        }
-
-        pub fun getContractCodeAsBytes(): [UInt8] {
-            return self.code
+        pub fun getDeployment(): [ContractUpdate] {
+            return self.deployment
         }
 
         pub fun hasBeenUpdated(): Bool {
             return self.updated
-        }
-
-        /* --- Owner setter --- */
-
-        pub fun setContractCode(code: [UInt8]) {
-            self.code = code
-        }
-
-        /* --- Internal helper --- */
-
-        access(self) fun borrowAccount(): &AuthAccount {
-            return self.contractAccount.borrow() ?? panic("Could not borrow contract account from stored Capability!")
         }
     }
 
@@ -123,21 +188,21 @@ pub contract ContractUpdater {
     /// Public interface for Delegatee
     ///
     pub resource interface DelegateePublic {
-        pub fun delegate(updater: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
+        pub fun check(id: UInt64): Bool?
+        pub fun delegate(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
         pub fun removeAsUpdater(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
     }
 
     /// Resource that executed delegated updates
     ///
-    pub resource Delegatee {
+    pub resource Delegatee : DelegateePublic{
+        // TODO: Block Height - All DelegatedUpdaters must be updated at or beyond this block height
+        // access(self) let blockUpdateBoundary: UInt64
         /// Track all delegated updaters
         access(self) let delegatedUpdaters: {UInt64: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>}
-        /// Index updater IDs on the Address they update to
-        access(self) let addressToIDs: {Address: [UInt64]}
 
         init() {
             self.delegatedUpdaters = {}
-            self.addressToIDs = {}
         }
 
         /// Allows for the delegation of updates to a contract
@@ -150,16 +215,11 @@ pub contract ContractUpdater {
             if self.delegatedUpdaters.containsKey(updater.getID()) {
                 // Upsert if updater already exists
                 self.delegatedUpdaters[updater.getID()] = updaterCap
-            } else if self.addressToIDs.containsKey(updater.getContractAccountAddress()) {
-                // New Updater for known Address - append to existing array
-                self.addressToIDs[updater.getContractAccountAddress()]!.append(updater.getID())
-                self.delegatedUpdaters.insert(key: updater.getID(), updaterCap)
             } else {
-                // New Updater entirely, insert into both maps
-                self.addressToIDs.insert(key: updater.getContractAccountAddress(), [updater.getID()])
+                // Insert if updater does not exist
                 self.delegatedUpdaters.insert(key: updater.getID(), updaterCap)
             }
-            emit UpdaterDelegationChanged(updaterUUID: updater.getID(), contractAccountAddress: updater.getContractAccountAddress(), contractName: updater.getContractName(), delegated: true)
+            emit UpdaterDelegationChanged(updaterUUID: updater.getID(), updaterAddress: updater.owner?.address, delegated: true)
         }
 
         /// Enables Updaters to remove their delegation
@@ -170,11 +230,12 @@ pub contract ContractUpdater {
                 self.delegatedUpdaters.containsKey(updaterCap.borrow()!.getID()): "No Updater found for ID!"
             }
             let updater = updaterCap.borrow()!
-            self.removeDelegatedUpdater(address: updater.getContractAccountAddress(), id: updater.getID())
+            self.removeDelegatedUpdater(id: updater.getID())
         }
 
         /// Executes update on the specified Updater
         ///
+        // TODO: Reconsider this signature - how can we ensure failed updates don't prevent others from updating?
         pub fun update(updaters: {Address: [UInt64]}): {Address: [UInt64]} {
             let failed: {Address: [UInt64]} = {}
 
@@ -198,7 +259,7 @@ pub contract ContractUpdater {
                         failed[address]!.append(id)
                     } else {
                         // Updater updated, can now be removed
-                        self.removeDelegatedUpdater(address: address, id: id)
+                        self.removeDelegatedUpdater(id: id)
                     }
                 }
             }
@@ -207,57 +268,40 @@ pub contract ContractUpdater {
 
         /// Checks if the specified DelegatedUpdater Capability is valid
         ///
-        pub fun check(id: UInt64): Bool {
-            pre {
-                self.delegatedUpdaters.containsKey(id): "No Updater found for ID!"
-            }
-            return self.delegatedUpdaters[id]!.check()
+        pub fun check(id: UInt64): Bool? {
+            return self.delegatedUpdaters[id]?.check() ?? nil
         }
 
         /// Enables admin removal of a DelegatedUpdater Capability
-        pub fun removeDelegatedUpdater(address: Address, id: UInt64) {
-            if !self.addressToIDs.containsKey(address) || !self.addressToIDs[address]!.contains(id) {
+        pub fun removeDelegatedUpdater(id: UInt64) {
+            if !self.delegatedUpdaters.containsKey(id) {
                 return
             }
-
-            let ids = self.addressToIDs[address]!
-            if ids.length == 1 {
-                self.addressToIDs.remove(key: address)
-            } else {
-                self.addressToIDs[address]!.remove(at: ids.firstIndex(of: id)!)
-            }
-
-            var name: String? = nil
-            if let cap = self.delegatedUpdaters.remove(key: id) {
-                name = cap.borrow()?.getContractName()
-            }
-            
-            emit UpdaterDelegationChanged(updaterUUID: id, contractAccountAddress: address, contractName: name, delegated: false)
+            let updaterCap = self.delegatedUpdaters.remove(key: id)!
+            emit UpdaterDelegationChanged(updaterUUID: id, updaterAddress: updaterCap.borrow()?.owner?.address, delegated: false)
         }
     }
 
     /// Returns a new Updater resource
     ///
-    pub fun createNewUpdater(blockUpdateBoundary: UInt64, contractAccount: Capability<&AuthAccount>, contractName: String, code: [UInt8]): @Updater {
-        let updater <- create Updater(blockUpdateBoundary: blockUpdateBoundary, contractAccount: contractAccount, contractName: contractName, code: code)
-        emit UpdaterUpdated(
-            updaterUUID: updater.uuid,
-            blockUpdateBoundary: blockUpdateBoundary,
-            contractAccountAddress: contractAccount.address,
-            contractName: contractName,
-            updated: false
-        )
+    pub fun createNewUpdater(
+        blockUpdateBoundary: UInt64,
+        accounts: [Capability<&AuthAccount>],
+        deployment: [ContractUpdate]
+    ): @Updater {
+        let updater <- create Updater(blockUpdateBoundary: blockUpdateBoundary, accounts: accounts, deployment: deployment)
+        emit UpdaterCreated(updaterUUID: updater.uuid, blockUpdateBoundary: blockUpdateBoundary)
         return <- updater
     }
 
     init() {
-        self.UpdaterStoragePath = /storage/ContractUpdater
-        self.DelegatedUpdaterPrivatePath = /private/ContractUpdaterDelegated
-        self.UpdaterPublicPath = /public/ContractUpdaterPublic
-        self.UpdaterContractAccountPrivatePath = /private/UpdaterContractAccount
-        self.DelegateeStoragePath = /storage/ContractUpdaterDelegatee
-        self.DelegateePrivatePath = /private/ContractUpdaterDelegatee
-        self.DelegateePublicPath = /public/ContractUpdaterDelegateePublic
+        self.UpdaterStoragePath = StoragePath(identifier: "ContractUpdater_".concat(self.account.address.toString()))!
+        self.DelegatedUpdaterPrivatePath = PrivatePath(identifier: "ContractUpdaterDelegated_".concat(self.account.address.toString()))!
+        self.UpdaterPublicPath = PublicPath(identifier: "ContractUpdaterPublic_".concat(self.account.address.toString()))!
+        self.UpdaterContractAccountPrivatePath = PrivatePath(identifier: "UpdaterContractAccount_".concat(self.account.address.toString()))!
+        self.DelegateeStoragePath = StoragePath(identifier: "ContractUpdaterDelegatee_".concat(self.account.address.toString()))!
+        self.DelegateePrivatePath = PrivatePath(identifier: "ContractUpdaterDelegatee_".concat(self.account.address.toString()))!
+        self.DelegateePublicPath = PublicPath(identifier: "ContractUpdaterDelegateePublic_".concat(self.account.address.toString()))!
 
         self.account.save(<-create Delegatee(), to: self.DelegateeStoragePath)
         self.account.link<&{DelegateePublic}>(self.DelegateePublicPath, target: self.DelegateePrivatePath)
