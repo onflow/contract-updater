@@ -4,7 +4,7 @@
 
 ## Simple Case Demo
 
-For this run through, we'll focus on the simple case where a single contract is deployed to a single account that can sign the setup & delegation transactions. This is enough to get the basic concepts involved in this setup, but know that more advanced deployments are possible enabling a developer to define multiple accounts and deployment orders so they can account for owned dependency contracts.
+For this run through, we'll focus on the simple case where a single contract is deployed to a single account that can sign the setup & delegation transactions. This is enough to get the basic concepts involved in the `ContractUpdater` contract, but know that more advanced deployments are possible enabling a developer to define multiple accounts and deployment orders so they can account for owned dependency contracts.
 
 1. Start emulator
 
