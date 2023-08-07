@@ -7,7 +7,7 @@ transaction {
     let updaterID: UInt64
     
     prepare(signer: AuthAccount) {
-        let delegateeAccount = getAccount(ContractUpdater.getContractAddress())
+        let delegateeAccount = getAccount(ContractUpdater.getContractDelegateeAddress())
         self.delegatee = delegateeAccount.getCapability<&ContractUpdater.Delegatee{ContractUpdater.DelegateePublic}>(
                 ContractUpdater.DelegateePublicPath
             ).borrow()

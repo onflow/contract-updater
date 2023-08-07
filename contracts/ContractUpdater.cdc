@@ -189,13 +189,14 @@ pub contract ContractUpdater {
     ///
     pub resource interface DelegateePublic {
         pub fun check(id: UInt64): Bool?
+        pub fun getUpdaterIDs(): [UInt64]
         pub fun delegate(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
         pub fun removeAsUpdater(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
     }
 
     /// Resource that executed delegated updates
     ///
-    pub resource Delegatee : DelegateePublic{
+    pub resource Delegatee : DelegateePublic {
         // TODO: Block Height - All DelegatedUpdaters must be updated at or beyond this block height
         // access(self) let blockUpdateBoundary: UInt64
         /// Track all delegated updaters
@@ -203,6 +204,18 @@ pub contract ContractUpdater {
 
         init() {
             self.delegatedUpdaters = {}
+        }
+
+        /// Checks if the specified DelegatedUpdater Capability is contained and valid
+        ///
+        pub fun check(id: UInt64): Bool? {
+            return self.delegatedUpdaters[id]?.check() ?? nil
+        }
+
+        /// Returns the IDs of the delegated updaters 
+        ///
+        pub fun getUpdaterIDs(): [UInt64] {
+            return self.delegatedUpdaters.keys
         }
 
         /// Allows for the delegation of updates to a contract
@@ -256,12 +269,6 @@ pub contract ContractUpdater {
             return failed
         }
 
-        /// Checks if the specified DelegatedUpdater Capability is valid
-        ///
-        pub fun check(id: UInt64): Bool? {
-            return self.delegatedUpdaters[id]?.check() ?? nil
-        }
-
         /// Enables admin removal of a DelegatedUpdater Capability
         pub fun removeDelegatedUpdater(id: UInt64) {
             if !self.delegatedUpdaters.containsKey(id) {
@@ -272,7 +279,9 @@ pub contract ContractUpdater {
         }
     }
 
-    pub fun getContractAddress(): Address {
+    /// Returns the Address of the Delegatee associated with this contract
+    ///
+    pub fun getContractDelegateeAddress(): Address {
         return self.account.address
     }
 
