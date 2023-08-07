@@ -2,6 +2,15 @@
 
 > Enables delayed contract updates to a wrapped account at or beyond a specified block height
 
+<!--
+## Questions/Thoughts
+
+- Devs can order their own deployment, but what if there exist dependencies they don't own that haven't been updated when the `Delegatee` attempts to update their contracts? Will their updates fail since their dependencies aren't yet updated for SC?
+    - Does this mean we'll need to account for the chain-wide dependency graph and conduct updates in order of the global dependency tree? Or would we just tell devs to avoid use of this contract if they have unowned/non-standard dependencies?
+    - If we plan on supporting global updates with dependency graph resolution, what does the Updater/Delegatee interface need to look like?
+        - We could configure the Delegatee such that it takes some DAG and executes the updates according to the given DAG, but we're not guaranteed that all contracts on MN will delegate their updates and thus may not be accessible for the Delegatee to update.
+-->
+
 ## Simple Case Demo
 
 For this run through, we'll focus on the simple case where a single contract is deployed to a single account that can sign the setup & delegation transactions. This is enough to get the basic concepts involved in the `ContractUpdater` contract, but know that more advanced deployments are possible enabling a developer to define multiple accounts and deployment orders so they can account for owned dependency contracts.
@@ -63,14 +72,3 @@ For this run through, we'll focus on the simple case where a single contract is 
     ```sh
     flow scripts execute ./scripts/foo.cdc
     ```
-
-## TODO
-
-- [ ] Implement Delegatee scripts & txns
-
-## Questions/Thoughts
-
-- Devs can order their own deployment, but what if there exist dependencies they don't own that haven't been updated when the `Delegatee` attempts to update their contracts? Will their updates fail since their dependencies aren't yet updated for SC?
-    - Does this mean we'll need to account for the chain-wide dependency graph and conduct updates in order of the global dependency tree? Or would we just tell devs to avoid use of this contract if they have unowned/non-standard dependencies?
-    - If we plan on supporting global updates with dependency graph resolution, what does the Updater/Delegatee interface need to look like?
-        - We could configure the Delegatee such that it takes some DAG and executes the updates according to the given DAG, but we're not guaranteed that all contracts on MN will delegate their updates and thus may not be accessible for the Delegatee to update.
