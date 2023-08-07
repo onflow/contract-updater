@@ -2,11 +2,8 @@
 
 import "ContractUpdater"
 
-/// Configures and Updater resource, assuming signing account is the account with the contract to update
-///
-/// @param blockUpdateBoundary: The block height at which the contract can be updated
-/// @param contractName: The name of the contract to update
-/// @param code: The code of the contract to update as a hex string
+/// Configures and Updater resource, assuming signing account is the account with the contract to update. This demos a
+/// simple case where the signer is the deployment account and deployment only includes a single contract.
 ///
 transaction(blockUpdateBoundary: UInt64, contractName: String, code: String) {
     prepare(signer: AuthAccount) {

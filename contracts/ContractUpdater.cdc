@@ -1,6 +1,24 @@
+/// This contract defines resources which enable storage of contract code for the purposes of updating at or beyond 
+/// some blockheight boundary either by the containing resource's owner or by some delegated party.
+///
+/// The two primary resources involved in this are the @Updater and @Delegatee resources. As their names suggest, the
+/// @Updater contains Capabilities for all deployment accounts as well as the corresponding contract code + names in
+/// the order of their update deployment as well as a blockheight at or beyond which the update can be performed. The
+/// @Delegatee resource can receive Capabilities to the @Updater resource and can perform the update on behalf of the
+/// @Updater resource's owner.
+///
+/// At the time of this writing, failed updates are not handled gracefully and will result in the halted iteration, but
+/// recent conversations point to the possibility of amending the AuthAccount.Contract API to allow for a graceful
+/// recovery from failed updates. If this method is not added, we'll want to reconsider the approach in favor of a 
+/// single update() call per transaction.
+/// See the following issue for more info: https://github.com/onflow/cadence/issues/2700
+///
 pub contract ContractUpdater {
 
+    pub let inboxAccountCapabilityNamePrefix: String
+
     /* --- Canonical Paths --- */
+    //
     pub let UpdaterStoragePath: StoragePath
     pub let DelegatedUpdaterPrivatePath: PrivatePath
     pub let UpdaterPublicPath: PublicPath
@@ -10,6 +28,7 @@ pub contract ContractUpdater {
     pub let DelegateePublicPath: PublicPath
 
     /* --- Events --- */
+    //
     pub event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64)
     pub event UpdaterUpdated(
         updaterUUID: UInt64,
@@ -285,6 +304,33 @@ pub contract ContractUpdater {
         return self.account.address
     }
 
+    /// Helper method that returns the ordered array reflecting order of deployment, with each contract update
+    /// deployment represented by a ContractUpdate struct.
+    ///
+    /// NOTES: deploymentConfig is ordered, and the order is used to determine the order of the contracts in the
+    /// deployment. Each entry in the array must be exactly one key-value pair, where the key is the address of the
+    /// associated contract name and code.
+    ///
+    pub fun getDeploymentFromConfig(_ deploymentConfig: [{Address: {String: String}}]): [ContractUpdate] {
+        let deployment: [ContractUpdate] = []
+        for contractConfig in deploymentConfig {
+            // Claim the AuthAccount Capability for this contract account
+            assert(contractConfig.length == 1, message: "Invalid contract config")
+            let address = contractConfig.keys[0]
+            assert(contractConfig[address]!.length == 1, message: "Invalid contract config")
+            // Build the deployment
+            let nameAndCode = contractConfig[address]!
+            deployment.append(
+                ContractUpdater.ContractUpdate(
+                    address: address,
+                    name: nameAndCode.keys[0],
+                    code: nameAndCode.values[0].decodeHex()
+                )
+            )
+        }
+        return deployment
+    }
+
     /// Returns a new Updater resource
     ///
     pub fun createNewUpdater(
@@ -298,6 +344,8 @@ pub contract ContractUpdater {
     }
 
     init() {
+        self.inboxAccountCapabilityNamePrefix = "ContractUpdaterAccountCapability_"
+
         self.UpdaterStoragePath = StoragePath(identifier: "ContractUpdater_".concat(self.account.address.toString()))!
         self.DelegatedUpdaterPrivatePath = PrivatePath(identifier: "ContractUpdaterDelegated_".concat(self.account.address.toString()))!
         self.UpdaterPublicPath = PublicPath(identifier: "ContractUpdaterPublic_".concat(self.account.address.toString()))!
