@@ -101,6 +101,11 @@ pub contract ContractUpdater {
         /// NOTE: Dev should be careful to validate their dependency tree such that updates are performed from root 
         /// to leaf dependencies
         access(self) let deployment: [ContractUpdate]
+        // TODO: Implement these properties to allow for staged updates & getters for info about num and state of stages
+        // access(self) let deployments: {UInt8: [ContractUpdate]}
+        // access(self) var deploymentIndex: UInt8
+        // TODO: Consider what we do when deployments fail - do we pause or continue successive updates
+        // access(self) let failedDeployments: [ContractUpdate]
 
         init(
             blockUpdateBoundary: UInt64,
@@ -223,6 +228,8 @@ pub contract ContractUpdater {
         // TODO: Block Height - All DelegatedUpdaters must be updated at or beyond this block height
         // access(self) let blockUpdateBoundary: UInt64
         /// Track all delegated updaters
+        // TODO: If we support staged updates, we'll want visibility into the number of stages and progress through all
+        //      maybe removing after stages have been complete or failed
         access(self) let delegatedUpdaters: {UInt64: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>}
 
         init() {
@@ -271,6 +278,7 @@ pub contract ContractUpdater {
 
         /// Executes update on the specified Updater
         ///
+        // TODO: Consider removing Capabilities once we get signal that the Updater has been completed
         pub fun update(updaterIDs: [UInt64]): [UInt64] {
             let failed: [UInt64] = []
 
@@ -345,6 +353,12 @@ pub contract ContractUpdater {
         let updater <- create Updater(blockUpdateBoundary: blockUpdateBoundary, accounts: accounts, deployment: deployment)
         emit UpdaterCreated(updaterUUID: updater.uuid, blockUpdateBoundary: blockUpdateBoundary)
         return <- updater
+    }
+
+    /// Creates a new Delegatee resource enabling caller to self-host their Delegatee
+    ///
+    pub fun createNewDelegatee(): @Delegatee {
+        return <- create Delegatee()
     }
 
     init() {
