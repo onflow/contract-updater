@@ -19,6 +19,7 @@ pub struct ContractUpdateReadable {
 /// Returns values of the Updater at the given Address
 ///
 pub fun main(address: Address): [ContractUpdateReadable]? {
+    
     let account = getAuthAccount(address)
      
     if let updater = account.borrow<&ContractUpdater.Updater>(from: ContractUpdater.UpdaterStoragePath) {

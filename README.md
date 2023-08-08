@@ -1,33 +1,30 @@
 # ContractUpdater
 
-> Enables delayed contract updates to a wrapped account at or beyond a specified block height
-
-<!--
-## Questions/Thoughts
-
-- Devs can order their own deployment, but what if there exist dependencies they don't own that haven't been updated when the `Delegatee` attempts to update their contracts? Will their updates fail since their dependencies aren't yet updated for SC?
-    - Does this mean we'll need to account for the chain-wide dependency graph and conduct updates in order of the global dependency tree? Or would we just tell devs to avoid use of this contract if they have unowned/non-standard dependencies?
-    - If we plan on supporting global updates with dependency graph resolution, what does the Updater/Delegatee interface need to look like?
-        - We could configure the Delegatee such that it takes some DAG and executes the updates according to the given DAG, but we're not guaranteed that all contracts on MN will delegate their updates and thus may not be accessible for the Delegatee to update.
--->
+> Enables pre-defined contract update deployments to a set of wrapped account at or beyond a specified block height
 
 ## Simple Case Demo
 
-For this run through, we'll focus on the simple case where a single contract is deployed to a single account that can sign the setup & delegation transactions. This is enough to get the basic concepts involved in the `ContractUpdater` contract, but know that more advanced deployments are possible enabling a developer to define multiple accounts and deployment orders so they can account for owned dependency contracts.
+For this run through, we'll focus on the simple case where a single contract is deployed to a single account that can sign the setup & delegation transactions. 
 
-1. Start emulator
+This use case is enough to get the basic concepts involved in the `ContractUpdater` contract, but know that more advanced deployments are possible with support for multiple contract accounts and customized deployment configurations.
+
+### Setup
+
+1. Start your local emulator:
 
     ```sh
     flow emulator
     ```
 
-1. Setup emulator environment
+1. Setup emulator environment - this creates our emulator accounts & deploys contracts:
 
     ```sh
     sh setup.sh
     ```
 
-1. We can see that the `Foo` has been deployed, and call its only contract method `foo()`, getting back `"foo"`
+### Walkthrough
+
+1. We can see that the `Foo` has been deployed, and call its only contract method `foo()`, getting back `"foo"`:
 
     ```sh
     flow scripts execute ./scripts/foo.cdc
@@ -72,3 +69,75 @@ For this run through, we'll focus on the simple case where a single contract is 
     ```sh
     flow scripts execute ./scripts/foo.cdc
     ```
+
+## Multi-Account Multi-Contract Deployment
+
+As mentioned above, `ContractUpdater` supports update deployments across any number of accounts & contracts.
+
+Developers with a number of owned contracts will find this helpful as they can specify the order in which an update should occur according to the contract set's dependency graph.
+
+In our example, our dependency graph will look like this:
+
+```
+A -> B
+A -> C
+B -> C
+```
+
+So our update should be conducted in the following order:
+
+```
+[A, B, C]
+```
+
+This is because, assuming some breaking change prior to the update boundary, updating `C` before it's dependencies will result in a failed deployment as contracts `A` & `B` are still in a broken state and cannot be imported when `C` is updated.
+
+### CLI Walkthrough
+
+For the following walkthrough, we'll assume `A` is deployed on its own account while `B` & `C` are in a different account.
+
+:information_source: If you haven't already, perform the [setup steps above](#setup)
+
+1. Since we'll be configuring an update deployment across a number of contract accounts, we'll need to delegate access to those accounts via AuthAccount Capabilities on each. Running the following transaction will link an AuthAccount Capability on the signer's account and publish it for the account where our `Updater` will live.
+
+    ```sh
+    flow transactions send ./transactions/publish_auth_account_capability.cdc 0xf669cb8d41ce0c74 --signer a-account
+    ```
+
+    ```sh
+    flow transactions send ./transactions/publish_auth_account_capability.cdc 0xf669cb8d41ce0c74 --signer bc-account
+    ```
+
+    :information_source: Note we perform a transaction for each contract account that is hosting contracts we will be updating.
+
+1. Next, we claim those published AuthAccount Capabilities and configure an `Updater` resource that contains them along with our ordered deployment.
+
+    ```sh
+    flow transactions send transactions/setup_updater_multi_account.cdc --args-json "$(cat args.json)" --signer abc-updater
+    ```
+
+    :information_source: Here we're passing the arguments in Cadence JSON format since the arguments are so long. Take a look at the transaction and arguments to more deeply understand what's being passed around.
+
+1. You'll see a number of events emitted, one of them being `UpdaterCreated` with your `Updater`'s UUID. This means the resource was created, so let's query against the updater account to get its info.
+
+    ```sh
+    flow scripts execute ./scripts/get_updater_info.cdc 0xf669cb8d41ce0c74
+    ```
+
+    ```sh
+    flow scripts execute ./scripts/get_updater_deployment.cdc 0xf669cb8d41ce0c74
+    ```
+
+1. Now we'll delegate a Capability on the `Updater` to the `Delegatee`:
+
+    ```sh
+    flow transactions send ./transactions/delegate.cdc --signer abc-updater
+    ```
+
+1. In the previous transaction we should see that the `UpdaterDelegationChanged` event includes the `Updater` UUID previously emitted in the creation event and that the `delegated` value is `true`. Now, we'll act as the `Delegatee` and execute the update.
+
+    ```sh
+    flow transactions send ./transactions/execute_delegated_updates.cdc
+    ```
+
+    :warning: Execution fails! Dependent contracts can't be updated in the same transaction as dependencies are updated - TODO about this found in the contract.

@@ -1,7 +1,16 @@
 #!/bin/bash
 
-# Create foo account e03daebed8ca0615 with private key e9b7b36e9d16f47501db73e84c68e441609475ee482ee808411b2fe0bd2329da
+# Create `foo` account e03daebed8ca0615 with private key e9b7b36e9d16f47501db73e84c68e441609475ee482ee808411b2fe0bd2329da
 flow accounts create --key "3bfabba47056a7ce4d1fe258f2dbf824c27e36dc1118335aaab5ba6362bf2f7d23eb9662ccd4d82d732966bd7dc4730da6e3c7ca0b72dd827be8d62271c5ae1b"
+
+# Create `a-account` account 045a1763c93006ca with private key 1bbaf3239cfd9e8e35f85723f6c70f2ac5c8f50856c4667021cf9ed72eabd9f8
+flow accounts create --key "e4d80c05460c9c7e766be0491060f1fc82858cd27c37ef7680a8f75faea89f3f6860735b9e7dce49e2ad97e512e94389c69b942ae0c888053660588588eb7571"
+
+# Create `bc-account` account 120e725050340cab with private key c06a4b0fce3bc3088a2a2e3b11a9ea5d13e251661cefa3f26af1180ad317d3dc
+flow accounts create --key "93298486140d00b22e2aee56c2bfc8cd5e4ae97fce7a7c0884916bc4561079eab979f6450a12a43eb426c21a19a8584c06af5e32cc2540a4a609dc1bd8f6252d"
+
+# Create `abc-updater` account f669cb8d41ce0c74 with private key caa4da634fee3ad45ce67ef8a6813987888d88f4b4e6e70b8d84685845db7f25
+flow accounts create --key "3325eb2ce37b2a8eb45a7262645d5360320f50746c907e53fdcfef88520e7d141c78c677f983e5c3a86b8a19ecc6dca35f9d2b84f3b1ecae84837ed0f8f1c69d"
 
 # Deploy contracts
 flow deploy

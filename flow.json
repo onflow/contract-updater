@@ -1,5 +1,8 @@
 {
 	"contracts": {
+		"A": "./contracts/A.cdc",
+		"B": "./contracts/B.cdc",
+		"C": "./contracts/C.cdc",
 		"ContractUpdater": "./contracts/ContractUpdater.cdc",
 		"Foo": "./contracts/Foo.cdc"
 	},
@@ -10,6 +13,18 @@
 		"testnet": "access.devnet.nodes.onflow.org:9000"
 	},
 	"accounts": {
+		"a-account": {
+			"address": "045a1763c93006ca",
+			"key": "1bbaf3239cfd9e8e35f85723f6c70f2ac5c8f50856c4667021cf9ed72eabd9f8"
+		},
+		"abc-updater": {
+			"address": "f669cb8d41ce0c74",
+			"key": "caa4da634fee3ad45ce67ef8a6813987888d88f4b4e6e70b8d84685845db7f25"
+		},
+		"bc-account": {
+			"address": "120e725050340cab",
+			"key": "c06a4b0fce3bc3088a2a2e3b11a9ea5d13e251661cefa3f26af1180ad317d3dc"
+		},
 		"emulator-account": {
 			"address": "f8d6e0586b0a20c7",
 			"key": "a08c990a1f7adb14c290d05df0f397d2de2f4d0cb18cdffed592f611f95f5d08"
@@ -21,6 +36,13 @@
 	},
 	"deployments": {
 		"emulator": {
+			"a-account": [
+				"A"
+			],
+			"bc-account": [
+				"B",
+				"C"
+			],
 			"emulator-account": [
 				"ContractUpdater"
 			],

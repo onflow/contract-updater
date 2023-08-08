@@ -13,6 +13,10 @@
 /// single update() call per transaction.
 /// See the following issue for more info: https://github.com/onflow/cadence/issues/2700
 ///
+// TODO: Consider how to handle large contracts that exceed the transaction limit
+//     - It's common to chunk contract code and pass over numerous transactions - think about how could support a similar workflow
+//       when configuring an Updater resource
+// TODO: We can't rely on dependencies updating in the same transaction, we'll need to allow for blocking update deployments
 pub contract ContractUpdater {
 
     pub let inboxAccountCapabilityNamePrefix: String
