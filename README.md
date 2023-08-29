@@ -37,7 +37,9 @@ This use case is enough to get the basic concepts involved in the `ContractUpdat
         1. `code: [String]`
 
     ```sh
-    flow transactions send ./transactions/setup_updater_single_account_and_contract.cdc 10 "Foo" 70756220636f6e747261637420466f6f207b0a202020207075622066756e20666f6f28293a20537472696e67207b0a202020202020202072657475726e2022626172220a202020207d0a7d --signer foo
+    flow transactions send ./transactions/setup_updater_single_account_and_contract.cdc \
+        10 "Foo" 70756220636f6e747261637420466f6f207b0a202020207075622066756e20666f6f28293a20537472696e67207b0a202020202020202072657475726e2022626172220a202020207d0a7d \
+        --signer foo
     ```
 
 1. Simulate block creation, running transactions to iterate over blocks to the pre-configured block update height:
@@ -121,11 +123,15 @@ For the following walkthrough, we'll assume `A` is deployed on its own account w
 1. Since we'll be configuring an update deployment across a number of contract accounts, we'll need to delegate access to those accounts via AuthAccount Capabilities on each. Running the following transaction will link an AuthAccount Capability on the signer's account and publish it for the account where our `Updater` will live.
 
     ```sh
-    flow transactions send ./transactions/publish_auth_account_capability.cdc 0xf669cb8d41ce0c74 --signer a-account
+    flow transactions send ./transactions/publish_auth_account_capability.cdc \
+        0xf669cb8d41ce0c74 \
+        --signer a-account
     ```
 
     ```sh
-    flow transactions send ./transactions/publish_auth_account_capability.cdc 0xf669cb8d41ce0c74 --signer bc-account
+    flow transactions send ./transactions/publish_auth_account_capability.cdc \
+        0xf669cb8d41ce0c74 \
+        --signer bc-account
     ```
 
     :information_source: Note we perform a transaction for each account hosting contracts we will be updating. This allows the `Updater` to perform updates for contracts across an arbitrary number of accounts.
@@ -137,7 +143,9 @@ For the following walkthrough, we'll assume `A` is deployed on its own account w
         1. `deploymentConfig: [[{Address: {String: String}}]]`
 
     ```sh
-    flow transactions send transactions/setup_updater_multi_account.cdc --args-json "$(cat args.json)" --signer abc-updater
+    flow transactions send transactions/setup_updater_multi_account.cdc \
+        --args-json "$(cat args.json)" \
+        --signer abc-updater
     ```
 
     :information_source: Arguments are passed in Cadence JSON format since the values exceptionally long. Take a look at the transaction and arguments to more deeply understand what's being passed around.
