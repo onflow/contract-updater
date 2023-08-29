@@ -78,19 +78,35 @@ Developers with a number of owned contracts will find this helpful as they can s
 
 In our example, our dependency graph will look like this:
 
-```
-A -> B
-A -> C
-B -> C
-```
+![flat dependency dag](./resources/dependency_dag.png)
 
-So our update should be conducted in the following order:
+So the contracts should be updated in the following order:
 
 ```
 [A, B, C]
 ```
 
 This is because, assuming some breaking change prior to the update boundary, updating `C` before it's dependencies will result in a failed deployment as contracts `A` & `B` are still in a broken state and cannot be imported when `C` is updated.
+
+However, since contract updates take effect after the updating transaction completes, we need to stage deployments among updating transactions based on the depth of each contract in its dependency tree. 
+
+More concretely, if we try to update all three contracts in the same transaction as above - `[A, B, C]` in sequence - `B`'s dependency (`A`) will not have yet been updated when we call for it to be updated. Therefore, `B`'s update attempt will fail.
+
+Consequently, we instead batch updates based on the contract's maximum depth in the dependency graph. In our case, instead of `[A, B, C]` we update `A` in one transaction, `B` in the next, and lastly `C` can be updated.
+
+![dependency graph with node depth](./resources/dependency_dag_with_depth.png)
+
+This concept can be extrapolated out for larger dependency graphs. For example, take the following:
+
+![larger dag example](./resources/larger_dag.png)
+
+This group of contracts would be updated over the same three stages, with each stage including contracts according to their maximum depth in the dependency graph. In this case:
+
+- Stage 0: `[A, D]`
+- Stage 1: `[B, E]`
+- Stage 2: `[C]`
+
+Let's continue into a walkthrough with contracts `A`, `B`, and `C` and see how `ContractUpdater` can be configured to execute these preconfigured updates.
 
 ### CLI Walkthrough
 
@@ -108,15 +124,19 @@ For the following walkthrough, we'll assume `A` is deployed on its own account w
     flow transactions send ./transactions/publish_auth_account_capability.cdc 0xf669cb8d41ce0c74 --signer bc-account
     ```
 
-    :information_source: Note we perform a transaction for each contract account that is hosting contracts we will be updating.
+    :information_source: Note we perform a transaction for each account hosting contracts we will be updating. This allows the `Updater` to perform updates for contracts across an arbitrary number of accounts.
 
 1. Next, we claim those published AuthAccount Capabilities and configure an `Updater` resource that contains them along with our ordered deployment.
+    - ``
+        1. `blockUpdateBoundary: UInt64`
+        1. `contractAddresses: [Address]`
+        1. `deploymentConfig: [[{Address: {String: String}}]]`
 
     ```sh
     flow transactions send transactions/setup_updater_multi_account.cdc --args-json "$(cat args.json)" --signer abc-updater
     ```
 
-    :information_source: Here we're passing the arguments in Cadence JSON format since the arguments are so long. Take a look at the transaction and arguments to more deeply understand what's being passed around.
+    :information_source: Arguments are passed in Cadence JSON format since the values exceptionally long. Take a look at the transaction and arguments to more deeply understand what's being passed around.
 
 1. You'll see a number of events emitted, one of them being `UpdaterCreated` with your `Updater`'s UUID. This means the resource was created, so let's query against the updater account to get its info.
 
@@ -140,4 +160,16 @@ For the following walkthrough, we'll assume `A` is deployed on its own account w
     flow transactions send ./transactions/execute_delegated_updates.cdc
     ```
 
-    :warning: Execution fails! Dependent contracts can't be updated in the same transaction as dependencies are updated - TODO about this found in the contract.
+    This transaction calls `Updater.update()`, executing the first staged deployment, and updating contract `A`. Note that the emitted event contains the name and address of the updated contracts and that the `updateComplete` field is still `false`. This is because there are still incomplete deployment stages. Let's run the transaction again, this time updating `B`.
+
+    ```sh
+    flow transactions send ./transactions/execute_delegated_updates.cdc
+    ```
+
+    Now we see `B` has been updated, but we still have one more stage to complete. Let's complete the staged update.
+
+    ```sh
+    flow transactions send ./transactions/execute_delegated_updates.cdc
+    ```
+
+    And finally, we see that `C` was updated and `updateComplete` is now `true`.
