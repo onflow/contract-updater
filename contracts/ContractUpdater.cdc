@@ -336,31 +336,35 @@ pub contract ContractUpdater {
         return self.account.address
     }
 
-    /// Helper method that returns the ordered array reflecting order of deployment, with each contract update
-    /// deployment represented by a ContractUpdate struct.
+    /// Helper method that returns the ordered array reflecting sequenced and staged deployments, with each contract
+    /// update represented by a ContractUpdate struct.
     ///
-    /// NOTES: deploymentConfig is ordered, and the order is used to determine the order of the contracts in the
-    /// deployment. Each entry in the array must be exactly one key-value pair, where the key is the address of the
-    /// associated contract name and code.
+    /// NOTE: deploymentConfig is ordered, and the order is used to determine both the order of the contracts in each
+    /// deployment and the order of the deployments themselves. Each entry in the inner array must be exactly one
+    /// key-value pair, where the key is the address of the associated contract name and code.
     ///
-    pub fun getDeploymentFromConfig(_ deploymentConfig: [{Address: {String: String}}]): [ContractUpdate] {
-        let deployment: [ContractUpdate] = []
-        for contractConfig in deploymentConfig {
-            // Claim the AuthAccount Capability for this contract account
-            assert(contractConfig.length == 1, message: "Invalid contract config")
-            let address = contractConfig.keys[0]
-            assert(contractConfig[address]!.length == 1, message: "Invalid contract config")
-            // Build the deployment
-            let nameAndCode = contractConfig[address]!
-            deployment.append(
-                ContractUpdater.ContractUpdate(
-                    address: address,
-                    name: nameAndCode.keys[0],
-                    code: nameAndCode.values[0].decodeHex()
-                )
+    pub fun getDeploymentFromConfig(_ deploymentConfig: [[{Address: {String: String}}]]): [[ContractUpdate]] {
+    // pub fun getDeploymentFromConfig(_ deploymentConfig: [{Address: {String: String}}]): [ContractUpdate] {
+        let deployments: [[ContractUpdate]] = []
+        
+        for deploymentStage in deploymentConfig {
+            
+            let contractUpdates: [ContractUpdate] = []
+            for contractConfig in deploymentStage {
+                
+                assert(contractConfig.length == 1, message: "Invalid contract config")
+                let address = contractConfig.keys[0]
+                assert(contractConfig[address]!.length == 1, message: "Invalid contract config")
+                // Build the deployment
+                let nameAndCode = contractConfig[address]!
+            }
+
+            deployments.append(
+                contractUpdates
             )
         }
-        return deployment
+        
+        return deployments
     }
 
     /// Returns a new Updater resource
