@@ -41,7 +41,8 @@ pub contract ContractUpdater {
         updatedAddresses: [Address],
         updatedContracts: [String],
         failedAddresses: [Address],
-        failedContracts: [String]
+        failedContracts: [String],
+        updateComplete: Bool
     )
     pub event UpdaterDelegationChanged(updaterUUID: UInt64, updaterAddress: Address?, delegated: Bool)
 
@@ -83,7 +84,9 @@ pub contract ContractUpdater {
         pub fun getID(): UInt64
         pub fun getBlockUpdateBoundary(): UInt64
         pub fun getContractAccountAddresses(): [Address]
-        pub fun getDeployment(): [ContractUpdate]
+        pub fun getDeployments(): [[ContractUpdate]]
+        pub fun getCurrentDeploymentStage(): Int
+        pub fun getFailedDeployments(): {Int: [String]}
         pub fun hasBeenUpdated(): Bool
     }
 
@@ -94,26 +97,25 @@ pub contract ContractUpdater {
         // TODO: Consider making this a contract-owned value as it's reflective of the spork height
         access(self) let blockUpdateBoundary: UInt64
         /// Update status for each contract
-        access(self) var updated: Bool
+        access(self) var updateComplete: Bool
         /// Capabilities for contract hosting accounts
         access(self) let accounts: {Address: Capability<&AuthAccount>}
-        /// Order of updates to be performed
+        /// Updates ordered by their deployment sequence and staged by their dependency depth
         /// NOTE: Dev should be careful to validate their dependency tree such that updates are performed from root 
         /// to leaf dependencies
-        access(self) let deployment: [ContractUpdate]
-        // TODO: Implement these properties to allow for staged updates & getters for info about num and state of stages
-        // access(self) let deployments: {UInt8: [ContractUpdate]}
-        // access(self) var deploymentIndex: UInt8
-        // TODO: Consider what we do when deployments fail - do we pause or continue successive updates
-        // access(self) let failedDeployments: [ContractUpdate]
+        access(self) let deployments: [[ContractUpdate]]
+        /// Current deployment stage
+        access(self) var currentDeploymentStage: Int
+        /// Contracts whose update failed keyed on their deployment stage
+        access(self) let failedDeployments: {Int: [String]}
 
         init(
             blockUpdateBoundary: UInt64,
             accounts: [Capability<&AuthAccount>],
-            deployment: [ContractUpdate]
+            deployments: [[ContractUpdate]]
         ) {
             self.blockUpdateBoundary = blockUpdateBoundary
-            self.updated = false
+            self.updateComplete = false
             self.accounts = {}
             // Validate given Capabilities
             for account in accounts {
@@ -122,22 +124,25 @@ pub contract ContractUpdater {
                 }
                 self.accounts.insert(key: account.borrow()!.address, account)
             }
-            // Validate given deployment
-            for contractUpdate in deployment {
-                if !self.accounts.containsKey(contractUpdate.address) {
-                    panic("Contract address not found in given accounts: ".concat(contractUpdate.address.toString()))
+            // Validate given deployment has corresponding account Capabilities
+            for stage in deployments {
+                for contractUpdate in stage {
+                    if !self.accounts.containsKey(contractUpdate.address) {
+                        panic("Contract address not found in given accounts: ".concat(contractUpdate.address.toString()))
+                    }
                 }
             }
-            self.deployment = deployment
+            self.deployments = deployments
+            self.currentDeploymentStage = 0
+            self.failedDeployments = {}
         }
 
-        /// Executes the update using Account.Contracts.update__experimental() for all contracts defined in deployment,
-        /// returning true if either update was previously completed or all updates succeed, and false if any update
-        /// fails
+        /// Executes the next update stabe using Account.Contracts.update__experimental() for all contracts defined in
+        /// deployment, returning true if all stages have been attempted and false if stages remain
         ///
         pub fun update(): Bool {
             // Return early if we've already updated
-            if self.updated {
+            if self.updateComplete {
                 return true
             }
             
@@ -147,11 +152,12 @@ pub contract ContractUpdater {
             let failedContracts: [String] = []
 
             // Update the contracts as specified in the deployment
-            for contractUpdate in self.deployment {
+            for contractUpdate in self.deployments[self.currentDeploymentStage] {
                 // Borrow the contract account
                 if let account = self.accounts[contractUpdate.address]!.borrow() {
                     // Update the contract
                     // TODO: Swap out optional/Bool API tryUpdate() (or similar) and do stuff if update fails
+                    //      See: https://github.com/onflow/cadence/issues/2700
                     // if account.contracts.tryUpdate(name: contractUpdate.name, code: contractUpdate.code) == false {
                     //     failedAddresses.append(account.address)
                     //     failedContracts.append(contractUpdate.toString())
@@ -173,9 +179,14 @@ pub contract ContractUpdater {
                     }
                 }
             }
-            if failedContracts.length == 0 {
-                self.updated = true
+            
+            if failedContracts.length > 0 {
+                self.failedDeployments.insert(key: self.currentDeploymentStage, failedContracts)
             }
+            
+            self.currentDeploymentStage = self.currentDeploymentStage + 1
+            self.updateComplete = self.currentDeploymentStage == self.deployments.length
+            
             emit UpdaterUpdated(
                 updaterUUID: self.uuid,
                 updaterAddress: self.owner?.address,
@@ -183,9 +194,10 @@ pub contract ContractUpdater {
                 updatedAddresses: updatedAddresses,
                 updatedContracts: updatedContracts,
                 failedAddresses: failedAddresses,
-                failedContracts: failedContracts
+                failedContracts: failedContracts,
+                updateComplete: self.updateComplete
             )
-            return self.updated
+            return self.updateComplete
         }
 
         /* --- Public getters --- */
@@ -202,12 +214,20 @@ pub contract ContractUpdater {
             return self.accounts.keys
         }
 
-        pub fun getDeployment(): [ContractUpdate] {
-            return self.deployment
+        pub fun getDeployments(): [[ContractUpdate]] {
+            return self.deployments
+        }
+
+        pub fun getCurrentDeploymentStage(): Int {
+            return self.currentDeploymentStage
+        }
+
+        pub fun getFailedDeployments(): {Int: [String]} {
+            return self.failedDeployments
         }
 
         pub fun hasBeenUpdated(): Bool {
-            return self.updated
+            return self.updateComplete
         }
     }
 
@@ -348,9 +368,9 @@ pub contract ContractUpdater {
     pub fun createNewUpdater(
         blockUpdateBoundary: UInt64,
         accounts: [Capability<&AuthAccount>],
-        deployment: [ContractUpdate]
+        deployments: [[ContractUpdate]]
     ): @Updater {
-        let updater <- create Updater(blockUpdateBoundary: blockUpdateBoundary, accounts: accounts, deployment: deployment)
+        let updater <- create Updater(blockUpdateBoundary: blockUpdateBoundary, accounts: accounts, deployments: deployments)
         emit UpdaterCreated(updaterUUID: updater.uuid, blockUpdateBoundary: blockUpdateBoundary)
         return <- updater
     }
