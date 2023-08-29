@@ -18,25 +18,30 @@ pub struct ContractUpdateReadable {
 
 /// Returns values of the Updater at the given Address
 ///
-pub fun main(address: Address): [ContractUpdateReadable]? {
+pub fun main(address: Address): [[ContractUpdateReadable]]? {
     
     let account = getAuthAccount(address)
      
     if let updater = account.borrow<&ContractUpdater.Updater>(from: ContractUpdater.UpdaterStoragePath) {
-        let data: [ContractUpdateReadable] = []
-        let deployment = updater.getDeployment()
 
-        for contractUpdate in deployment {
-            data.append(
-                ContractUpdateReadable(
-                    address: contractUpdate.address,
-                    name: contractUpdate.name,
-                    code: contractUpdate.stringifyCode()
+        let result: [[ContractUpdateReadable]] = []
+        let deployments = updater.getDeployments()
+
+        for stage in deployments {
+            let data: [ContractUpdateReadable] = []
+            for contractUpdate in stage {
+                data.append(
+                        ContractUpdateReadable(
+                        address: contractUpdate.address,
+                        name: contractUpdate.name,
+                        code: contractUpdate.stringifyCode()
+                    )
                 )
-            )
+            }
+            result.append(data)
         }
         
-        return data
+        return result
     }
 
     return nil

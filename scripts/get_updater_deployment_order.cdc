@@ -2,20 +2,24 @@ import "ContractUpdater"
 
 /// Returns values of the Updater at the given Address
 ///
-pub fun main(address: Address): [{Address: String}]? {
+pub fun main(address: Address): [[{Address: String}]]? {
     let account = getAuthAccount(address)
      
     if let updater = account.borrow<&ContractUpdater.Updater>(from: ContractUpdater.UpdaterStoragePath) {
-        let data: [{Address: String}] = []
-        let deployment = updater.getDeployment()
+        let result: [[{Address: String}]] = []
+        let deployments = updater.getDeployments()
 
-        for contractUpdate in deployment {
-            data.append({
-                contractUpdate.address: contractUpdate.name
-            })
+        for i, stage in deployments {
+            let data: [{Address: String}] = []
+            for contractUpdate in stage {
+                data.append({
+                    contractUpdate.address: contractUpdate.name
+                })
+            }
+            result.append(data)
         }
         
-        return data
+        return result
     }
 
     return nil

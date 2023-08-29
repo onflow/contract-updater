@@ -344,26 +344,32 @@ pub contract ContractUpdater {
     /// key-value pair, where the key is the address of the associated contract name and code.
     ///
     pub fun getDeploymentFromConfig(_ deploymentConfig: [[{Address: {String: String}}]]): [[ContractUpdate]] {
-    // pub fun getDeploymentFromConfig(_ deploymentConfig: [{Address: {String: String}}]): [ContractUpdate] {
         let deployments: [[ContractUpdate]] = []
-        
+
         for deploymentStage in deploymentConfig {
-            
+
             let contractUpdates: [ContractUpdate] = []
             for contractConfig in deploymentStage {
-                
+
                 assert(contractConfig.length == 1, message: "Invalid contract config")
                 let address = contractConfig.keys[0]
                 assert(contractConfig[address]!.length == 1, message: "Invalid contract config")
-                // Build the deployment
+
                 let nameAndCode = contractConfig[address]!
+                contractUpdates.append(
+                    ContractUpdater.ContractUpdate(
+                        address: address,
+                        name: nameAndCode.keys[0],
+                        code: nameAndCode.values[0].decodeHex()
+                    )
+                )
             }
 
             deployments.append(
                 contractUpdates
             )
         }
-        
+
         return deployments
     }
 

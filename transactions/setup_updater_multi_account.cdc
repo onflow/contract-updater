@@ -11,7 +11,7 @@ import "ContractUpdater"
 /// This transaction also assumes that all contract hosting AuthAccount Capabilities have been published for the signer
 /// to claim.
 ///
-transaction(blockUpdateBoundary: UInt64, contractAddresses: [Address], deploymentConfig: [{Address: {String: String}}]) {
+transaction(blockUpdateBoundary: UInt64, contractAddresses: [Address], deploymentConfig: [[{Address: {String: String}}]]) {
 
     prepare(signer: AuthAccount) {
         // Abort if Updater is already configured in signer's account
@@ -34,13 +34,13 @@ transaction(blockUpdateBoundary: UInt64, contractAddresses: [Address], deploymen
             seenAddresses.append(address)
         }
         // Construct deployment from config
-        let deployment = ContractUpdater.getDeploymentFromConfig(deploymentConfig)
+        let deployments = ContractUpdater.getDeploymentFromConfig(deploymentConfig)
         
         // Construct the updater, save and link Capabilities
         let contractUpdater: @ContractUpdater.Updater <- ContractUpdater.createNewUpdater(
                 blockUpdateBoundary: blockUpdateBoundary,
                 accounts: accountCaps,
-                deployment: deployment
+                deployments: deployments
             )
         signer.save(
             <-contractUpdater,
