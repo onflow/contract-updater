@@ -31,6 +31,10 @@ This use case is enough to get the basic concepts involved in the `ContractUpdat
     ```
 
 1. Configure `ContractUpdater.Updater`, passing the block height, contract name, and contract code in hex form (see [`get_code_hex.py`](./src/get_code_hex.py) for simple script hexifying contract code):
+    - `setup_updater_single_account_and_contract.cdc`
+        1. `blockUpdateBoundary: UInt64`
+        1. `contractName: String`
+        1. `code: [String]`
 
     ```sh
     flow transactions send ./transactions/setup_updater_single_account_and_contract.cdc 10 "Foo" 70756220636f6e747261637420466f6f207b0a202020207075622066756e20666f6f28293a20537472696e67207b0a202020202020202072657475726e2022626172220a202020207d0a7d --signer foo
@@ -88,9 +92,9 @@ So the contracts should be updated in the following order:
 
 This is because, assuming some breaking change prior to the update boundary, updating `C` before it's dependencies will result in a failed deployment as contracts `A` & `B` are still in a broken state and cannot be imported when `C` is updated.
 
-However, since contract updates take effect after the updating transaction completes, we need to stage deployments among updating transactions based on the depth of each contract in its dependency tree. 
+However, since contract updates take effect **after** the updating transaction completes, we need to stage deployments among updating transactions based on the depth of each contract in its dependency tree. 
 
-More concretely, if we try to update all three contracts in the same transaction as above - `[A, B, C]` in sequence - `B`'s dependency (`A`) will not have yet been updated when we call for it to be updated. Therefore, `B`'s update attempt will fail.
+More concretely, if we try to update all three contracts in the same transaction as above - `[A, B, C]` in sequence - `B`'s dependency (`A`) will not have completed its update, causing `B`'s update attempt to fail.
 
 Consequently, we instead batch updates based on the contract's maximum depth in the dependency graph. In our case, instead of `[A, B, C]` we update `A` in one transaction, `B` in the next, and lastly `C` can be updated.
 
@@ -127,7 +131,7 @@ For the following walkthrough, we'll assume `A` is deployed on its own account w
     :information_source: Note we perform a transaction for each account hosting contracts we will be updating. This allows the `Updater` to perform updates for contracts across an arbitrary number of accounts.
 
 1. Next, we claim those published AuthAccount Capabilities and configure an `Updater` resource that contains them along with our ordered deployment.
-    - ``
+    - `setup_updater_multi_account.cdc`
         1. `blockUpdateBoundary: UInt64`
         1. `contractAddresses: [Address]`
         1. `deploymentConfig: [[{Address: {String: String}}]]`
