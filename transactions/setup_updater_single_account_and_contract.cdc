@@ -19,13 +19,13 @@ transaction(blockUpdateBoundary: UInt64, contractName: String, code: String) {
             <- ContractUpdater.createNewUpdater(
                 blockUpdateBoundary: blockUpdateBoundary,
                 accounts: [accountCap],
-                deployment: [
+                deployments: [[
                     ContractUpdater.ContractUpdate(
                         address: signer.address,
                         name: contractName,
                         code: code.decodeHex()
                     )
-                ]
+                ]]
             ),
             to: ContractUpdater.UpdaterStoragePath
         )
