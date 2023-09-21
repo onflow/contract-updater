@@ -1,5 +1,5 @@
-pub contract Foo {
-    pub fun foo(): String {
+access(all) contract Foo {
+    access(all) view fun foo(): String {
         return "bar"
     }
 }
