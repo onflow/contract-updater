@@ -1,17 +1,17 @@
 import A from 0x045a1763c93006ca
 
-pub contract B : A {
+access(all) contract B : A {
     
-    pub resource R : A.I {
-        pub fun foo(): String {
+    access(all) resource R : A.I {
+        access(all) view fun foo(): String {
             return "foo"
         }
-        pub fun bar(): String {
+        access(all) view fun bar(): String {
             return "bar"
         }
     }
     
-    pub fun createR(): @R {
+    access(all) fun createR(): @R {
         return <-create R()
     }
 }
