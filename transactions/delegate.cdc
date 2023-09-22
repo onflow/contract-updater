@@ -5,7 +5,7 @@ transaction {
     let updaterCap: Capability<&ContractUpdater.Updater>
     let updaterID: UInt64
     
-    prepare(signer: auth(Capabilities) &Account) {
+    prepare(signer: auth(IssueStorageCapabilityController) &Account) {
         let delegateeAccount = getAccount(ContractUpdater.getContractDelegateeAddress())
         self.delegatee = delegateeAccount.capabilities.borrow<&{ContractUpdater.DelegateePublic}>(
                 ContractUpdater.DelegateePublicPath
