@@ -52,12 +52,12 @@ access(all) contract ContractUpdater {
 
     /// Represents contract and its corresponding code
     ///
-    access(all) struct ContractUpdate {
-        access(all) let address: Address
-        access(all) let name: String
-        access(all) let code: [UInt8]
+    pub struct ContractUpdate {
+        pub let address: Address
+        pub let name: String
+        pub let code: String
 
-        init(address: Address, name: String, code: [UInt8]) {
+        init(address: Address, name: String, code: String) {
             self.address = address
             self.name = name
             self.code = code
@@ -69,7 +69,7 @@ access(all) contract ContractUpdater {
         }
 
         /// Returns code as a String
-        access(all) view fun stringifyCode(): String {
+        pub fun codeAsCadence(): String {
             return String.fromUTF8(self.code) ?? panic("Problem stringifying code!")
         }
     }
@@ -168,7 +168,7 @@ access(all) contract ContractUpdater {
                     //         updatedContracts.append(contractUpdate.toString())
                     //     }
                     // }
-                    account.contracts.update(name: contractUpdate.name, code: contractUpdate.code)
+                    account.contracts.update(name: contractUpdate.name, code: contractUpdate.code.decodeHex())
                     if !updatedAddresses.contains(account.address) {
                         updatedAddresses.append(account.address)
                     }
@@ -358,7 +358,7 @@ access(all) contract ContractUpdater {
                     ContractUpdater.ContractUpdate(
                         address: address,
                         name: nameAndCode.keys[0],
-                        code: nameAndCode.values[0].decodeHex()
+                        code: nameAndCode.values[0]
                     )
                 )
             }

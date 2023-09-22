@@ -25,7 +25,7 @@ transaction {
                     ContractUpdater.ContractUpdate(
                         address: signer.address,
                         name: contractName,
-                        code: code.decodeHex()
+                        code: code
                     )
                 ]]
             ),

@@ -31,7 +31,7 @@ access(all) fun main(address: Address): {Int: {Address: [ContractUpdateReadable]
                 data[contractUpdate.address]!.append(
                     ContractUpdateReadable(
                         name: contractUpdate.name,
-                        code: contractUpdate.stringifyCode()
+                        code: contractUpdate.codeAsCadence()
                     )
                 )
             }
