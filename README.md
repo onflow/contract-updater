@@ -135,7 +135,7 @@ account.
 :information_source: If you haven't already, perform the [setup steps above](#setup)
 
 1. Since we'll be configuring an update deployment across a number of contract accounts, we'll need to delegate access
-   to those accounts via AuthAccount Capabilities on each. Running the following transaction will link an AuthAccount
+   to those accounts via Account Capabilities on each. Running the following transaction will link an Account
    Capability on the signer's account and publish it for the account where our `Updater` will live.
 
     ```sh
@@ -153,7 +153,7 @@ account.
     :information_source: Note we perform a transaction for each account hosting contracts we will be updating. This
     allows the `Updater` to perform updates for contracts across an arbitrary number of accounts.
 
-1. Next, we claim those published AuthAccount Capabilities and configure an `Updater` resource that contains them along
+1. Next, we claim those published Account Capabilities and configure an `Updater` resource that contains them along
    with our ordered deployment.
     - `setup_updater_multi_account.cdc`
         1. `blockUpdateBoundary: UInt64`
