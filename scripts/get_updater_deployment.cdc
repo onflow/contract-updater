@@ -34,7 +34,7 @@ pub fun main(address: Address): [[ContractUpdateReadable]]? {
                         ContractUpdateReadable(
                         address: contractUpdate.address,
                         name: contractUpdate.name,
-                        code: contractUpdate.stringifyCode()
+                        code: contractUpdate.codeAsCadence()
                     )
                 )
             }

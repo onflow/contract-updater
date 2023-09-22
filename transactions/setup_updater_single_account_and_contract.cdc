@@ -23,7 +23,7 @@ transaction(blockUpdateBoundary: UInt64, contractName: String, code: String) {
                     ContractUpdater.ContractUpdate(
                         address: signer.address,
                         name: contractName,
-                        code: code.decodeHex()
+                        code: code
                     )
                 ]]
             ),
