@@ -1,6 +1,6 @@
 import "ContractUpdater"
 
-pub fun main(updaterAddress: Address, delegateeAddress: Address): Bool? {
+access(all) fun main(updaterAddress: Address, delegateeAddress: Address): Bool? {
     let updater = getAuthAccount(updaterAddress).borrow<&ContractUpdater.Updater>(
             from: ContractUpdater.UpdaterStoragePath
         ) ?? panic("Could not borrow contract updater reference")
