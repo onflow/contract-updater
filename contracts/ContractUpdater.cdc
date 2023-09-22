@@ -52,10 +52,10 @@ access(all) contract ContractUpdater {
 
     /// Represents contract and its corresponding code
     ///
-    pub struct ContractUpdate {
-        pub let address: Address
-        pub let name: String
-        pub let code: String
+    access(all) struct ContractUpdate {
+        access(all) let address: Address
+        access(all) let name: String
+        access(all) let code: String
 
         init(address: Address, name: String, code: String) {
             self.address = address
@@ -69,7 +69,7 @@ access(all) contract ContractUpdater {
         }
 
         /// Returns code as a String
-        pub fun codeAsCadence(): String {
+        access(all) fun codeAsCadence(): String {
             return String.fromUTF8(self.code.decodeHex()) ?? panic("Problem stringifying code!")
         }
     }
