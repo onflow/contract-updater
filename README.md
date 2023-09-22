@@ -42,7 +42,7 @@ advanced deployments are possible with support for multiple contract accounts an
 
     ```sh
     flow transactions send ./transactions/setup_updater_single_account_and_contract.cdc \
-        10 "Foo" 70756220636f6e747261637420466f6f207b0a202020207075622066756e20666f6f28293a20537472696e67207b0a202020202020202072657475726e2022626172220a202020207d0a7d \
+        10 "Foo" 61636365737328616c6c2920636f6e747261637420466f6f207b0a2020202061636365737328616c6c2920766965772066756e20666f6f28293a20537472696e67207b0a202020202020202072657475726e2022626172220a202020207d0a7d \
         --signer foo
     ```
 
@@ -55,11 +55,11 @@ advanced deployments are possible with support for multiple contract accounts an
 1. We can get details from our `Updater` before updating:
 
     ```sh
-    flow scripts execute ./scripts/get_updater_info.cdc 0xe03daebed8ca0615
+    flow scripts execute ./scripts/get_updater_info.cdc 0x01cf0e2f2f715450
     ```
 
     ```sh
-    flow scripts execute ./scripts/get_updater_deployment.cdc 0xe03daebed8ca0615
+    flow scripts execute ./scripts/get_updater_deployment.cdc 0x01cf0e2f2f715450
     ```
 
 1. Next, we'll delegate the `Updater` Capability as `DelegatedUpdater` to the `Delegatee` stored in the `ContractUpdater`'s account.
@@ -135,7 +135,7 @@ account.
 :information_source: If you haven't already, perform the [setup steps above](#setup)
 
 1. Since we'll be configuring an update deployment across a number of contract accounts, we'll need to delegate access
-   to those accounts via AuthAccount Capabilities on each. Running the following transaction will link an AuthAccount
+   to those accounts via Account Capabilities on each. Running the following transaction will link an Account
    Capability on the signer's account and publish it for the account where our `Updater` will live.
 
     ```sh
@@ -153,7 +153,7 @@ account.
     :information_source: Note we perform a transaction for each account hosting contracts we will be updating. This
     allows the `Updater` to perform updates for contracts across an arbitrary number of accounts.
 
-1. Next, we claim those published AuthAccount Capabilities and configure an `Updater` resource that contains them along
+1. Next, we claim those published Account Capabilities and configure an `Updater` resource that contains them along
    with our ordered deployment.
     - `setup_updater_multi_account.cdc`
         1. `blockUpdateBoundary: UInt64`

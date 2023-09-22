@@ -1,5 +1,5 @@
 import "Foo"
 
-pub fun main(): String {
+access(all) fun main(): String {
     return Foo.foo()
 }

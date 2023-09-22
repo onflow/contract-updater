@@ -1,5 +1,5 @@
 import "ContractUpdater"
 
-pub fun main(config: [[{Address: {String: String}}]]): [[ContractUpdater.ContractUpdate]] {
+access(all) fun main(config: [[{Address: {String: String}}]]): [[ContractUpdater.ContractUpdate]] {
     return ContractUpdater.getDeploymentFromConfig(config)
 }

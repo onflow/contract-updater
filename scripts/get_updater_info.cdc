@@ -1,8 +1,8 @@
 import "ContractUpdater"
 
-pub struct ContractUpdateReadable {
-    pub let name: String
-    pub let code: String
+access(all) struct ContractUpdateReadable {
+    access(all) let name: String
+    access(all) let code: String
 
     init(
         name: String,
@@ -15,10 +15,10 @@ pub struct ContractUpdateReadable {
 
 /// Returns values of the Updater at the given Address
 ///
-pub fun main(address: Address): {Int: {Address: [ContractUpdateReadable]}}? {
-    let account = getAuthAccount(address)
+access(all) fun main(address: Address): {Int: {Address: [ContractUpdateReadable]}}? {
+    let account = getAuthAccount<auth(Storage) &Account>(address)
      
-    if let updater = account.borrow<&ContractUpdater.Updater>(from: ContractUpdater.UpdaterStoragePath) {
+    if let updater = account.storage.borrow<&ContractUpdater.Updater>(from: ContractUpdater.UpdaterStoragePath) {
         let result: {Int: {Address: [ContractUpdateReadable]}} = {}
         let deployments = updater.getDeployments()
 
