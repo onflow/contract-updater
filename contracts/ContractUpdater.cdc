@@ -97,7 +97,7 @@ access(all) contract ContractUpdater {
         /// Update status for each contract
         access(self) var updateComplete: Bool
         /// Capabilities for contract hosting accounts
-        access(self) let accounts: {Address: Capability<auth(Contracts) &Account>}
+        access(self) let accounts: {Address: Capability<auth(UpdateContract) &Account>}
         /// Updates ordered by their deployment sequence and staged by their dependency depth
         /// NOTE: Dev should be careful to validate their dependency tree such that updates are performed from root 
         /// to leaf dependencies
@@ -109,7 +109,7 @@ access(all) contract ContractUpdater {
 
         init(
             blockUpdateBoundary: UInt64,
-            accounts: [Capability<auth(Contracts)&Account>],
+            accounts: [Capability<auth(UpdateContract)&Account>],
             deployments: [[ContractUpdate]]
         ) {
             self.blockUpdateBoundary = blockUpdateBoundary
@@ -375,7 +375,7 @@ access(all) contract ContractUpdater {
     ///
     access(all) fun createNewUpdater(
         blockUpdateBoundary: UInt64,
-        accounts: [Capability<auth(Contracts)&Account>],
+        accounts: [Capability<auth(UpdateContract)&Account>],
         deployments: [[ContractUpdate]]
     ): @Updater {
         let updater <- create Updater(blockUpdateBoundary: blockUpdateBoundary, accounts: accounts, deployments: deployments)
