@@ -1,21 +1,23 @@
-#allowAccountLinking
-
 import "ContractUpdater"
 
 /// Configures and Updater resource, assuming signing account is the account with the contract to update. This demos a
 /// simple case where the signer is the deployment account and deployment only includes a single contract.
 ///
-transaction(blockUpdateBoundary: UInt64, contractName: String, code: String) {
-    prepare(signer: AuthAccount) {
-        if !signer.getCapability<&AuthAccount>(ContractUpdater.UpdaterContractAccountPrivatePath).check() {
-            signer.unlink(ContractUpdater.UpdaterContractAccountPrivatePath)
-            signer.linkAccount(ContractUpdater.UpdaterContractAccountPrivatePath)
-        }
-        let accountCap: Capability<&AuthAccount> = signer.getCapability<&AuthAccount>(ContractUpdater.UpdaterContractAccountPrivatePath)
-        if signer.type(at: ContractUpdater.UpdaterStoragePath) != nil {
+// TODO: Remove when CLI param issue fixed
+// transaction(blockUpdateBoundary: UInt64, contractName: String, code: String) {
+transaction {
+    
+    prepare(signer: auth(Capabilities, Storage) &Account) {
+        // TODO: Remove when CLI param issue fixed
+        let blockUpdateBoundary: UInt64 = 10
+        let contractName: String = "Foo"
+        let code: String = "61636365737328616c6c2920636f6e747261637420466f6f207b0a2020202061636365737328616c6c2920766965772066756e20666f6f28293a20537472696e67207b0a202020202020202072657475726e2022626172220a202020207d0a7d"
+
+        let accountCap = signer.capabilities.account.issue<auth(Contracts) &Account>()
+        if signer.storage.type(at: ContractUpdater.UpdaterStoragePath) != nil {
             panic("Updater already configured at expected path!")
         }
-        signer.save(
+        signer.storage.save(
             <- ContractUpdater.createNewUpdater(
                 blockUpdateBoundary: blockUpdateBoundary,
                 accounts: [accountCap],
@@ -29,9 +31,7 @@ transaction(blockUpdateBoundary: UInt64, contractName: String, code: String) {
             ),
             to: ContractUpdater.UpdaterStoragePath
         )
-        signer.unlink(ContractUpdater.UpdaterPublicPath)
-        signer.unlink(ContractUpdater.DelegatedUpdaterPrivatePath)
-        signer.link<&ContractUpdater.Updater{ContractUpdater.UpdaterPublic}>(ContractUpdater.UpdaterPublicPath, target: ContractUpdater.UpdaterStoragePath)
-        signer.link<&ContractUpdater.Updater{ContractUpdater.DelegatedUpdater, ContractUpdater.UpdaterPublic}>(ContractUpdater.DelegatedUpdaterPrivatePath, target: ContractUpdater.UpdaterStoragePath)
+        let updaterPublicCap = signer.capabilities.storage.issue<&{ContractUpdater.UpdaterPublic}>(ContractUpdater.UpdaterStoragePath)
+        signer.capabilities.publish(updaterPublicCap, at:ContractUpdater.UpdaterPublicPath)
     }
 }

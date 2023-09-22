@@ -4,9 +4,9 @@ transaction {
     
     let delegatee: &ContractUpdater.Delegatee
     
-    prepare(signer: AuthAccount) {
-        self.delegatee = signer.borrow<&ContractUpdater.Delegatee>(from: ContractUpdater.DelegateeStoragePath)
-            ?? panic("Could not borrow Delegatee reference from signer")
+    prepare(signer: auth(Storage) &Account) {
+        self.delegatee = signer.storage.borrow<&ContractUpdater.Delegatee>(from: ContractUpdater.DelegateeStoragePath)
+            ?? panic("Could not borrow Delegatee reference from signer's storage")
     }
 
     execute {

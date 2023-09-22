@@ -1,20 +1,16 @@
 import "ContractUpdater"
 
 transaction {
-    
-    let delegatee: &ContractUpdater.Delegatee{ContractUpdater.DelegateePublic}
-    let updaterCap: Capability<&ContractUpdater.Updater{ContractUpdater.DelegatedUpdater, ContractUpdater.UpdaterPublic}>
+    let delegatee: &{ContractUpdater.DelegateePublic}
+    let updaterCap: Capability<&ContractUpdater.Updater>
     let updaterID: UInt64
     
-    prepare(signer: AuthAccount) {
+    prepare(signer: auth(Capabilities) &Account) {
         let delegateeAccount = getAccount(ContractUpdater.getContractDelegateeAddress())
-        self.delegatee = delegateeAccount.getCapability<&ContractUpdater.Delegatee{ContractUpdater.DelegateePublic}>(
+        self.delegatee = delegateeAccount.capabilities.borrow<&{ContractUpdater.DelegateePublic}>(
                 ContractUpdater.DelegateePublicPath
-            ).borrow()
-            ?? panic("Could not borrow Delegatee reference")
-        self.updaterCap = signer.getCapability<&ContractUpdater.Updater{ContractUpdater.DelegatedUpdater, ContractUpdater.UpdaterPublic}>(
-                ContractUpdater.DelegatedUpdaterPrivatePath
-            )
+            ) ?? panic("Could not borrow Delegatee reference")
+        self.updaterCap = signer.capabilities.storage.issue<&ContractUpdater.Updater>(ContractUpdater.UpdaterStoragePath)
         self.updaterID = self.updaterCap.borrow()?.getID() ?? panic("Invalid Updater Capability retrieved from signer!")
     }
 
