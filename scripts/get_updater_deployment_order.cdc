@@ -3,7 +3,7 @@ import "ContractUpdater"
 /// Returns values of the Updater at the given Address
 ///
 access(all) fun main(address: Address): [[{Address: String}]]? {
-    let account = getAuthAccount(address)
+    let account = getAuthAccount<auth(BorrowValue) &Account>(address)
      
     if let updater = account.borrow<&ContractUpdater.Updater>(from: ContractUpdater.UpdaterStoragePath) {
         let result: [[{Address: String}]] = []
