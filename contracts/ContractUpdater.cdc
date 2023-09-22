@@ -19,6 +19,9 @@
 // TODO: We can't rely on dependencies updating in the same transaction, we'll need to allow for blocking update deployments
 access(all) contract ContractUpdater {
 
+    /* --- Contract Values --- */
+    //
+    /// Prefix for published Account Capability
     access(all) let inboxAccountCapabilityNamePrefix: String
 
     /* --- Canonical Paths --- */
@@ -30,6 +33,7 @@ access(all) contract ContractUpdater {
     access(all) let DelegateeStoragePath: StoragePath
     access(all) let DelegateePrivatePath: PrivatePath
     access(all) let DelegateePublicPath: PublicPath
+
 
     /* --- Events --- */
     //
@@ -72,12 +76,6 @@ access(all) contract ContractUpdater {
 
     /* --- Updater --- */
     //
-    /// Private Capability enabling delegated updates
-    ///
-    access(all) resource interface DelegatedUpdater {
-        access(all) fun update(): Bool
-    }
-
     /// Public interface enabling queries about the Updater
     ///
     access(all) resource interface UpdaterPublic {
@@ -92,7 +90,7 @@ access(all) contract ContractUpdater {
 
     /// Resource that enables delayed contract updates to a wrapped account at or beyond a specified block height
     ///
-    access(all) resource Updater : UpdaterPublic, DelegatedUpdater {
+    access(all) resource Updater : UpdaterPublic {
         /// Update to occur at or beyond this block height
         // TODO: Consider making this a contract-owned value as it's reflective of the spork height
         access(self) let blockUpdateBoundary: UInt64
