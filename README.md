@@ -42,7 +42,7 @@ advanced deployments are possible with support for multiple contract accounts an
 
     ```sh
     flow transactions send ./transactions/setup_updater_single_account_and_contract.cdc \
-        10 "Foo" 70756220636f6e747261637420466f6f207b0a202020207075622066756e20666f6f28293a20537472696e67207b0a202020202020202072657475726e2022626172220a202020207d0a7d \
+        10 "Foo" 61636365737328616c6c2920636f6e747261637420466f6f207b0a2020202061636365737328616c6c2920766965772066756e20666f6f28293a20537472696e67207b0a202020202020202072657475726e2022626172220a202020207d0a7d \
         --signer foo
     ```
 
@@ -55,11 +55,11 @@ advanced deployments are possible with support for multiple contract accounts an
 1. We can get details from our `Updater` before updating:
 
     ```sh
-    flow scripts execute ./scripts/get_updater_info.cdc 0xe03daebed8ca0615
+    flow scripts execute ./scripts/get_updater_info.cdc 0x01cf0e2f2f715450
     ```
 
     ```sh
-    flow scripts execute ./scripts/get_updater_deployment.cdc 0xe03daebed8ca0615
+    flow scripts execute ./scripts/get_updater_deployment.cdc 0x01cf0e2f2f715450
     ```
 
 1. Next, we'll delegate the `Updater` Capability as `DelegatedUpdater` to the `Delegatee` stored in the `ContractUpdater`'s account.
