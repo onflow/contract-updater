@@ -70,7 +70,7 @@ access(all) contract ContractUpdater {
 
         /// Returns code as a String
         pub fun codeAsCadence(): String {
-            return String.fromUTF8(self.code) ?? panic("Problem stringifying code!")
+            return String.fromUTF8(self.code.decodeHex()) ?? panic("Problem stringifying code!")
         }
     }
 
