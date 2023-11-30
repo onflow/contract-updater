@@ -17,7 +17,7 @@
 //     - It's common to chunk contract code and pass over numerous transactions - think about how could support a similar workflow
 //       when configuring an Updater resource
 // TODO: We can't rely on dependencies updating in the same transaction, we'll need to allow for blocking update deployments
-pub contract ContractUpdater {
+pub contract StagedContractUpdates {
 
     pub let inboxAccountCapabilityNamePrefix: String
 
@@ -357,7 +357,7 @@ pub contract ContractUpdater {
 
                 let nameAndCode = contractConfig[address]!
                 contractUpdates.append(
-                    ContractUpdater.ContractUpdate(
+                    StagedContractUpdates.ContractUpdate(
                         address: address,
                         name: nameAndCode.keys[0],
                         code: nameAndCode.values[0]
@@ -392,15 +392,15 @@ pub contract ContractUpdater {
     }
 
     init() {
-        self.inboxAccountCapabilityNamePrefix = "ContractUpdaterAccountCapability_"
+        self.inboxAccountCapabilityNamePrefix = "StagedContractUpdatesAccountCapability_"
 
-        self.UpdaterStoragePath = StoragePath(identifier: "ContractUpdater_".concat(self.account.address.toString()))!
-        self.DelegatedUpdaterPrivatePath = PrivatePath(identifier: "ContractUpdaterDelegated_".concat(self.account.address.toString()))!
-        self.UpdaterPublicPath = PublicPath(identifier: "ContractUpdaterPublic_".concat(self.account.address.toString()))!
+        self.UpdaterStoragePath = StoragePath(identifier: "StagedContractUpdates_".concat(self.account.address.toString()))!
+        self.DelegatedUpdaterPrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegated_".concat(self.account.address.toString()))!
+        self.UpdaterPublicPath = PublicPath(identifier: "StagedContractUpdatesPublic_".concat(self.account.address.toString()))!
         self.UpdaterContractAccountPrivatePath = PrivatePath(identifier: "UpdaterContractAccount_".concat(self.account.address.toString()))!
-        self.DelegateeStoragePath = StoragePath(identifier: "ContractUpdaterDelegatee_".concat(self.account.address.toString()))!
-        self.DelegateePrivatePath = PrivatePath(identifier: "ContractUpdaterDelegatee_".concat(self.account.address.toString()))!
-        self.DelegateePublicPath = PublicPath(identifier: "ContractUpdaterDelegateePublic_".concat(self.account.address.toString()))!
+        self.DelegateeStoragePath = StoragePath(identifier: "StagedContractUpdatesDelegatee_".concat(self.account.address.toString()))!
+        self.DelegateePrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegatee_".concat(self.account.address.toString()))!
+        self.DelegateePublicPath = PublicPath(identifier: "StagedContractUpdatesDelegateePublic_".concat(self.account.address.toString()))!
 
         self.account.save(<-create Delegatee(), to: self.DelegateeStoragePath)
         self.account.link<&Delegatee{DelegateePublic}>(self.DelegateePublicPath, target: self.DelegateeStoragePath)

@@ -1,5 +1,5 @@
-import "ContractUpdater"
+import "StagedContractUpdates"
 
-pub fun main(config: [[{Address: {String: String}}]]): [[ContractUpdater.ContractUpdate]] {
-    return ContractUpdater.getDeploymentFromConfig(config)
+pub fun main(config: [[{Address: {String: String}}]]): [[StagedContractUpdates.ContractUpdate]] {
+    return StagedContractUpdates.getDeploymentFromConfig(config)
 }

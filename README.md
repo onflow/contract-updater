@@ -1,4 +1,4 @@
-# ContractUpdater
+# StagedContractUpdates
 
 > Enables pre-defined contract update deployments to a set of wrapped account at or beyond a specified block height. For
 > more details about the purpose of this mechanism, see [FLIP 179](https://github.com/onflow/flips/pull/179)
@@ -8,7 +8,7 @@
 For this run through, we'll focus on the simple case where a single contract is deployed to a single account that can
 sign the setup & delegation transactions. 
 
-This use case is enough to get the basic concepts involved in the `ContractUpdater` contract, but know that more
+This use case is enough to get the basic concepts involved in the `StagedContractUpdates` contract, but know that more
 advanced deployments are possible with support for multiple contract accounts and customized deployment configurations.
 
 ### Setup
@@ -33,7 +33,7 @@ advanced deployments are possible with support for multiple contract accounts an
     flow scripts execute ./scripts/foo.cdc
     ```
 
-1. Configure `ContractUpdater.Updater`, passing the block height, contract name, and contract code in hex form (see
+1. Configure `StagedContractUpdates.Updater`, passing the block height, contract name, and contract code in hex form (see
    [`get_code_hex.py`](./src/get_code_hex.py) for simple script hexifying contract code):
     - `setup_updater_single_account_and_contract.cdc`
         1. `blockUpdateBoundary: UInt64`
@@ -62,7 +62,7 @@ advanced deployments are possible with support for multiple contract accounts an
     flow scripts execute ./scripts/get_updater_deployment.cdc 0xe03daebed8ca0615
     ```
 
-1. Next, we'll delegate the `Updater` Capability as `DelegatedUpdater` to the `Delegatee` stored in the `ContractUpdater`'s account.
+1. Next, we'll delegate the `Updater` Capability as `DelegatedUpdater` to the `Delegatee` stored in the `StagedContractUpdates`'s account.
 
     ```sh
     flow transactions send ./transactions/delegate.cdc --signer foo
@@ -83,7 +83,7 @@ advanced deployments are possible with support for multiple contract accounts an
 
 ## Multi-Account Multi-Contract Deployment
 
-As mentioned above, `ContractUpdater` supports update deployments across any number of accounts & contracts.
+As mentioned above, `StagedContractUpdates` supports update deployments across any number of accounts & contracts.
 
 Developers with a number of owned contracts will find this helpful as they can specify the order in which an update
 should occur according to the contract set's dependency graph.
@@ -124,8 +124,8 @@ their maximum depth in the dependency graph. In this case:
 - Stage 1: `[B, E]`
 - Stage 2: `[C]`
 
-Let's continue into a walkthrough with contracts `A`, `B`, and `C` and see how `ContractUpdater` can be configured to
-execute these preconfigured updates.
+Let's continue into a walkthrough with contracts `A`, `B`, and `C` and see how `StagedContractUpdates` can be configured to
+execute these pre-configured updates.
 
 ### CLI Walkthrough
 

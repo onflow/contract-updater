@@ -3,7 +3,12 @@
 		"A": "./contracts/A.cdc",
 		"B": "./contracts/B.cdc",
 		"C": "./contracts/C.cdc",
-		"ContractUpdater": "./contracts/ContractUpdater.cdc",
+		"StagedContractUpdates": {
+			"source": "./contracts/StagedContractUpdates.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7"
+			}
+		},
 		"Foo": "./contracts/Foo.cdc"
 	},
 	"networks": {
@@ -44,7 +49,7 @@
 				"C"
 			],
 			"emulator-account": [
-				"ContractUpdater"
+				"StagedContractUpdates"
 			],
 			"foo": [
 				"Foo"

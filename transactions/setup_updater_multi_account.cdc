@@ -1,6 +1,6 @@
 #allowAccountLinking
 
-import "ContractUpdater"
+import "StagedContractUpdates"
 
 /// Configures and Updater resource, assuming signing account is the account with the contract to update. This demos an
 /// advanced case where an update deployment involves multiple accounts and contracts.
@@ -15,7 +15,7 @@ transaction(blockUpdateBoundary: UInt64, contractAddresses: [Address], deploymen
 
     prepare(signer: AuthAccount) {
         // Abort if Updater is already configured in signer's account
-        if signer.type(at: ContractUpdater.UpdaterStoragePath) != nil {
+        if signer.type(at: StagedContractUpdates.UpdaterStoragePath) != nil {
             panic("Updater already configured at expected path!")
         }
 
@@ -27,28 +27,28 @@ transaction(blockUpdateBoundary: UInt64, contractAddresses: [Address], deploymen
                 continue
             }
             let accountCap = signer.inbox.claim<&AuthAccount>(
-                ContractUpdater.inboxAccountCapabilityNamePrefix.concat(signer.address.toString()),
+                StagedContractUpdates.inboxAccountCapabilityNamePrefix.concat(signer.address.toString()),
                 provider: address
             ) ?? panic("No AuthAccount Capability found in Inbox for signer at address: ".concat(address.toString()))
             accountCaps.append(accountCap)
             seenAddresses.append(address)
         }
         // Construct deployment from config
-        let deployments = ContractUpdater.getDeploymentFromConfig(deploymentConfig)
+        let deployments = StagedContractUpdates.getDeploymentFromConfig(deploymentConfig)
         
         // Construct the updater, save and link Capabilities
-        let contractUpdater: @ContractUpdater.Updater <- ContractUpdater.createNewUpdater(
+        let contractUpdater: @StagedContractUpdates.Updater <- StagedContractUpdates.createNewUpdater(
                 blockUpdateBoundary: blockUpdateBoundary,
                 accounts: accountCaps,
                 deployments: deployments
             )
         signer.save(
             <-contractUpdater,
-            to: ContractUpdater.UpdaterStoragePath
+            to: StagedContractUpdates.UpdaterStoragePath
         )
-        signer.unlink(ContractUpdater.UpdaterPublicPath)
-        signer.unlink(ContractUpdater.DelegatedUpdaterPrivatePath)
-        signer.link<&ContractUpdater.Updater{ContractUpdater.UpdaterPublic}>(ContractUpdater.UpdaterPublicPath, target: ContractUpdater.UpdaterStoragePath)
-        signer.link<&ContractUpdater.Updater{ContractUpdater.DelegatedUpdater, ContractUpdater.UpdaterPublic}>(ContractUpdater.DelegatedUpdaterPrivatePath, target: ContractUpdater.UpdaterStoragePath)
+        signer.unlink(StagedContractUpdates.UpdaterPublicPath)
+        signer.unlink(StagedContractUpdates.DelegatedUpdaterPrivatePath)
+        signer.link<&StagedContractUpdates.Updater{StagedContractUpdates.UpdaterPublic}>(StagedContractUpdates.UpdaterPublicPath, target: StagedContractUpdates.UpdaterStoragePath)
+        signer.link<&StagedContractUpdates.Updater{StagedContractUpdates.DelegatedUpdater, StagedContractUpdates.UpdaterPublic}>(StagedContractUpdates.DelegatedUpdaterPrivatePath, target: StagedContractUpdates.UpdaterStoragePath)
     }
 }

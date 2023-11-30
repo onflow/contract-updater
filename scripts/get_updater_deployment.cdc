@@ -1,4 +1,4 @@
-import "ContractUpdater"
+import "StagedContractUpdates"
 
 pub struct ContractUpdateReadable {
     pub let address: Address
@@ -22,7 +22,7 @@ pub fun main(address: Address): [[ContractUpdateReadable]]? {
     
     let account = getAuthAccount(address)
      
-    if let updater = account.borrow<&ContractUpdater.Updater>(from: ContractUpdater.UpdaterStoragePath) {
+    if let updater = account.borrow<&StagedContractUpdates.Updater>(from: StagedContractUpdates.UpdaterStoragePath) {
 
         let result: [[ContractUpdateReadable]] = []
         let deployments = updater.getDeployments()
