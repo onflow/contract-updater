@@ -2,10 +2,10 @@
 /// some blockheight boundary either by the containing resource's owner or by some delegated party.
 ///
 /// The two primary resources involved in this are the @Updater and @Delegatee resources. As their names suggest, the
-/// @Updater contains Capabilities for all deployment accounts as well as the corresponding contract code + names in
-/// the order of their update deployment as well as a blockheight at or beyond which the update can be performed. The
-/// @Delegatee resource can receive Capabilities to the @Updater resource and can perform the update on behalf of the
-/// @Updater resource's owner.
+/// @Updater contains Capabilities for all deployment accounts (wrapped in @Host resources) as well as the 
+/// corresponding contract code + names in the order of their update deployment as well as a blockheight at or beyond
+/// which the update can be performed. The @Delegatee resource can receive Capabilities to the @Updater resource and 
+/// can perform the update on behalf of the @Updater resource's owner.
 ///
 /// At the time of this writing, failed updates are not handled gracefully and will result in the halted iteration, but
 /// recent conversations point to the possibility of amending the AuthAccount.Contract API to allow for a graceful
@@ -16,25 +16,25 @@
 // TODO: Consider how to handle large contracts that exceed the transaction limit
 //     - It's common to chunk contract code and pass over numerous transactions - think about how could support a similar workflow
 //       when configuring an Updater resource
-// TODO: We can't rely on dependencies updating in the same transaction, we'll need to allow for blocking update deployments
-pub contract StagedContractUpdates {
+access(all) contract StagedContractUpdates {
 
-    pub let inboxAccountCapabilityNamePrefix: String
+    access(all) let inboxAccountCapabilityNamePrefix: String
 
     /* --- Canonical Paths --- */
     //
-    pub let UpdaterStoragePath: StoragePath
-    pub let DelegatedUpdaterPrivatePath: PrivatePath
-    pub let UpdaterPublicPath: PublicPath
-    pub let UpdaterContractAccountPrivatePath: PrivatePath
-    pub let DelegateeStoragePath: StoragePath
-    pub let DelegateePrivatePath: PrivatePath
-    pub let DelegateePublicPath: PublicPath
+    access(all) let HostStoragePath: StoragePath
+    access(all) let StagedUpdaterStoragePath: StoragePath
+    // access(all) let DelegatedUpdaterPrivatePath: PrivatePath
+    access(all) let UpdaterPublicPath: PublicPath
+    // access(all) let UpdaterContractAccountPrivatePath: PrivatePath
+    access(all) let DelegateeStoragePath: StoragePath
+    // access(all) let DelegateePrivatePath: PrivatePath
+    access(all) let DelegateePublicPath: PublicPath
 
     /* --- Events --- */
     //
-    pub event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64)
-    pub event UpdaterUpdated(
+    access(all) event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64)
+    access(all) event UpdaterUpdated(
         updaterUUID: UInt64,
         updaterAddress: Address?,
         blockUpdateBoundary: UInt64,
@@ -44,14 +44,14 @@ pub contract StagedContractUpdates {
         failedContracts: [String],
         updateComplete: Bool
     )
-    pub event UpdaterDelegationChanged(updaterUUID: UInt64, updaterAddress: Address?, delegated: Bool)
+    access(all) event UpdaterDelegationChanged(updaterUUID: UInt64, updaterAddress: Address?, delegated: Bool)
 
     /// Represents contract and its corresponding code
     ///
-    pub struct ContractUpdate {
-        pub let address: Address
-        pub let name: String
-        pub let code: String
+    access(all) struct ContractUpdate {
+        access(all) let address: Address
+        access(all) let name: String
+        access(all) let code: String
 
         init(address: Address, name: String, code: String) {
             self.address = address
@@ -60,46 +60,77 @@ pub contract StagedContractUpdates {
         }
 
         /// Serializes the address and name into a string
-        pub fun toString(): String {
+        access(all) fun toString(): String {
             return self.address.toString().concat(".").concat(self.name)
         }
 
         /// Returns code as a String
-        pub fun codeAsCadence(): String {
+        access(all) fun codeAsCadence(): String {
             return String.fromUTF8(self.code.decodeHex()) ?? panic("Problem stringifying code!")
+        }
+    }
+
+    /* --- Host --- */
+    //
+    /// Encapsulates an AuthAccount, exposing only the ability to update contracts on the underlying account
+    ///
+    access(all) resource Host {
+        access(self) let accountCapability: Capability<&AuthAccount>
+
+        init(accountCapability: Capability<&AuthAccount>) {
+            self.accountCapability = accountCapability
+        }
+
+        /// Updates the contract with the specified name and code
+        ///
+        access(all) fun update(name: String, code: [UInt8]): Bool {
+            if let account = self.accountCapability.borrow() {
+                // TODO: Replace update__experimental with tryUpdate() once it's available
+                // let deploymentResult = account.contracts.tryUpdate(name: name, code: code)
+                // return deploymentResult.success
+                account.contracts.update__experimental(name: name, code: code)
+                return true
+            }
+            return false
+        }
+
+        /// Checks the wrapped AuthAccount Capability
+        ///
+        access(all) fun checkAccountCapability(): Bool {
+            return self.accountCapability.check()
+        }
+
+        /// Returns the Address of the underlying account
+        ///
+        access(all) fun getHostAddress(): Address? {
+            return self.accountCapability.borrow()?.address
         }
     }
 
     /* --- Updater --- */
     //
-    /// Private Capability enabling delegated updates
-    ///
-    pub resource interface DelegatedUpdater {
-        pub fun update(): Bool
-    }
-
     /// Public interface enabling queries about the Updater
     ///
-    pub resource interface UpdaterPublic {
-        pub fun getID(): UInt64
-        pub fun getBlockUpdateBoundary(): UInt64
-        pub fun getContractAccountAddresses(): [Address]
-        pub fun getDeployments(): [[ContractUpdate]]
-        pub fun getCurrentDeploymentStage(): Int
-        pub fun getFailedDeployments(): {Int: [String]}
-        pub fun hasBeenUpdated(): Bool
+    access(all) resource interface UpdaterPublic {
+        access(all) fun getID(): UInt64
+        access(all) fun getBlockUpdateBoundary(): UInt64
+        access(all) fun getContractAccountAddresses(): [Address]
+        access(all) fun getDeployments(): [[ContractUpdate]]
+        access(all) fun getCurrentDeploymentStage(): Int
+        access(all) fun getFailedDeployments(): {Int: [String]}
+        access(all) fun hasBeenUpdated(): Bool
     }
 
     /// Resource that enables delayed contract updates to a wrapped account at or beyond a specified block height
     ///
-    pub resource Updater : UpdaterPublic, DelegatedUpdater {
+    access(all) resource Updater : UpdaterPublic {
         /// Update to occur at or beyond this block height
         // TODO: Consider making this a contract-owned value as it's reflective of the spork height
         access(self) let blockUpdateBoundary: UInt64
         /// Update status for each contract
         access(self) var updateComplete: Bool
         /// Capabilities for contract hosting accounts
-        access(self) let accounts: {Address: Capability<&AuthAccount>}
+        access(self) let hosts: {Address: Capability<&Host>}
         /// Updates ordered by their deployment sequence and staged by their dependency depth
         /// NOTE: Dev should be careful to validate their dependency tree such that updates are performed from root 
         /// to leaf dependencies
@@ -111,23 +142,23 @@ pub contract StagedContractUpdates {
 
         init(
             blockUpdateBoundary: UInt64,
-            accounts: [Capability<&AuthAccount>],
+            hosts: [Capability<&Host>],
             deployments: [[ContractUpdate]]
         ) {
             self.blockUpdateBoundary = blockUpdateBoundary
             self.updateComplete = false
-            self.accounts = {}
+            self.hosts = {}
             // Validate given Capabilities
-            for account in accounts {
-                if !account.check() {
-                    panic("Account capability is invalid for account: ".concat(account.address.toString()))
+            for host in hosts {
+                if !host.check() || !host.borrow()!.checkAccountCapability() {
+                    panic("Host capability is invalid for account: ".concat(host.address.toString()))
                 }
-                self.accounts.insert(key: account.borrow()!.address, account)
+                self.hosts.insert(key: host.borrow()!.getHostAddress()!, host)
             }
             // Validate given deployment has corresponding account Capabilities
             for stage in deployments {
                 for contractUpdate in stage {
-                    if !self.accounts.containsKey(contractUpdate.address) {
+                    if !self.hosts.containsKey(contractUpdate.address) {
                         panic("Contract address not found in given accounts: ".concat(contractUpdate.address.toString()))
                     }
                 }
@@ -137,10 +168,10 @@ pub contract StagedContractUpdates {
             self.failedDeployments = {}
         }
 
-        /// Executes the next update stabe using Account.Contracts.update__experimental() for all contracts defined in
-        /// deployment, returning true if all stages have been attempted and false if stages remain
+        /// Executes the next update stage for all contracts defined in deployment, returning true if all stages have
+        /// been attempted and false if stages remain
         ///
-        pub fun update(): Bool {
+        access(all) fun update(): Bool {
             // Return early if we've already updated
             if self.updateComplete {
                 return true
@@ -153,29 +184,18 @@ pub contract StagedContractUpdates {
 
             // Update the contracts as specified in the deployment
             for contractUpdate in self.deployments[self.currentDeploymentStage] {
-                // Borrow the contract account
-                if let account = self.accounts[contractUpdate.address]!.borrow() {
-                    // Update the contract
-                    // TODO: Swap out optional/Bool API tryUpdate() (or similar) and do stuff if update fails
-                    //      See: https://github.com/onflow/cadence/issues/2700
-                    // if account.contracts.tryUpdate(name: contractUpdate.name, code: contractUpdate.code) == false {
-                    //     failedAddresses.append(account.address)
-                    //     failedContracts.append(contractUpdate.toString())
-                    //     continue
-                    // } else {
-                    //     if !updatedAddresses.contains(account.address) {
-                    //         updatedAddresses.append(account.address)
-                    //     }
-                    //     if !updatedContracts.contains(contractUpdate.toString()) {
-                    //         updatedContracts.append(contractUpdate.toString())
-                    //     }
-                    // }
-                    account.contracts.update__experimental(name: contractUpdate.name, code: contractUpdate.code.decodeHex())
-                    if !updatedAddresses.contains(account.address) {
-                        updatedAddresses.append(account.address)
-                    }
-                    if !updatedContracts.contains(contractUpdate.toString()) {
-                        updatedContracts.append(contractUpdate.toString())
+                if let host = self.hosts[contractUpdate.address]!.borrow() {
+                    if host.update(name: contractUpdate.name, code: contractUpdate.code.decodeHex()) == false {
+                        failedAddresses.append(contractUpdate.address)
+                        failedContracts.append(contractUpdate.toString())
+                        continue
+                    } else {
+                        if !updatedAddresses.contains(contractUpdate.address) {
+                            updatedAddresses.append(contractUpdate.address)
+                        }
+                        if !updatedContracts.contains(contractUpdate.toString()) {
+                            updatedContracts.append(contractUpdate.toString())
+                        }
                     }
                 }
             }
@@ -202,31 +222,31 @@ pub contract StagedContractUpdates {
 
         /* --- Public getters --- */
 
-        pub fun getID(): UInt64 {
+        access(all) fun getID(): UInt64 {
             return self.uuid
         }
 
-        pub fun getBlockUpdateBoundary(): UInt64 {
+        access(all) fun getBlockUpdateBoundary(): UInt64 {
             return self.blockUpdateBoundary
         }
 
-        pub fun getContractAccountAddresses(): [Address] {
-            return self.accounts.keys
+        access(all) fun getContractAccountAddresses(): [Address] {
+            return self.hosts.keys
         }
 
-        pub fun getDeployments(): [[ContractUpdate]] {
+        access(all) fun getDeployments(): [[ContractUpdate]] {
             return self.deployments
         }
 
-        pub fun getCurrentDeploymentStage(): Int {
+        access(all) fun getCurrentDeploymentStage(): Int {
             return self.currentDeploymentStage
         }
 
-        pub fun getFailedDeployments(): {Int: [String]} {
+        access(all) fun getFailedDeployments(): {Int: [String]} {
             return self.failedDeployments
         }
 
-        pub fun hasBeenUpdated(): Bool {
+        access(all) fun hasBeenUpdated(): Bool {
             return self.updateComplete
         }
     }
@@ -235,22 +255,22 @@ pub contract StagedContractUpdates {
     //
     /// Public interface for Delegatee
     ///
-    pub resource interface DelegateePublic {
-        pub fun check(id: UInt64): Bool?
-        pub fun getUpdaterIDs(): [UInt64]
-        pub fun delegate(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
-        pub fun removeAsUpdater(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
+    access(all) resource interface DelegateePublic {
+        access(all) fun check(id: UInt64): Bool?
+        access(all) fun getUpdaterIDs(): [UInt64]
+        access(all) fun delegate(updaterCap: Capability<&Updater>)
+        access(all) fun removeAsUpdater(updaterCap: Capability<&Updater>)
     }
 
     /// Resource that executed delegated updates
     ///
-    pub resource Delegatee : DelegateePublic {
+    access(all) resource Delegatee : DelegateePublic {
         // TODO: Block Height - All DelegatedUpdaters must be updated at or beyond this block height
         // access(self) let blockUpdateBoundary: UInt64
         /// Track all delegated updaters
         // TODO: If we support staged updates, we'll want visibility into the number of stages and progress through all
         //      maybe removing after stages have been complete or failed
-        access(self) let delegatedUpdaters: {UInt64: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>}
+        access(self) let delegatedUpdaters: {UInt64: Capability<&Updater>}
 
         init() {
             self.delegatedUpdaters = {}
@@ -258,19 +278,19 @@ pub contract StagedContractUpdates {
 
         /// Checks if the specified DelegatedUpdater Capability is contained and valid
         ///
-        pub fun check(id: UInt64): Bool? {
+        access(all) fun check(id: UInt64): Bool? {
             return self.delegatedUpdaters[id]?.check() ?? nil
         }
 
         /// Returns the IDs of the delegated updaters 
         ///
-        pub fun getUpdaterIDs(): [UInt64] {
+        access(all) fun getUpdaterIDs(): [UInt64] {
             return self.delegatedUpdaters.keys
         }
 
         /// Allows for the delegation of updates to a contract
         ///
-        pub fun delegate(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>) {
+        access(all) fun delegate(updaterCap: Capability<&Updater>) {
             pre {
                 updaterCap.check(): "Invalid DelegatedUpdater Capability!"
             }
@@ -287,7 +307,7 @@ pub contract StagedContractUpdates {
 
         /// Enables Updaters to remove their delegation
         ///
-        pub fun removeAsUpdater(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>) {
+        access(all) fun removeAsUpdater(updaterCap: Capability<&Updater>) {
             pre {
                 updaterCap.check(): "Invalid DelegatedUpdater Capability!"
                 self.delegatedUpdaters.containsKey(updaterCap.borrow()!.getID()): "No Updater found for ID!"
@@ -299,7 +319,7 @@ pub contract StagedContractUpdates {
         /// Executes update on the specified Updater
         ///
         // TODO: Consider removing Capabilities once we get signal that the Updater has been completed
-        pub fun update(updaterIDs: [UInt64]): [UInt64] {
+        access(all) fun update(updaterIDs: [UInt64]): [UInt64] {
             let failed: [UInt64] = []
 
             for id in updaterIDs {
@@ -321,18 +341,18 @@ pub contract StagedContractUpdates {
         }
 
         /// Enables admin removal of a DelegatedUpdater Capability
-        pub fun removeDelegatedUpdater(id: UInt64) {
+        access(all) fun removeDelegatedUpdater(id: UInt64) {
             if !self.delegatedUpdaters.containsKey(id) {
                 return
             }
-            let updaterCap = self.delegatedUpdaters.remove(key: id)!
-            emit UpdaterDelegationChanged(updaterUUID: id, updaterAddress: updaterCap.borrow()?.owner?.address, delegated: false)
+            let stagedUpdaterCap = self.delegatedUpdaters.remove(key: id)!
+            emit UpdaterDelegationChanged(updaterUUID: id, updaterAddress: stagedUpdaterCap.borrow()?.owner?.address, delegated: false)
         }
     }
 
     /// Returns the Address of the Delegatee associated with this contract
     ///
-    pub fun getContractDelegateeAddress(): Address {
+    access(all) fun getContractDelegateeAddress(): Address {
         return self.account.address
     }
 
@@ -343,7 +363,7 @@ pub contract StagedContractUpdates {
     /// deployment and the order of the deployments themselves. Each entry in the inner array must be exactly one
     /// key-value pair, where the key is the address of the associated contract name and code.
     ///
-    pub fun getDeploymentFromConfig(_ deploymentConfig: [[{Address: {String: String}}]]): [[ContractUpdate]] {
+    access(all) fun getDeploymentFromConfig(_ deploymentConfig: [[{Address: {String: String}}]]): [[ContractUpdate]] {
         let deployments: [[ContractUpdate]] = []
 
         for deploymentStage in deploymentConfig {
@@ -373,36 +393,43 @@ pub contract StagedContractUpdates {
         return deployments
     }
 
+    /// Returns a new Host resource
+    ///
+    access(all) fun createNewHost(accountCap: Capability<&AuthAccount>): @Host {
+        return <- create Host(accountCapability: accountCap)
+    }
+
     /// Returns a new Updater resource
     ///
-    pub fun createNewUpdater(
+    access(all) fun createNewUpdater(
         blockUpdateBoundary: UInt64,
-        accounts: [Capability<&AuthAccount>],
+        hosts: [Capability<&Host>],
         deployments: [[ContractUpdate]]
     ): @Updater {
-        let updater <- create Updater(blockUpdateBoundary: blockUpdateBoundary, accounts: accounts, deployments: deployments)
+        let updater <- create Updater(blockUpdateBoundary: blockUpdateBoundary, hosts: hosts, deployments: deployments)
         emit UpdaterCreated(updaterUUID: updater.uuid, blockUpdateBoundary: blockUpdateBoundary)
         return <- updater
     }
 
     /// Creates a new Delegatee resource enabling caller to self-host their Delegatee
     ///
-    pub fun createNewDelegatee(): @Delegatee {
+    access(all) fun createNewDelegatee(): @Delegatee {
         return <- create Delegatee()
     }
 
     init() {
         self.inboxAccountCapabilityNamePrefix = "StagedContractUpdatesAccountCapability_"
-
-        self.UpdaterStoragePath = StoragePath(identifier: "StagedContractUpdates_".concat(self.account.address.toString()))!
-        self.DelegatedUpdaterPrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegated_".concat(self.account.address.toString()))!
-        self.UpdaterPublicPath = PublicPath(identifier: "StagedContractUpdatesPublic_".concat(self.account.address.toString()))!
-        self.UpdaterContractAccountPrivatePath = PrivatePath(identifier: "UpdaterContractAccount_".concat(self.account.address.toString()))!
+        self.HostStoragePath = StoragePath(identifier: "StagedContractUpdatesHost_".concat(self.account.address.toString()))!
+        // self.HostPrivatePath = PrivatePath(identifier: "StagedContractUpdatesHost_".concat(self.account.address.toString()))!
+        self.StagedUpdaterStoragePath = StoragePath(identifier: "StagedContractUpdatesUpdater_".concat(self.account.address.toString()))!
+        // self.DelegatedUpdaterPrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegatedUpdater_".concat(self.account.address.toString()))!
+        self.UpdaterPublicPath = PublicPath(identifier: "StagedContractUpdatesUpdaterPublic_".concat(self.account.address.toString()))!
+        // self.UpdaterContractAccountPrivatePath = PrivatePath(identifier: "UpdaterContractAccount_".concat(self.account.address.toString()))!
         self.DelegateeStoragePath = StoragePath(identifier: "StagedContractUpdatesDelegatee_".concat(self.account.address.toString()))!
-        self.DelegateePrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegatee_".concat(self.account.address.toString()))!
+        // self.DelegateePrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegatee_".concat(self.account.address.toString()))!
         self.DelegateePublicPath = PublicPath(identifier: "StagedContractUpdatesDelegateePublic_".concat(self.account.address.toString()))!
 
         self.account.save(<-create Delegatee(), to: self.DelegateeStoragePath)
-        self.account.link<&Delegatee{DelegateePublic}>(self.DelegateePublicPath, target: self.DelegateeStoragePath)
+        self.account.link<&{DelegateePublic}>(self.DelegateePublicPath, target: self.DelegateeStoragePath)
     }
 }
