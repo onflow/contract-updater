@@ -1,18 +1,44 @@
 {
 	"contracts": {
-		"A": "./contracts/A.cdc",
-		"B": "./contracts/B.cdc",
-		"C": "./contracts/C.cdc",
+		"A": {
+			"source": "./contracts/A.cdc",
+			"aliases": {
+				"emulator": "045a1763c93006ca",
+				"testing": "0x0000000000000009"
+			}
+		},
+		"B": {
+			"source": "./contracts/B.cdc",
+			"aliases": {
+				"emulator": "120e725050340cab",
+				"testing": "0x0000000000000010"
+			}
+		},
+		"C": {
+			"source": "./contracts/C.cdc",
+			"aliases": {
+				"emulator": "120e725050340cab",
+				"testing": "0x0000000000000010"
+			}
+		},
 		"StagedContractUpdates": {
 			"source": "./contracts/StagedContractUpdates.cdc",
 			"aliases": {
-				"emulator": "f8d6e0586b0a20c7"
+				"emulator": "f8d6e0586b0a20c7",
+				"testing": "0x0000000000000007"
 			}
 		},
-		"Foo": "./contracts/Foo.cdc"
+		"Foo": {
+			"source": "./contracts/Foo.cdc",
+			"aliases": {
+				"emulator": "e03daebed8ca0615",
+				"testing": "0x0000000000000008"
+			}
+		}
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
+		"testing": "127.0.0.1:3569",
 		"mainnet": "access.mainnet.nodes.onflow.org:9000",
 		"sandboxnet": "access.sandboxnet.nodes.onflow.org:9000",
 		"testnet": "access.devnet.nodes.onflow.org:9000"
