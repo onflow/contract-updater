@@ -1,15 +1,15 @@
-/// This contract defines resources which enable storage of contract code for the purposes of updating at or beyond 
+/// This contract defines resources which enable storage of contract code for the purposes of updating at or beyond
 /// some blockheight boundary either by the containing resource's owner or by some delegated party.
 ///
 /// The two primary resources involved in this are the @Updater and @Delegatee resources. As their names suggest, the
-/// @Updater contains Capabilities for all deployment accounts (wrapped in @Host resources) as well as the 
+/// @Updater contains Capabilities for all deployment accounts (wrapped in @Host resources) as well as the
 /// corresponding contract code + names in the order of their update deployment as well as a blockheight at or beyond
-/// which the update can be performed. The @Delegatee resource can receive Capabilities to the @Updater resource and 
+/// which the update can be performed. The @Delegatee resource can receive Capabilities to the @Updater resource and
 /// can perform the update on behalf of the @Updater resource's owner.
 ///
 /// At the time of this writing, failed updates are not handled gracefully and will result in the halted iteration, but
 /// recent conversations point to the possibility of amending the AuthAccount.Contract API to allow for a graceful
-/// recovery from failed updates. If this method is not added, we'll want to reconsider the approach in favor of a 
+/// recovery from failed updates. If this method is not added, we'll want to reconsider the approach in favor of a
 /// single update() call per transaction.
 /// See the following issue for more info: https://github.com/onflow/cadence/issues/2700
 ///
@@ -18,12 +18,12 @@
 //       when configuring an Updater resource
 access(all) contract StagedContractUpdates {
 
-    access(all) let inboxAccountCapabilityNamePrefix: String
+    access(all) let inboxHostCapabilityNamePrefix: String
 
     /* --- Canonical Paths --- */
     //
     access(all) let HostStoragePath: StoragePath
-    access(all) let StagedUpdaterStoragePath: StoragePath
+    access(all) let UpdaterStoragePath: StoragePath
     // access(all) let DelegatedUpdaterPrivatePath: PrivatePath
     access(all) let UpdaterPublicPath: PublicPath
     // access(all) let UpdaterContractAccountPrivatePath: PrivatePath
@@ -132,7 +132,7 @@ access(all) contract StagedContractUpdates {
         /// Capabilities for contract hosting accounts
         access(self) let hosts: {Address: Capability<&Host>}
         /// Updates ordered by their deployment sequence and staged by their dependency depth
-        /// NOTE: Dev should be careful to validate their dependency tree such that updates are performed from root 
+        /// NOTE: Dev should be careful to validate their dependency tree such that updates are performed from root
         /// to leaf dependencies
         access(self) let deployments: [[ContractUpdate]]
         /// Current deployment stage
@@ -176,7 +176,7 @@ access(all) contract StagedContractUpdates {
             if self.updateComplete {
                 return true
             }
-            
+
             let updatedAddresses: [Address] = []
             let failedAddresses: [Address] = []
             let updatedContracts: [String] = []
@@ -199,14 +199,14 @@ access(all) contract StagedContractUpdates {
                     }
                 }
             }
-            
+
             if failedContracts.length > 0 {
                 self.failedDeployments.insert(key: self.currentDeploymentStage, failedContracts)
             }
-            
+
             self.currentDeploymentStage = self.currentDeploymentStage + 1
             self.updateComplete = self.currentDeploymentStage == self.deployments.length
-            
+
             emit UpdaterUpdated(
                 updaterUUID: self.uuid,
                 updaterAddress: self.owner?.address,
@@ -282,7 +282,7 @@ access(all) contract StagedContractUpdates {
             return self.delegatedUpdaters[id]?.check() ?? nil
         }
 
-        /// Returns the IDs of the delegated updaters 
+        /// Returns the IDs of the delegated updaters
         ///
         access(all) fun getUpdaterIDs(): [UInt64] {
             return self.delegatedUpdaters.keys
@@ -345,8 +345,12 @@ access(all) contract StagedContractUpdates {
             if !self.delegatedUpdaters.containsKey(id) {
                 return
             }
-            let stagedUpdaterCap = self.delegatedUpdaters.remove(key: id)!
-            emit UpdaterDelegationChanged(updaterUUID: id, updaterAddress: stagedUpdaterCap.borrow()?.owner?.address, delegated: false)
+            let updaterCap = self.delegatedUpdaters.remove(key: id)!
+            emit UpdaterDelegationChanged(
+                updaterUUID: id,
+                updaterAddress: updaterCap.borrow()?.owner?.address,
+                delegated: false
+            )
         }
     }
 
@@ -418,16 +422,19 @@ access(all) contract StagedContractUpdates {
     }
 
     init() {
-        self.inboxAccountCapabilityNamePrefix = "StagedContractUpdatesAccountCapability_"
-        self.HostStoragePath = StoragePath(identifier: "StagedContractUpdatesHost_".concat(self.account.address.toString()))!
-        // self.HostPrivatePath = PrivatePath(identifier: "StagedContractUpdatesHost_".concat(self.account.address.toString()))!
-        self.StagedUpdaterStoragePath = StoragePath(identifier: "StagedContractUpdatesUpdater_".concat(self.account.address.toString()))!
-        // self.DelegatedUpdaterPrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegatedUpdater_".concat(self.account.address.toString()))!
-        self.UpdaterPublicPath = PublicPath(identifier: "StagedContractUpdatesUpdaterPublic_".concat(self.account.address.toString()))!
-        // self.UpdaterContractAccountPrivatePath = PrivatePath(identifier: "UpdaterContractAccount_".concat(self.account.address.toString()))!
-        self.DelegateeStoragePath = StoragePath(identifier: "StagedContractUpdatesDelegatee_".concat(self.account.address.toString()))!
-        // self.DelegateePrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegatee_".concat(self.account.address.toString()))!
-        self.DelegateePublicPath = PublicPath(identifier: "StagedContractUpdatesDelegateePublic_".concat(self.account.address.toString()))!
+
+        let contractAddress = self.account.address.toString()
+        self.inboxHostCapabilityNamePrefix = "StagedContractUpdatesHostCapability_"
+
+        self.HostStoragePath = StoragePath(identifier: "StagedContractUpdatesHost_".concat(contractAddress))!
+        // self.HostPrivatePath = PrivatePath(identifier: "StagedContractUpdatesHost_".concat(contractAddress))!
+        self.UpdaterStoragePath = StoragePath(identifier: "StagedContractUpdatesUpdater_".concat(contractAddress))!
+        // self.DelegatedUpdaterPrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegatedUpdater_".concat(contractAddress))!
+        self.UpdaterPublicPath = PublicPath(identifier: "StagedContractUpdatesUpdaterPublic_".concat(contractAddress))!
+        // self.UpdaterContractAccountPrivatePath = PrivatePath(identifier: "UpdaterContractAccount_".concat(contractAddress))!
+        self.DelegateeStoragePath = StoragePath(identifier: "StagedContractUpdatesDelegatee_".concat(contractAddress))!
+        // self.DelegateePrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegatee_".concat(contractAddress))!
+        self.DelegateePublicPath = PublicPath(identifier: "StagedContractUpdatesDelegateePublic_".concat(contractAddress))!
 
         self.account.save(<-create Delegatee(), to: self.DelegateeStoragePath)
         self.account.link<&{DelegateePublic}>(self.DelegateePublicPath, target: self.DelegateeStoragePath)

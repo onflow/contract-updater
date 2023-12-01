@@ -1,7 +1,7 @@
 #allowAccountLinking
 import "StagedContractUpdates"
 
-/// Executes the update of the stored contract code in the signer's Updater resource
+/// Executes the currently staged update in the signer's Updater resource
 ///
 transaction {
     prepare(signer: AuthAccount) {

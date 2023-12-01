@@ -2,7 +2,7 @@
 
 import "StagedContractUpdates"
 
-/// Configures and Updater resource, assuming signing account is the account with the contract to update. This demos an
+/// Configures an Updater resource, assuming signing account is the account with the contract to update. This demos an
 /// advanced case where an update deployment involves multiple accounts and contracts.
 ///
 /// NOTES: deploymentConfig is ordered, and the order is used to determine the order of the contracts in the deployment.
@@ -19,27 +19,27 @@ transaction(blockUpdateBoundary: UInt64, contractAddresses: [Address], deploymen
             panic("Updater already configured at expected path!")
         }
 
-        // Claim all AuthAccount Capabilities.
-        let accountCaps: [Capability<&AuthAccount>] = []
+        // Claim all Host Capabilities from contract addresses
+        let hostCaps: [Capability<&StagedContractUpdates.Host>] = []
         let seenAddresses: [Address] = []
         for address in contractAddresses {
             if seenAddresses.contains(address) {
                 continue
             }
-            let accountCap = signer.inbox.claim<&AuthAccount>(
-                StagedContractUpdates.inboxAccountCapabilityNamePrefix.concat(signer.address.toString()),
+            let hostCap: Capability<&StagedContractUpdates.Host> = signer.inbox.claim<&StagedContractUpdates.Host>(
+                StagedContractUpdates.inboxHostCapabilityNamePrefix.concat(signer.address.toString()),
                 provider: address
-            ) ?? panic("No AuthAccount Capability found in Inbox for signer at address: ".concat(address.toString()))
-            accountCaps.append(accountCap)
+            ) ?? panic("No Host Capability found in Inbox for signer at address: ".concat(address.toString()))
+            hostCaps.append(hostCap)
             seenAddresses.append(address)
         }
         // Construct deployment from config
-        let deployments = StagedContractUpdates.getDeploymentFromConfig(deploymentConfig)
-        
-        // Construct the updater, save and link Capabilities
+        let deployments: [[StagedContractUpdates.ContractUpdate]] = StagedContractUpdates.getDeploymentFromConfig(deploymentConfig)
+
+        // Construct the updater, save and link public Capability
         let contractUpdater: @StagedContractUpdates.Updater <- StagedContractUpdates.createNewUpdater(
                 blockUpdateBoundary: blockUpdateBoundary,
-                accounts: accountCaps,
+                hosts: hostCaps,
                 deployments: deployments
             )
         signer.save(
@@ -47,8 +47,6 @@ transaction(blockUpdateBoundary: UInt64, contractAddresses: [Address], deploymen
             to: StagedContractUpdates.UpdaterStoragePath
         )
         signer.unlink(StagedContractUpdates.UpdaterPublicPath)
-        signer.unlink(StagedContractUpdates.DelegatedUpdaterPrivatePath)
         signer.link<&StagedContractUpdates.Updater{StagedContractUpdates.UpdaterPublic}>(StagedContractUpdates.UpdaterPublicPath, target: StagedContractUpdates.UpdaterStoragePath)
-        signer.link<&StagedContractUpdates.Updater{StagedContractUpdates.DelegatedUpdater, StagedContractUpdates.UpdaterPublic}>(StagedContractUpdates.DelegatedUpdaterPrivatePath, target: StagedContractUpdates.UpdaterStoragePath)
     }
 }
