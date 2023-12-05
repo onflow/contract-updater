@@ -4,35 +4,35 @@
 			"source": "./contracts/A.cdc",
 			"aliases": {
 				"emulator": "045a1763c93006ca",
-				"testing": "0x0000000000000009"
+				"testing": "0000000000000007"
 			}
 		},
 		"B": {
 			"source": "./contracts/B.cdc",
 			"aliases": {
 				"emulator": "120e725050340cab",
-				"testing": "0x0000000000000010"
+				"testing": "0000000000000007"
 			}
 		},
 		"C": {
 			"source": "./contracts/C.cdc",
 			"aliases": {
 				"emulator": "120e725050340cab",
-				"testing": "0x0000000000000010"
+				"testing": "0000000000000007"
 			}
 		},
 		"StagedContractUpdates": {
 			"source": "./contracts/StagedContractUpdates.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testing": "0x0000000000000007"
+				"testing": "0000000000000007"
 			}
 		},
 		"Foo": {
 			"source": "./contracts/Foo.cdc",
 			"aliases": {
 				"emulator": "e03daebed8ca0615",
-				"testing": "0x0000000000000008"
+				"testing": "0000000000000008"
 			}
 		}
 	},
