@@ -1,5 +1,8 @@
 # StagedContractUpdates
 
+![Tests](https://github.com/onflow/contract-updater/actions/workflows/ci.yml/badge.svg)
+[![codecov](https://codecov.io/gh/onflow/contract-updater/graph/badge.svg?token=TAIKIA95FU)](https://codecov.io/gh/onflow/contract-updater)
+
 > Enables pre-defined contract update deployments to a set of wrapped account at or beyond a specified block height. For
 > more details about the purpose of this mechanism, see [FLIP 179](https://github.com/onflow/flips/pull/179)
 
