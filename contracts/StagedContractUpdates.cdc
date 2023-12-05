@@ -175,6 +175,10 @@ access(all) contract StagedContractUpdates {
             // Return early if we've already updated
             if self.updateComplete {
                 return true
+            } else if getCurrentBlock().height < self.blockUpdateBoundary {
+                // TODO: Consider returning nil here - indicates an update isn't even attempted.
+                //      Delegatee could then pop on nil since this Updater won't update at the attempted height anyway
+                return false
             }
 
             let updatedAddresses: [Address] = []
