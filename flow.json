@@ -4,21 +4,21 @@
 			"source": "./contracts/A.cdc",
 			"aliases": {
 				"emulator": "045a1763c93006ca",
-				"testing": "0000000000000007"
+				"testing": "0000000000000009"
 			}
 		},
 		"B": {
 			"source": "./contracts/B.cdc",
 			"aliases": {
 				"emulator": "120e725050340cab",
-				"testing": "0000000000000007"
+				"testing": "0000000000000010"
 			}
 		},
 		"C": {
 			"source": "./contracts/C.cdc",
 			"aliases": {
 				"emulator": "120e725050340cab",
-				"testing": "0000000000000007"
+				"testing": "0000000000000010"
 			}
 		},
 		"StagedContractUpdates": {
