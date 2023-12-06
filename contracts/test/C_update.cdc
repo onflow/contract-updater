@@ -1,40 +1,40 @@
-import A from 0x045a1763c93006ca
-import B from 0x120e725050340cab
+import A from 0x0000000000000009
+import B from 0x0000000000000010
 
-pub contract C {
+access(all) contract C {
 
-    pub let StoragePath: StoragePath
-    pub let PublicPath: PublicPath
+    access(all) let StoragePath: StoragePath
+    access(all) let PublicPath: PublicPath
 
-    pub resource interface OuterPublic {
-        pub fun getFooFrom(id: UInt64): String
-        pub fun getBarFrom(id: UInt64): String
+    access(all) resource interface OuterPublic {
+        access(all) fun getFooFrom(id: UInt64): String
+        access(all) fun getBarFrom(id: UInt64): String
     }
 
-    pub resource Outer : OuterPublic {
-        pub let inner: @{UInt64: A.R}
+    access(all) resource Outer : OuterPublic {
+        access(all) let inner: @{UInt64: A.R}
 
         init() {
             self.inner <- {}
         }
 
-        pub fun getFooFrom(id: UInt64): String {
+        access(all) fun getFooFrom(id: UInt64): String {
             return self.borrowResource(id)?.foo() ?? panic("No resource found with given ID")
         }
 
-        pub fun getBarFrom(id: UInt64): String {
+        access(all) fun getBarFrom(id: UInt64): String {
             return self.borrowResource(id)?.bar() ?? panic("No resource found with given ID")
         }
 
-        pub fun addResource(_ i: @A.R) {
+        access(all) fun addResource(_ i: @A.R) {
             self.inner[i.uuid] <-! i
         }
 
-        pub fun borrowResource(_ id: UInt64): &{A.I}? {
+        access(all) fun borrowResource(_ id: UInt64): &{A.I}? {
             return &self.inner[id] as &{A.I}?
         }
 
-        pub fun removeResource(_ id: UInt64): @A.R? {
+        access(all) fun removeResource(_ id: UInt64): @A.R? {
             return <- self.inner.remove(key: id)
         }
 
