@@ -7,7 +7,7 @@ import "StagedContractUpdates"
 /// Configures an Updater resource, assuming signing account is the account with the contract to update. This demos a
 /// simple case where the signer is the deployment account and deployment only includes a single contract.
 ///
-transaction(blockUpdateBoundary: UInt64, contractName: String, code: String) {
+transaction(contractName: String, code: String) {
 
     prepare(signer: AuthAccount) {
 
@@ -41,10 +41,10 @@ transaction(blockUpdateBoundary: UInt64, contractName: String, code: String) {
         }
         let hostCap = signer.getCapability<&StagedContractUpdates.Host>(hostPrivatePath)
 
-        // Create Updater resource
+        // Create Updater resource, assigning the contract .blockUpdateBoundary to the new Updater
         signer.save(
             <- StagedContractUpdates.createNewUpdater(
-                blockUpdateBoundary: blockUpdateBoundary,
+                blockUpdateBoundary: StagedContractUpdates.blockUpdateBoundary,
                 hosts: [hostCap],
                 deployments: [[
                     StagedContractUpdates.ContractUpdate(

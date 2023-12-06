@@ -6,7 +6,7 @@ import "StagedContractUpdates"
 transaction {
     prepare(signer: AuthAccount) {
         let updater <- StagedContractUpdates.createNewUpdater(
-            blockUpdateBoundary: getCurrentBlock().height,
+            blockUpdateBoundary: StagedContractUpdates.blockUpdateBoundary,
             hosts: [],
             deployments: []
         )

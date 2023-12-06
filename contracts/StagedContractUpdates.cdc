@@ -15,12 +15,14 @@ import "MetadataViews"
 /// single update() call per transaction.
 /// See the following issue for more info: https://github.com/onflow/cadence/issues/2700
 ///
-// TODO: Consider how to handle large contracts that exceed the transaction limit
-//     - It's common to chunk contract code and pass over numerous transactions - think about how could support a similar workflow
-//       when configuring an Updater resource
 access(all) contract StagedContractUpdates {
 
+    /// Common inbox name prefix for Host Capabilities
     access(all) let inboxHostCapabilityNamePrefix: String
+
+    /// Common update boundary for those coordinating with contract account-managed Delegatee, enabling opt-in
+    /// coordinated contract updates
+    access(all) var blockUpdateBoundary: UInt64
 
     /* --- Canonical Paths --- */
     //
@@ -35,6 +37,7 @@ access(all) contract StagedContractUpdates {
 
     /* --- Events --- */
     //
+    access(all) event ContractBlockUpdateBoundaryUpdated(old: UInt64?, new: UInt64)
     access(all) event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64)
     access(all) event UpdaterUpdated(
         updaterUUID: UInt64,
@@ -158,7 +161,6 @@ access(all) contract StagedContractUpdates {
     ///
     access(all) resource Updater : UpdaterPublic, MetadataViews.Resolver {
         /// Update to occur at or beyond this block height
-        // TODO: Consider making this a contract-owned value as it's reflective of the spork height
         access(self) let blockUpdateBoundary: UInt64
         /// Update status defining whether all update stages have been *attempted*
         /// NOTE: `true` does not necessarily mean all updates were successful
@@ -208,14 +210,13 @@ access(all) contract StagedContractUpdates {
         /// Executes the next update stage for all contracts defined in deployment, returning true if all stages have
         /// been attempted and false if stages remain
         ///
-        access(all) fun update(): Bool {
+        access(all) fun update(): Bool? {
             // Return early if we've already updated
             if self.updateComplete {
                 return true
             } else if getCurrentBlock().height < self.blockUpdateBoundary {
-                // TODO: Consider returning nil here - indicates an update isn't even attempted.
-                //      Delegatee could then pop on nil since this Updater won't update at the attempted height anyway
-                return false
+                // Return nil to indicate we're not yet at the update boundary
+                return nil
             }
 
             let updatedAddresses: [Address] = []
@@ -327,14 +328,15 @@ access(all) contract StagedContractUpdates {
     /// Resource that executed delegated updates
     ///
     access(all) resource Delegatee : DelegateePublic {
-        // TODO: Block Height - All DelegatedUpdaters must be updated at or beyond this block height
-        // access(self) let blockUpdateBoundary: UInt64
+        /// Block height at which delegated updates will be performed
+        /// NOTE: This may differ from the contract's blockUpdateBoundary, enabling flexibility
+        ///     but any Updater not ready when updates are performed will be revoked from the Delegatee
+        access(self) let blockUpdateBoundary: UInt64
         /// Track all delegated updaters
-        // TODO: If we support staged updates, we'll want visibility into the number of stages and progress through all
-        //      maybe removing after stages have been complete or failed
         access(self) let delegatedUpdaters: {UInt64: Capability<&Updater>}
 
-        init() {
+        init(blockUpdateBoundary: UInt64) {
+            self.blockUpdateBoundary = blockUpdateBoundary
             self.delegatedUpdaters = {}
         }
 
@@ -356,8 +358,11 @@ access(all) contract StagedContractUpdates {
             pre {
                 updaterCap.check(): "Invalid DelegatedUpdater Capability!"
                 updaterCap.borrow()!.hasBeenUpdated() == false: "Updater has already been updated!"
+                updaterCap.borrow()!.getBlockUpdateBoundary() <= self.blockUpdateBoundary:
+                    "Updater will not be ready for updates at Delegatee boundary of ".concat(self.blockUpdateBoundary.toString())
             }
-            let updater = updaterCap.borrow()!
+
+            let updater: &StagedContractUpdates.Updater = updaterCap.borrow()!
             if self.delegatedUpdaters.containsKey(updater.getID()) {
                 // Upsert if updater already exists
                 self.delegatedUpdaters[updater.getID()] = updaterCap
@@ -375,35 +380,41 @@ access(all) contract StagedContractUpdates {
                 updaterCap.check(): "Invalid DelegatedUpdater Capability!"
                 self.delegatedUpdaters.containsKey(updaterCap.borrow()!.getID()): "No Updater found for ID!"
             }
-            let updater = updaterCap.borrow()!
+
+            let updater: &StagedContractUpdates.Updater = updaterCap.borrow()!
             self.removeDelegatedUpdater(id: updater.getID())
         }
 
-        /// Executes update on the specified Updater
+        /// Executes update on the specified Updaters. All updates are attempted, and if the Updater is not yet ready
+        /// to be updated (updater.update() returns nil) or the attempted update is the final staged (updater.update()
+        /// returns true) the corresponding Updater Capability is removed.
         ///
-        // TODO: Consider removing Capabilities once we get signal that the Updater has been completed
-        access(all) fun update(updaterIDs: [UInt64]): [UInt64] {
-            let failed: [UInt64] = []
-
+        access(all) fun update(updaterIDs: [UInt64]) {
             for id in updaterIDs {
+                // Invalid ID - mark as purged and continue
                 if self.delegatedUpdaters[id] == nil {
-                    failed.append(id)
                     continue
                 }
-                let updaterCap = self.delegatedUpdaters[id]!
+
+                // Check Capability - if invalid, remove Capability, mark as purged and continue
+                let updaterCap: Capability<&StagedContractUpdates.Updater> = self.delegatedUpdaters[id]!
                 if !updaterCap.check() {
-                    failed.append(id)
+                    self.delegatedUpdaters.remove(key: id)
                     continue
                 }
-                let success = updaterCap.borrow()!.update()
-                if !success {
-                    failed.append(id)
+
+                // Execute currently staged update
+                let success: Bool? = updaterCap.borrow()!.update()
+                // If update is not ready or complete, remove Capability and continue
+                if success == nil || success! == true {
+                    self.delegatedUpdaters.remove(key: id)
+                    continue
                 }
             }
-            return failed
         }
 
         /// Enables admin removal of a DelegatedUpdater Capability
+        ///
         access(all) fun removeDelegatedUpdater(id: UInt64) {
             if !self.delegatedUpdaters.containsKey(id) {
                 return
@@ -417,10 +428,12 @@ access(all) contract StagedContractUpdates {
         }
     }
 
-    /// Returns the Address of the Delegatee associated with this contract
+    /// Returns the Capability of the Delegatee associated with this contract
     ///
-    access(all) fun getContractDelegateeAddress(): Address {
-        return self.account.address
+    access(all) fun getContractDelegateeCapability(): Capability<&{DelegateePublic}> {
+        let delegateeCap = self.account.getCapability<&{DelegateePublic}>(self.DelegateePublicPath)
+        assert(delegateeCap.check(), message: "Invalid Delegatee Capability retrieved")
+        return delegateeCap
     }
 
     /// Helper method that returns the ordered array reflecting sequenced and staged deployments, with each contract
@@ -437,7 +450,6 @@ access(all) contract StagedContractUpdates {
 
             let contractUpdates: [ContractUpdate] = []
             for contractConfig in deploymentStage {
-
                 assert(contractConfig.length == 1, message: "Invalid contract config")
                 let address = contractConfig.keys[0]
                 assert(contractConfig[address]!.length == 1, message: "Invalid contract config")
@@ -451,12 +463,10 @@ access(all) contract StagedContractUpdates {
                     )
                 )
             }
-
             deployments.append(
                 contractUpdates
             )
         }
-
         return deployments
     }
 
@@ -480,13 +490,26 @@ access(all) contract StagedContractUpdates {
 
     /// Creates a new Delegatee resource enabling caller to self-host their Delegatee
     ///
-    access(all) fun createNewDelegatee(): @Delegatee {
-        return <- create Delegatee()
+    access(all) fun createNewDelegatee(blockUpdateBoundary: UInt64): @Delegatee {
+        return <- create Delegatee(blockUpdateBoundary: blockUpdateBoundary)
     }
 
-    init() {
+    /// Allows the contract block update boundary to be set
+    ///
+    access(account) fun setBlockUpdateBoundary(new: UInt64) {
+        pre {
+            new > getCurrentBlock().height: "New boundary must be in the future!"
+            new > self.blockUpdateBoundary: "New block update boundary must be greater than current boundary!"
+        }
+        let old = self.blockUpdateBoundary
+        self.blockUpdateBoundary = new
+        emit ContractBlockUpdateBoundaryUpdated(old: old, new: new)
+    }
 
+    init(blockUpdateBoundary: UInt64) {
         let contractAddress = self.account.address.toString()
+
+        self.blockUpdateBoundary = blockUpdateBoundary
         self.inboxHostCapabilityNamePrefix = "StagedContractUpdatesHostCapability_"
 
         self.HostStoragePath = StoragePath(identifier: "StagedContractUpdatesHost_".concat(contractAddress))!
@@ -499,7 +522,9 @@ access(all) contract StagedContractUpdates {
         // self.DelegateePrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegatee_".concat(contractAddress))!
         self.DelegateePublicPath = PublicPath(identifier: "StagedContractUpdatesDelegateePublic_".concat(contractAddress))!
 
-        self.account.save(<-create Delegatee(), to: self.DelegateeStoragePath)
+        self.account.save(<-create Delegatee(blockUpdateBoundary: blockUpdateBoundary), to: self.DelegateeStoragePath)
         self.account.link<&{DelegateePublic}>(self.DelegateePublicPath, target: self.DelegateeStoragePath)
+
+        emit ContractBlockUpdateBoundaryUpdated(old: nil, new: blockUpdateBoundary)
     }
 }

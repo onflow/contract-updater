@@ -16,16 +16,15 @@ transaction {
         }
         // Continue...
 
-        let delegateeAccount = getAccount(StagedContractUpdates.getContractDelegateeAddress())
-        let updaterPrivatePath = PrivatePath(
-                identifier: "StagedContractUpdatesUpdater_".concat(delegateeAccount.address.toString())
-            )!
-
         // Get reference to the contract's DelegateePublic
-        self.delegatee = delegateeAccount.getCapability<&{StagedContractUpdates.DelegateePublic}>(
-                StagedContractUpdates.DelegateePublicPath
-            ).borrow()
+        self.delegatee = StagedContractUpdates.getContractDelegateeCapability().borrow()
             ?? panic("Could not borrow Delegatee reference")
+
+        let updaterPrivatePath = PrivatePath(
+                identifier: "StagedContractUpdatesUpdater_".concat(
+                    self.delegatee.owner?.address?.toString() ?? panic("Problem referencing contract's DelegateePublic owner address")
+                )
+            )!
 
         // Link Updater Capability in private if needed & retrieve
         if !signer.getCapability<&StagedContractUpdates.Updater>(updaterPrivatePath).check() {

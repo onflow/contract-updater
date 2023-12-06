@@ -13,7 +13,7 @@ import "StagedContractUpdates"
 /// This transaction also assumes that all contract hosting AuthAccount Capabilities have been published for the signer
 /// to claim.
 ///
-transaction(blockUpdateBoundary: UInt64, contractAddresses: [Address], deploymentConfig: [[{Address: {String: String}}]]) {
+transaction(contractAddresses: [Address], deploymentConfig: [[{Address: {String: String}}]]) {
 
     prepare(signer: AuthAccount) {
         // Abort if Updater is already configured in signer's account
@@ -40,7 +40,7 @@ transaction(blockUpdateBoundary: UInt64, contractAddresses: [Address], deploymen
 
         // Construct the updater, save and link public Capability
         let contractUpdater: @StagedContractUpdates.Updater <- StagedContractUpdates.createNewUpdater(
-                blockUpdateBoundary: blockUpdateBoundary,
+                blockUpdateBoundary: StagedContractUpdates.blockUpdateBoundary,
                 hosts: hostCaps,
                 deployments: deployments
             )
