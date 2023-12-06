@@ -145,6 +145,9 @@ access(all) contract StagedContractUpdates {
             hosts: [Capability<&Host>],
             deployments: [[ContractUpdate]]
         ) {
+            pre {
+                hosts.length > 0 && deployments.length > 0: "Must provide at least one host and contract update!"
+            }
             self.blockUpdateBoundary = blockUpdateBoundary
             self.updateComplete = false
             self.hosts = {}
@@ -297,6 +300,7 @@ access(all) contract StagedContractUpdates {
         access(all) fun delegate(updaterCap: Capability<&Updater>) {
             pre {
                 updaterCap.check(): "Invalid DelegatedUpdater Capability!"
+                updaterCap.borrow()!.hasBeenUpdated() == false: "Updater has already been updated!"
             }
             let updater = updaterCap.borrow()!
             if self.delegatedUpdaters.containsKey(updater.getID()) {
