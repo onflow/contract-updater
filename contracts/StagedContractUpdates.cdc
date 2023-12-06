@@ -1,3 +1,5 @@
+import "MetadataViews"
+
 /// This contract defines resources which enable storage of contract code for the purposes of updating at or beyond
 /// some blockheight boundary either by the containing resource's owner or by some delegated party.
 ///
@@ -70,6 +72,37 @@ access(all) contract StagedContractUpdates {
         }
     }
 
+    /// Represents the status of an Updater resource, mirroring the encapsulated values of an Updater resource and
+    /// defined here for ease of querying via MetadataViews.ViewResolver interface
+    ///
+    access(all) struct UpdaterInfo {
+        access(all) let id: UInt64
+        access(all) let blockUpdateBoundary: UInt64
+        access(all) let updateComplete: Bool
+        access(all) let hostAddresses: [Address]
+        access(all) let deployments: [[ContractUpdate]]
+        access(all) let currentDeploymentStage: Int
+        access(all) let failedDeployments: {Int: [String]}
+
+        init(
+            id: UInt64,
+            blockUpdateBoundary: UInt64,
+            updateComplete: Bool,
+            hostAddresses: [Address],
+            deployments: [[ContractUpdate]],
+            currentDeploymentStage: Int,
+            failedDeployments: {Int: [String]}
+        ) {
+            self.id = id
+            self.blockUpdateBoundary = blockUpdateBoundary
+            self.updateComplete = updateComplete
+            self.hostAddresses = hostAddresses
+            self.deployments = deployments
+            self.currentDeploymentStage = currentDeploymentStage
+            self.failedDeployments = failedDeployments
+        }
+    }
+
     /* --- Host --- */
     //
     /// Encapsulates an AuthAccount, exposing only the ability to update contracts on the underlying account
@@ -123,11 +156,12 @@ access(all) contract StagedContractUpdates {
 
     /// Resource that enables delayed contract updates to a wrapped account at or beyond a specified block height
     ///
-    access(all) resource Updater : UpdaterPublic {
+    access(all) resource Updater : UpdaterPublic, MetadataViews.Resolver {
         /// Update to occur at or beyond this block height
         // TODO: Consider making this a contract-owned value as it's reflective of the spork height
         access(self) let blockUpdateBoundary: UInt64
-        /// Update status for each contract
+        /// Update status defining whether all update stages have been *attempted*
+        /// NOTE: `true` does not necessarily mean all updates were successful
         access(self) var updateComplete: Bool
         /// Capabilities for contract hosting accounts
         access(self) let hosts: {Address: Capability<&Host>}
@@ -255,6 +289,27 @@ access(all) contract StagedContractUpdates {
 
         access(all) fun hasBeenUpdated(): Bool {
             return self.updateComplete
+        }
+
+        /* --- MetadataViews.Resolver --- */
+
+        access(all) fun getViews(): [Type] {
+            return [Type<UpdaterInfo>()]
+        }
+
+        access(all) fun resolveView(_ view: Type): AnyStruct? {
+            if view == Type<UpdaterInfo>() {
+                return UpdaterInfo(
+                    id: self.uuid,
+                    blockUpdateBoundary: self.blockUpdateBoundary,
+                    updateComplete: self.updateComplete,
+                    hostAddresses: self.hosts.keys,
+                    deployments: self.deployments,
+                    currentDeploymentStage: self.currentDeploymentStage,
+                    failedDeployments: self.failedDeployments
+                )
+            }
+            return nil
         }
     }
 
