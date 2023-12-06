@@ -301,12 +301,12 @@ access(all) contract StagedContractUpdates {
             if view == Type<UpdaterInfo>() {
                 return UpdaterInfo(
                     id: self.uuid,
-                    blockUpdateBoundary: self.blockUpdateBoundary,
-                    updateComplete: self.updateComplete,
-                    hostAddresses: self.hosts.keys,
-                    deployments: self.deployments,
-                    currentDeploymentStage: self.currentDeploymentStage,
-                    failedDeployments: self.failedDeployments
+                    blockUpdateBoundary: self.getBlockUpdateBoundary(),
+                    updateComplete: self.hasBeenUpdated(),
+                    hostAddresses: self.getContractAccountAddresses(),
+                    deployments: self.getDeployments(),
+                    currentDeploymentStage: self.getCurrentDeploymentStage(),
+                    failedDeployments: self.getFailedDeployments()
                 )
             }
             return nil
