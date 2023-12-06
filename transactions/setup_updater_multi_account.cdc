@@ -1,5 +1,7 @@
 #allowAccountLinking
 
+import "MetadataViews"
+
 import "StagedContractUpdates"
 
 /// Configures an Updater resource, assuming signing account is the account with the contract to update. This demos an
@@ -47,6 +49,9 @@ transaction(blockUpdateBoundary: UInt64, contractAddresses: [Address], deploymen
             to: StagedContractUpdates.UpdaterStoragePath
         )
         signer.unlink(StagedContractUpdates.UpdaterPublicPath)
-        signer.link<&StagedContractUpdates.Updater{StagedContractUpdates.UpdaterPublic}>(StagedContractUpdates.UpdaterPublicPath, target: StagedContractUpdates.UpdaterStoragePath)
+        signer.link<&{StagedContractUpdates.UpdaterPublic, MetadataViews.Resolver}>(
+            StagedContractUpdates.UpdaterPublicPath,
+            target: StagedContractUpdates.UpdaterStoragePath
+        )
     }
 }

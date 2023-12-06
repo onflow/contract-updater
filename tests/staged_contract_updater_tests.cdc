@@ -1,6 +1,7 @@
 import Test
 import BlockchainHelpers
 
+// NOTE: This is an artifact of the implicit Test API - it's not clear how block height transitions between test cases
 access(all) let blockHeightBoundaryDelay: UInt64 = 15
 
 // Contract hosts as defined in flow.json
@@ -28,31 +29,48 @@ access(all) fun setup() {
 
     err = Test.deployContract(
         name: "Foo",
-        path: "../contracts/Foo.cdc",
+        path: "../contracts/example/Foo.cdc",
         arguments: []
     )
     Test.expect(err, Test.beNil())
 
     err = Test.deployContract(
         name: "A",
-        path: "../contracts/A.cdc",
+        path: "../contracts/example/A.cdc",
         arguments: []
     )
     Test.expect(err, Test.beNil())
 
     err = Test.deployContract(
         name: "B",
-        path: "../contracts/B.cdc",
+        path: "../contracts/example/B.cdc",
         arguments: []
     )
     Test.expect(err, Test.beNil())
 
     err = Test.deployContract(
         name: "C",
-        path: "../contracts/C.cdc",
+        path: "../contracts/example/C.cdc",
         arguments: []
     )
     Test.expect(err, Test.beNil())
+}
+
+access(all) fun testDeploymentAddressMatchesDelegateeAddress() {
+    let expectedAddress = admin.address
+    let actualAddress = executeScript("../scripts/get_contract_delegatee_address.cdc", []).returnValue as! Address?
+        ?? panic("Problem retrieving deployment address")
+    Test.assertEqual(expectedAddress, actualAddress)
+}
+
+access(all) fun testEmptyDeploymentUpdaterInitFails() {
+    let alice = Test.createAccount()
+    let txResult = executeTransaction(
+        "../transactions/test/setup_updater_with_empty_deployment.cdc",
+        [],
+        alice
+    )
+    Test.expect(txResult, Test.beFailed())
 }
 
 access(all) fun testSetupSingleContractSingleHostSelfUpdate() {
@@ -60,7 +78,7 @@ access(all) fun testSetupSingleContractSingleHostSelfUpdate() {
     let expectedPreUpdateResult: String = "foo"
     
     // Validate the pre-update value of Foo.foo()
-    let actualPreUpdateResult = executeScript("../scripts/foo.cdc", []).returnValue as! String?
+    let actualPreUpdateResult = executeScript("../scripts/test/foo.cdc", []).returnValue as! String?
         ?? panic("Problem retrieving result of Foo.foo()")
     Test.assertEqual(expectedPreUpdateResult, actualPreUpdateResult)
 
@@ -105,12 +123,17 @@ access(all) fun testExecuteUpdateFailsBeforeBoundary() {
     Test.assertEqual(0, stagePost)
 }
 
+// TODO
+// access(all) fun testDelegatedUpdate() {
+//     /* TODO */ 
+// }
+
 access(all) fun testExecuteUpdateSucceedsAfterBoundary() {
 
     let expectedPostUpdateResult: String = "bar"
 
     // Mock block advancement
-    tickTock(advanceBlocks: blockHeightBoundaryDelay, fooAccount)
+    jumpToUpdateBoundary(forUpdater: fooAccount.address)
 
     // Validate the current deployment stage is still 0
     let stagePrior = executeScript("../scripts/get_current_deployment_stage.cdc", [fooAccount.address]).returnValue as! Int?
@@ -141,9 +164,18 @@ access(all) fun testExecuteUpdateSucceedsAfterBoundary() {
     // Test.assertEqual(1, events.length)
 
     // Validate the post-update value of Foo.foo()
-    let actualPostUpdateResult = executeScript("../scripts/foo.cdc", []).returnValue as! String?
+    let actualPostUpdateResult = executeScript("../scripts/test/foo.cdc", []).returnValue as! String?
         ?? panic("Problem retrieving result of Foo.foo()")
     Test.assertEqual(expectedPostUpdateResult, actualPostUpdateResult)
+}
+
+access(all) fun testDelegationOfCompletedUpdaterFails() {
+    let txResult = executeTransaction(
+        "../transactions/delegate.cdc",
+        [],
+        fooAccount
+    )
+    Test.expect(txResult, Test.beFailed())
 }
 
 access(all) fun testSetupMultiContractMultiAccountUpdater() {
@@ -200,13 +232,40 @@ access(all) fun testSetupMultiContractMultiAccountUpdater() {
     Test.assertEqual(0, currentStage)
 }
 
+access(all) fun testUpdateMultiContractMultiAccountUpdater() {
+    // Validate the current deployment stage is still 0
+    let currentStage = executeScript("../scripts/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
+        ?? panic("Updater was not found at given address")
+    Test.assertEqual(0, currentStage)
+
+
+}
+
 /* --- TEST HELPERS --- */
+
+access(all) fun jumpToUpdateBoundary(forUpdater: Address) {
+    // Identify current block height in test environment
+    var currentHeight = executeScript("../scripts/test/get_block_height.cdc", []).returnValue as! UInt64?
+        ?? panic("Problem retrieving current block height")
+    // Identify number of blocks to advance
+    let updateBoundary = executeScript(
+            "../scripts/get_block_update_boundary_from_updater.cdc",
+            [forUpdater]
+        ).returnValue as! UInt64?
+        ?? panic("Problem retrieving updater height boundary")
+    // Return if no advancement needed
+    if updateBoundary <= currentHeight {
+        return
+    }
+    // Otherwise jump to update boundary
+    tickTock(advanceBlocks: updateBoundary - currentHeight, admin)
+}
 
 access(all) fun tickTock(advanceBlocks: UInt64, _ signer: Test.Account) {
     var blocksAdvanced: UInt64 = 0
     while blocksAdvanced < advanceBlocks {
         
-        let txResult = executeTransaction("../transactions/tick_tock.cdc", [], signer)
+        let txResult = executeTransaction("../transactions/test/tick_tock.cdc", [], signer)
         Test.expect(txResult, Test.beSucceeded())
 
         blocksAdvanced = blocksAdvanced + 1
