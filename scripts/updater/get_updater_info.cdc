@@ -7,7 +7,6 @@ import "StagedContractUpdates"
 pub fun main(address: Address): StagedContractUpdates.UpdaterInfo? {
     return getAccount(address).getCapability<&{StagedContractUpdates.UpdaterPublic, MetadataViews.Resolver}>(
             StagedContractUpdates.UpdaterPublicPath
-        )
-        .borrow()
+        ).borrow()
         ?.resolveView(Type<StagedContractUpdates.UpdaterInfo>()) as! StagedContractUpdates.UpdaterInfo?
 }

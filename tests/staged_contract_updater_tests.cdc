@@ -118,13 +118,13 @@ access(all) fun testSetupMultiContractMultiAccountUpdater() {
     // Test.assertEqual(0, events.length)
 
     // Validate the current deployment stage is 0
-    let currentStage = executeScript("../scripts/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
+    let currentStage = executeScript("../scripts/updater/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(0, currentStage)
 
     // Check Updater has valid Host Capabilities
     let invalidHosts = executeScript(
-            "../scripts/get_invalid_hosts.cdc",
+            "../scripts/updater/get_invalid_hosts.cdc",
             [abcUpdater.address]
         ).returnValue as! [Address]? ?? panic("Updater was not found at given address")
     Test.assert(invalidHosts.length == 0, message: "Invalid hosts found")
@@ -132,7 +132,7 @@ access(all) fun testSetupMultiContractMultiAccountUpdater() {
 
 access(all) fun testUpdaterDelegationSucceeds() {
     // Validate the current deployment stage is still 0
-    var currentStage = executeScript("../scripts/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
+    var currentStage = executeScript("../scripts/updater/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(0, currentStage)
 
@@ -146,7 +146,7 @@ access(all) fun testUpdaterDelegationSucceeds() {
 
     // Ensure valid Updater Capability received by Delegatee
     let validCapReceived = executeScript(
-            "../scripts/check_delegatee_has_valid_updater_cap.cdc",
+            "../scripts/delegatee/check_delegatee_has_valid_updater_cap.cdc",
             [abcUpdater.address, admin.address]
         ).returnValue as! Bool? ?? panic("Updater was not found at given address")
     Test.assertEqual(true, validCapReceived)
@@ -154,7 +154,7 @@ access(all) fun testUpdaterDelegationSucceeds() {
 
 access(all) fun testDelegatedUpdateSucceeds() {
     // Validate the current deployment stage is still 0
-    var currentStage = executeScript("../scripts/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
+    var currentStage = executeScript("../scripts/updater/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(0, currentStage)
 
@@ -169,7 +169,7 @@ access(all) fun testDelegatedUpdateSucceeds() {
     Test.expect(updateTxResult, Test.beSucceeded())
 
     // Validate stage incremented
-    currentStage = executeScript("../scripts/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
+    currentStage = executeScript("../scripts/updater/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(1, currentStage)
 
@@ -183,12 +183,12 @@ access(all) fun testDelegatedUpdateSucceeds() {
 
     // Ensure update is not yet complete before final stage
     var updateComplete = executeScript(
-            "../scripts/has_been_updated.cdc",
+            "../scripts/updater/has_been_updated.cdc",
             [abcUpdater.address]
         ).returnValue as! Bool? ?? panic("Updater was not found at given address")
     Test.assertEqual(false, updateComplete)
 
-    currentStage = executeScript("../scripts/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
+    currentStage = executeScript("../scripts/updater/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(2, currentStage)
 
@@ -199,13 +199,13 @@ access(all) fun testDelegatedUpdateSucceeds() {
     )
     Test.expect(updateTxResult, Test.beSucceeded())
 
-    currentStage = executeScript("../scripts/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
+    currentStage = executeScript("../scripts/updater/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(3, currentStage)
     
     // Validate that Updater has completed all stages
     updateComplete = executeScript(
-            "../scripts/has_been_updated.cdc",
+            "../scripts/updater/has_been_updated.cdc",
             [abcUpdater.address]
         ).returnValue as! Bool? ?? panic("Problem validating Updater delegation success")
     Test.assertEqual(true, updateComplete)
@@ -217,7 +217,7 @@ access(all) fun testDelegatedUpdateSucceeds() {
 
     // Validate the Delegatee has removed the Updater Capability after completion
     let updaterCapRemoved = executeScript(
-            "../scripts/check_delegatee_has_valid_updater_cap.cdc",
+            "../scripts/delegatee/check_delegatee_has_valid_updater_cap.cdc",
             [abcUpdater.address, admin.address]
         ).returnValue as! Bool?
     Test.assertEqual(nil, updaterCapRemoved)
@@ -246,7 +246,7 @@ access(all) fun testSetupSingleContractSingleHostSelfUpdate() {
     // Test.assertEqual(2, events.length)
 
     // Validate the current deployment stage is 0
-    let currentStage = executeScript("../scripts/get_current_deployment_stage.cdc", [fooAccount.address]).returnValue as! Int?
+    let currentStage = executeScript("../scripts/updater/get_current_deployment_stage.cdc", [fooAccount.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(0, currentStage)
 }
@@ -254,7 +254,7 @@ access(all) fun testSetupSingleContractSingleHostSelfUpdate() {
 access(all) fun testExecuteUpdateFailsBeforeBoundary() {
 
     // Validate the current deployment stage is still 0
-    let stagePrior = executeScript("../scripts/get_current_deployment_stage.cdc", [fooAccount.address]).returnValue as! Int?
+    let stagePrior = executeScript("../scripts/updater/get_current_deployment_stage.cdc", [fooAccount.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(0, stagePrior)
 
@@ -267,7 +267,7 @@ access(all) fun testExecuteUpdateFailsBeforeBoundary() {
     Test.expect(txResult, Test.beSucceeded())
 
     // Validate the current deployment stage is still 0
-    let stagePost = executeScript("../scripts/get_current_deployment_stage.cdc", [fooAccount.address]).returnValue as! Int?
+    let stagePost = executeScript("../scripts/updater/get_current_deployment_stage.cdc", [fooAccount.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(0, stagePost)
 }
@@ -280,7 +280,7 @@ access(all) fun testExecuteUpdateSucceedsAfterBoundary() {
     jumpToUpdateBoundary(forUpdater: fooAccount.address)
 
     // Validate the current deployment stage is still 0
-    let stagePrior = executeScript("../scripts/get_current_deployment_stage.cdc", [fooAccount.address]).returnValue as! Int?
+    let stagePrior = executeScript("../scripts/updater/get_current_deployment_stage.cdc", [fooAccount.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(0, stagePrior)
 
@@ -293,12 +293,12 @@ access(all) fun testExecuteUpdateSucceedsAfterBoundary() {
     Test.expect(txResult, Test.beSucceeded())
 
     // Validate the current deployment stage has advanced
-    let stagePost = executeScript("../scripts/get_current_deployment_stage.cdc", [fooAccount.address]).returnValue as! Int?
+    let stagePost = executeScript("../scripts/updater/get_current_deployment_stage.cdc", [fooAccount.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(1, stagePost)
 
     // Validate the Updater.hasBeenUpdated() returns true
-    let hasBeenUpdated = executeScript("../scripts/has_been_updated.cdc", [fooAccount.address]).returnValue as! Bool?
+    let hasBeenUpdated = executeScript("../scripts/updater/has_been_updated.cdc", [fooAccount.address]).returnValue as! Bool?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(true, hasBeenUpdated)
     
@@ -351,7 +351,7 @@ access(all) fun jumpToUpdateBoundary(forUpdater: Address) {
     let currentHeight = getCurrentBlockHeight()
     // Identify number of blocks to advance
     let updateBoundary = executeScript(
-            "../scripts/get_block_update_boundary_from_updater.cdc",
+            "../scripts/updater/get_block_update_boundary_from_updater.cdc",
             [forUpdater]
         ).returnValue as! UInt64?
         ?? panic("Problem retrieving updater height boundary")

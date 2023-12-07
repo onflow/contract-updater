@@ -9,5 +9,5 @@ pub fun main(updaterAddress: Address): [Address]? {
     return getAccount(updaterAddress).getCapability<&{StagedContractUpdates.UpdaterPublic}>(
             StagedContractUpdates.UpdaterPublicPath
         ).borrow()
-        ?.getInvalidHosts() ?? nil
+        ?.getInvalidHosts()
 }
