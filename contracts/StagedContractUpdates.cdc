@@ -153,6 +153,7 @@ access(all) contract StagedContractUpdates {
         access(all) fun getCurrentDeploymentStage(): Int
         access(all) fun getFailedDeployments(): {Int: [String]}
         access(all) fun hasBeenUpdated(): Bool
+        access(all) fun getInvalidHosts(): [Address]?
     }
 
     /// Resource that enables delayed contract updates to a wrapped account at or beyond a specified block height
@@ -288,6 +289,19 @@ access(all) contract StagedContractUpdates {
 
         access(all) fun hasBeenUpdated(): Bool {
             return self.updateComplete
+        }
+
+        access(all) fun getInvalidHosts(): [Address]? {
+            var invalidHosts: [Address]? = nil
+            for host in self.hosts.values {
+                if !host.check() || !host.borrow()!.checkAccountCapability() {
+                    if invalidHosts == nil {
+                        invalidHosts = []
+                    }
+                    invalidHosts!.append(host.address)
+                }
+            }
+            return invalidHosts
         }
 
         /* --- MetadataViews.Resolver --- */
