@@ -66,15 +66,6 @@ access(all) fun testEmptyDeploymentUpdaterInitFails() {
     Test.expect(txResult, Test.beFailed())
 }
 
-access(all) fun testDelegationOfCompletedUpdaterFails() {
-    let txResult = executeTransaction(
-        "../transactions/delegate.cdc",
-        [],
-        fooAccount
-    )
-    Test.expect(txResult, Test.beFailed())
-}
-
 access(all) fun testSetupMultiContractMultiAccountUpdater() {
     let contractAddresses: [Address] = [aAccount.address, bcAccount.address]
     let stage0: [{Address: {String: String}}] = [
@@ -102,21 +93,21 @@ access(all) fun testSetupMultiContractMultiAccountUpdater() {
     let deploymentConfig: [[{Address: {String: String}}]] = [stage0, stage1, stage2]
 
     let aHostTxResult = executeTransaction(
-        "../transactions/publish_host_capability.cdc",
+        "../transactions/host/publish_host_capability.cdc",
         [abcUpdater.address],
         aAccount
     )
     Test.expect(aHostTxResult, Test.beSucceeded())
 
     let bcHostTxResult = executeTransaction(
-        "../transactions/publish_host_capability.cdc",
+        "../transactions/host/publish_host_capability.cdc",
         [abcUpdater.address],
         bcAccount
     )
     Test.expect(bcHostTxResult, Test.beSucceeded())
 
     let setupUpdaterTxResult = executeTransaction(
-        "../transactions/setup_updater_multi_account.cdc",
+        "../transactions/updater/setup_updater_multi_account.cdc",
         [nil, contractAddresses, deploymentConfig],
         abcUpdater
     )
@@ -130,6 +121,13 @@ access(all) fun testSetupMultiContractMultiAccountUpdater() {
     let currentStage = executeScript("../scripts/get_current_deployment_stage.cdc", [abcUpdater.address]).returnValue as! Int?
         ?? panic("Updater was not found at given address")
     Test.assertEqual(0, currentStage)
+
+    // Check Updater has valid Host Capabilities
+    let invalidHosts = executeScript(
+            "../scripts/get_invalid_hosts.cdc",
+            [abcUpdater.address]
+        ).returnValue as! [Address]? ?? panic("Updater was not found at given address")
+    Test.assert(invalidHosts.length == 0, message: "Invalid hosts found")
 }
 
 access(all) fun testUpdaterDelegationSucceeds() {
@@ -140,7 +138,7 @@ access(all) fun testUpdaterDelegationSucceeds() {
 
     // Delegate ABC updater to contract's delegatee
     let txResult = executeTransaction(
-            "../transactions/delegate.cdc",
+            "../transactions/updater/delegate.cdc",
             [],
             abcUpdater
         )
@@ -164,7 +162,7 @@ access(all) fun testDelegatedUpdateSucceeds() {
     
     // Execute first update stage as Delegatee
     var updateTxResult = executeTransaction(
-        "../transactions/execute_all_delegated_updates.cdc",
+        "../transactions/delegatee/execute_all_delegated_updates.cdc",
         [],
         admin
     )
@@ -177,7 +175,7 @@ access(all) fun testDelegatedUpdateSucceeds() {
 
     // Continue through remaining stages (should total 3)
     updateTxResult = executeTransaction(
-        "../transactions/execute_all_delegated_updates.cdc",
+        "../transactions/delegatee/execute_all_delegated_updates.cdc",
         [],
         admin
     )
@@ -195,7 +193,7 @@ access(all) fun testDelegatedUpdateSucceeds() {
     Test.assertEqual(2, currentStage)
 
         updateTxResult = executeTransaction(
-        "../transactions/execute_all_delegated_updates.cdc",
+        "../transactions/delegatee/execute_all_delegated_updates.cdc",
         [],
         admin
     )
@@ -236,7 +234,7 @@ access(all) fun testSetupSingleContractSingleHostSelfUpdate() {
 
     // Configure Updater resource in Foo contract account
     let txResult = executeTransaction(
-        "../transactions/setup_updater_single_account_and_contract.cdc",
+        "../transactions/updater/setup_updater_single_account_and_contract.cdc",
         [getCurrentBlockHeight() + blockHeightBoundaryDelay, "Foo", fooUpdateCode],
         fooAccount
     )
@@ -262,7 +260,7 @@ access(all) fun testExecuteUpdateFailsBeforeBoundary() {
 
     // Execute update as Foo contract account
     let txResult = executeTransaction(
-        "../transactions/update.cdc",
+        "../transactions/updater/update.cdc",
         [],
         fooAccount
     )
@@ -288,7 +286,7 @@ access(all) fun testExecuteUpdateSucceedsAfterBoundary() {
 
     // Execute update as Foo contract account
     let txResult = executeTransaction(
-        "../transactions/update.cdc",
+        "../transactions/updater/update.cdc",
         [],
         fooAccount
     )
@@ -313,6 +311,15 @@ access(all) fun testExecuteUpdateSucceedsAfterBoundary() {
     let actualPostUpdateResult = executeScript("../scripts/test/foo.cdc", []).returnValue as! String?
         ?? panic("Problem retrieving result of Foo.foo()")
     Test.assertEqual(expectedPostUpdateResult, actualPostUpdateResult)
+}
+
+access(all) fun testDelegationOfCompletedUpdaterFails() {
+    let txResult = executeTransaction(
+        "../transactions/updater/delegate.cdc",
+        [],
+        fooAccount
+    )
+    Test.expect(txResult, Test.beFailed())
 }
 
 access(all) fun testCoordinatorSetBlockUpdateBoundaryFails() {
