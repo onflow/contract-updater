@@ -354,6 +354,8 @@ access(all) contract StagedContractUpdates {
         ///
         access(all) fun delegate(updaterCap: Capability<&Updater>) {
             pre {
+                getCurrentBlock().height < self.blockUpdateBoundary:
+                    "Delegation must occur before Delegatee boundary of ".concat(self.blockUpdateBoundary.toString())
                 updaterCap.check(): "Invalid DelegatedUpdater Capability!"
                 updaterCap.borrow()!.hasBeenUpdated() == false: "Updater has already been updated!"
                 updaterCap.borrow()!.getBlockUpdateBoundary() <= self.blockUpdateBoundary:
