@@ -28,12 +28,10 @@ access(all) contract StagedContractUpdates {
     //
     access(all) let HostStoragePath: StoragePath
     access(all) let UpdaterStoragePath: StoragePath
-    // access(all) let DelegatedUpdaterPrivatePath: PrivatePath
     access(all) let UpdaterPublicPath: PublicPath
-    // access(all) let UpdaterContractAccountPrivatePath: PrivatePath
     access(all) let DelegateeStoragePath: StoragePath
-    // access(all) let DelegateePrivatePath: PrivatePath
     access(all) let DelegateePublicPath: PublicPath
+    access(all) let CoordinatorStoragePath: StoragePath
 
     /* --- Events --- */
     //
@@ -428,6 +426,26 @@ access(all) contract StagedContractUpdates {
         }
     }
 
+    /* --- Coordinator --- */
+    //
+    /// This resource coordinates block update boundaries for all who opt-in to coordinated updates
+    ///
+    access(all) resource Coordinator {
+        /// Allows the contract block update boundary to be set
+        ///
+        access(all) fun setBlockUpdateBoundary(new: UInt64) {
+            pre {
+                new > getCurrentBlock().height: "New boundary must be in the future!"
+                new > StagedContractUpdates.blockUpdateBoundary: "New block update boundary must be greater than current boundary!"
+            }
+            let old = StagedContractUpdates.blockUpdateBoundary
+            StagedContractUpdates.blockUpdateBoundary = new
+            emit ContractBlockUpdateBoundaryUpdated(old: old, new: new)
+        }
+    }
+
+    /* --- Contract Methods --- */
+
     /// Returns the Capability of the Delegatee associated with this contract
     ///
     access(all) fun getContractDelegateeCapability(): Capability<&{DelegateePublic}> {
@@ -494,18 +512,6 @@ access(all) contract StagedContractUpdates {
         return <- create Delegatee(blockUpdateBoundary: blockUpdateBoundary)
     }
 
-    /// Allows the contract block update boundary to be set
-    ///
-    access(account) fun setBlockUpdateBoundary(new: UInt64) {
-        pre {
-            new > getCurrentBlock().height: "New boundary must be in the future!"
-            new > self.blockUpdateBoundary: "New block update boundary must be greater than current boundary!"
-        }
-        let old = self.blockUpdateBoundary
-        self.blockUpdateBoundary = new
-        emit ContractBlockUpdateBoundaryUpdated(old: old, new: new)
-    }
-
     init(blockUpdateBoundary: UInt64) {
         let contractAddress = self.account.address.toString()
 
@@ -513,17 +519,16 @@ access(all) contract StagedContractUpdates {
         self.inboxHostCapabilityNamePrefix = "StagedContractUpdatesHostCapability_"
 
         self.HostStoragePath = StoragePath(identifier: "StagedContractUpdatesHost_".concat(contractAddress))!
-        // self.HostPrivatePath = PrivatePath(identifier: "StagedContractUpdatesHost_".concat(contractAddress))!
         self.UpdaterStoragePath = StoragePath(identifier: "StagedContractUpdatesUpdater_".concat(contractAddress))!
-        // self.DelegatedUpdaterPrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegatedUpdater_".concat(contractAddress))!
         self.UpdaterPublicPath = PublicPath(identifier: "StagedContractUpdatesUpdaterPublic_".concat(contractAddress))!
-        // self.UpdaterContractAccountPrivatePath = PrivatePath(identifier: "UpdaterContractAccount_".concat(contractAddress))!
         self.DelegateeStoragePath = StoragePath(identifier: "StagedContractUpdatesDelegatee_".concat(contractAddress))!
-        // self.DelegateePrivatePath = PrivatePath(identifier: "StagedContractUpdatesDelegatee_".concat(contractAddress))!
         self.DelegateePublicPath = PublicPath(identifier: "StagedContractUpdatesDelegateePublic_".concat(contractAddress))!
+        self.CoordinatorStoragePath = StoragePath(identifier: "StagedContractUpdatesCoordinator_".concat(contractAddress))!
 
         self.account.save(<-create Delegatee(blockUpdateBoundary: blockUpdateBoundary), to: self.DelegateeStoragePath)
         self.account.link<&{DelegateePublic}>(self.DelegateePublicPath, target: self.DelegateeStoragePath)
+
+        self.account.save(<-create Coordinator(), to: self.CoordinatorStoragePath)
 
         emit ContractBlockUpdateBoundaryUpdated(old: nil, new: blockUpdateBoundary)
     }

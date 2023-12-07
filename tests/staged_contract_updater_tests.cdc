@@ -315,6 +315,28 @@ access(all) fun testExecuteUpdateSucceedsAfterBoundary() {
     Test.assertEqual(expectedPostUpdateResult, actualPostUpdateResult)
 }
 
+access(all) fun testCoordinatorSetBlockUpdateBoundaryFails() {
+    let txResult = executeTransaction(
+        "../transactions/coordinator/set_block_update_boundary.cdc",
+        [1],
+        admin
+    )
+    Test.expect(txResult, Test.beFailed())
+}
+
+access(all) fun testCoordinatorSetBlockUpdateBoundarySucceeds() {
+    let txResult = executeTransaction(
+        "../transactions/coordinator/set_block_update_boundary.cdc",
+        [getCurrentBlockHeight() + blockHeightBoundaryDelay],
+        admin
+    )
+    Test.expect(txResult, Test.beSucceeded())
+
+    // TODO: Uncomment once bug is fixed allowing contract import
+    // events = Test.eventsOfType(Type<StagedContractUpdates.ContractBlockUpdateBoundaryUpdated>())
+    // Test.assertEqual(1, events.length)
+}
+
 /* --- TEST HELPERS --- */
 
 access(all) fun jumpToUpdateBoundary(forUpdater: Address) {
