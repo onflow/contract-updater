@@ -1,0 +1,7 @@
+coverage.json
+coverage.lcov
+
+*.pem
+*.pkey
+
+.env

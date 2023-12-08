@@ -1,4 +1,7 @@
-# ContractUpdater
+# StagedContractUpdates
+
+![Tests](https://github.com/onflow/contract-updater/actions/workflows/ci.yml/badge.svg)
+[![codecov](https://codecov.io/gh/onflow/contract-updater/graph/badge.svg?token=TAIKIA95FU)](https://codecov.io/gh/onflow/contract-updater)
 
 > Enables pre-defined contract update deployments to a set of wrapped account at or beyond a specified block height. For
 > more details about the purpose of this mechanism, see [FLIP 179](https://github.com/onflow/flips/pull/179)
@@ -8,7 +11,7 @@
 For this run through, we'll focus on the simple case where a single contract is deployed to a single account that can
 sign the setup & delegation transactions. 
 
-This use case is enough to get the basic concepts involved in the `ContractUpdater` contract, but know that more
+This use case is enough to get the basic concepts involved in the `StagedContractUpdates` contract, but know that more
 advanced deployments are possible with support for multiple contract accounts and customized deployment configurations.
 
 ### Setup
@@ -30,10 +33,10 @@ advanced deployments are possible with support for multiple contract accounts an
 1. We can see that the `Foo` has been deployed, and call its only contract method `foo()`, getting back `"foo"`:
 
     ```sh
-    flow scripts execute ./scripts/foo.cdc
+    flow scripts execute ./scripts/test/foo.cdc
     ```
 
-1. Configure `ContractUpdater.Updater`, passing the block height, contract name, and contract code in hex form (see
+1. Configure `StagedContractUpdates.Updater`, passing the block height, contract name, and contract code in hex form (see
    [`get_code_hex.py`](./src/get_code_hex.py) for simple script hexifying contract code):
     - `setup_updater_single_account_and_contract.cdc`
         1. `blockUpdateBoundary: UInt64`
@@ -41,7 +44,7 @@ advanced deployments are possible with support for multiple contract accounts an
         1. `code: [String]`
 
     ```sh
-    flow transactions send ./transactions/setup_updater_single_account_and_contract.cdc \
+    flow transactions send ./transactions/updater/setup_updater_single_account_and_contract.cdc \
         10 "Foo" 70756220636f6e747261637420466f6f207b0a202020207075622066756e20666f6f28293a20537472696e67207b0a202020202020202072657475726e2022626172220a202020207d0a7d \
         --signer foo
     ```
@@ -55,14 +58,14 @@ advanced deployments are possible with support for multiple contract accounts an
 1. We can get details from our `Updater` before updating:
 
     ```sh
-    flow scripts execute ./scripts/get_updater_info.cdc 0xe03daebed8ca0615
+    flow scripts execute ./scripts/updater/get_updater_info.cdc 0xe03daebed8ca0615
     ```
 
     ```sh
-    flow scripts execute ./scripts/get_updater_deployment.cdc 0xe03daebed8ca0615
+    flow scripts execute ./scripts/updater/get_updater_deployment.cdc 0xe03daebed8ca0615
     ```
 
-1. Next, we'll delegate the `Updater` Capability as `DelegatedUpdater` to the `Delegatee` stored in the `ContractUpdater`'s account.
+1. Next, we'll delegate the `Updater` Capability to the `Delegatee` stored in the `StagedContractUpdates`'s account.
 
     ```sh
     flow transactions send ./transactions/delegate.cdc --signer foo
@@ -71,19 +74,19 @@ advanced deployments are possible with support for multiple contract accounts an
 1. Lastly, we'll run the updating transaction as the `Delegatee`:
 
     ```sh
-    flow transactions send ./transactions/execute_delegated_updates.cdc
+    flow transactions send ./transactions/delegatee/execute_all_delegated_updates.cdc
     ```
 
 1. And we can validate the update has taken place by calling `Foo.foo()` again and seeing the return value is now
    `"bar"`
 
     ```sh
-    flow scripts execute ./scripts/foo.cdc
+    flow scripts execute ./scripts/test/foo.cdc
     ```
 
 ## Multi-Account Multi-Contract Deployment
 
-As mentioned above, `ContractUpdater` supports update deployments across any number of accounts & contracts.
+As mentioned above, `StagedContractUpdates` supports update deployments across any number of accounts & contracts.
 
 Developers with a number of owned contracts will find this helpful as they can specify the order in which an update
 should occur according to the contract set's dependency graph.
@@ -124,8 +127,8 @@ their maximum depth in the dependency graph. In this case:
 - Stage 1: `[B, E]`
 - Stage 2: `[C]`
 
-Let's continue into a walkthrough with contracts `A`, `B`, and `C` and see how `ContractUpdater` can be configured to
-execute these preconfigured updates.
+Let's continue into a walkthrough with contracts `A`, `B`, and `C` and see how `StagedContractUpdates` can be configured to
+execute these pre-configured updates.
 
 ### CLI Walkthrough
 
@@ -135,18 +138,19 @@ account.
 :information_source: If you haven't already, perform the [setup steps above](#setup)
 
 1. Since we'll be configuring an update deployment across a number of contract accounts, we'll need to delegate access
-   to those accounts via AuthAccount Capabilities on each. Running the following transaction will link an AuthAccount
-   Capability on the signer's account and publish it for the account where our `Updater` will live.
+   to those accounts via AuthAccount Capabilities on each. Running the following transaction will link and encapsulate
+   an AuthAccount Capability in a `Host` within the signer's account and publish a Capability on it for the account
+   where our `Updater` will live.
 
     ```sh
-    flow transactions send ./transactions/publish_auth_account_capability.cdc \
-        0xf669cb8d41ce0c74 \
+    flow transactions send ./transactions/host/publish_host_capability.cdc \
+        0xe03daebed8ca0615 \
         --signer a-account
     ```
 
     ```sh
-    flow transactions send ./transactions/publish_auth_account_capability.cdc \
-        0xf669cb8d41ce0c74 \
+    flow transactions send ./transactions/host/publish_host_capability.cdc \
+        0xe03daebed8ca0615 \
         --signer bc-account
     ```
 
@@ -161,7 +165,7 @@ account.
         1. `deploymentConfig: [[{Address: {String: String}}]]`
 
     ```sh
-    flow transactions send transactions/setup_updater_multi_account.cdc \
+    flow transactions send transactions/updater/setup_updater_multi_account.cdc \
         --args-json "$(cat args.json)" \
         --signer abc-updater
     ```
@@ -173,17 +177,17 @@ account.
    resource was created, so let's query against the updater account to get its info.
 
     ```sh
-    flow scripts execute ./scripts/get_updater_info.cdc 0xf669cb8d41ce0c74
+    flow scripts execute ./scripts/updater/get_updater_info.cdc 0xe03daebed8ca0615
     ```
 
     ```sh
-    flow scripts execute ./scripts/get_updater_deployment.cdc 0xf669cb8d41ce0c74
+    flow scripts execute ./scripts/updater/get_updater_deployment.cdc 0xe03daebed8ca0615
     ```
 
 1. Now we'll delegate a Capability on the `Updater` to the `Delegatee`:
 
     ```sh
-    flow transactions send ./transactions/delegate.cdc --signer abc-updater
+    flow transactions send ./transactions/updater/delegate.cdc --signer abc-updater
     ```
 
 1. In the previous transaction we should see that the `UpdaterDelegationChanged` event includes the `Updater` UUID
@@ -191,7 +195,7 @@ account.
    and execute the update.
 
     ```sh
-    flow transactions send ./transactions/execute_delegated_updates.cdc
+    flow transactions send ./transactions/delegatee/execute_all_delegated_updates.cdc
     ```
 
     This transaction calls `Updater.update()`, executing the first staged deployment, and updating contract `A`. Note
@@ -200,13 +204,13 @@ account.
     time updating `B`.
 
     ```sh
-    flow transactions send ./transactions/execute_delegated_updates.cdc
+    flow transactions send ./transactions/delegatee/execute_all_delegated_updates.cdc
     ```
 
     Now we see `B` has been updated, but we still have one more stage to complete. Let's complete the staged update.
 
     ```sh
-    flow transactions send ./transactions/execute_delegated_updates.cdc
+    flow transactions send ./transactions/delegatee/execute_all_delegated_updates.cdc
     ```
 
     And finally, we see that `C` was updated and `updateComplete` is now `true`.

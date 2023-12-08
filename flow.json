@@ -1,36 +1,95 @@
 {
 	"contracts": {
-		"A": "./contracts/A.cdc",
-		"B": "./contracts/B.cdc",
-		"C": "./contracts/C.cdc",
-		"ContractUpdater": "./contracts/ContractUpdater.cdc",
-		"Foo": "./contracts/Foo.cdc"
+		"A": {
+			"source": "./contracts/test/A.cdc",
+			"aliases": {
+				"emulator": "179b6b1cb6755e31",
+				"testing": "0000000000000009"
+			}
+		},
+		"B": {
+			"source": "./contracts/test/B.cdc",
+			"aliases": {
+				"emulator": "f3fcd2c1a78f5eee",
+				"testing": "0000000000000010"
+			}
+		},
+		"C": {
+			"source": "./contracts/test/C.cdc",
+			"aliases": {
+				"emulator": "f3fcd2c1a78f5eee",
+				"testing": "0000000000000010"
+			}
+		},
+		"Foo": {
+			"source": "./contracts/test/Foo.cdc",
+			"aliases": {
+				"emulator": "01cf0e2f2f715450",
+				"testing": "0000000000000008"
+			}
+		},
+		"FungibleToken": {
+			"source": "./contracts/standards/FungibleToken.cdc",
+			"aliases": {
+				"emulator": "ee82856bf20e2aa6",
+				"mainnet": "f233dcee88fe0abe",
+				"testnet": "9a0766d93b6608b7"
+			}
+		},
+		"MetadataViews": {
+			"source": "./contracts/standards/MetadataViews.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1d7e57aa55817448",
+				"testnet": "631e88ae7f1d7c20"
+			}
+		},
+		"NonFungibleToken": {
+			"source": "./contracts/standards/NonFungibleToken.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1d7e57aa55817448",
+				"testnet": "631e88ae7f1d7c20"
+			}
+		},
+		"StagedContractUpdates": {
+			"source": "./contracts/StagedContractUpdates.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testing": "0000000000000007"
+			}
+		}
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
 		"mainnet": "access.mainnet.nodes.onflow.org:9000",
 		"sandboxnet": "access.sandboxnet.nodes.onflow.org:9000",
+		"testing": "127.0.0.1:3569",
 		"testnet": "access.devnet.nodes.onflow.org:9000"
 	},
 	"accounts": {
 		"a-account": {
-			"address": "045a1763c93006ca",
+			"address": "179b6b1cb6755e31",
 			"key": "1bbaf3239cfd9e8e35f85723f6c70f2ac5c8f50856c4667021cf9ed72eabd9f8"
 		},
 		"abc-updater": {
-			"address": "f669cb8d41ce0c74",
+			"address": "e03daebed8ca0615",
 			"key": "caa4da634fee3ad45ce67ef8a6813987888d88f4b4e6e70b8d84685845db7f25"
 		},
 		"bc-account": {
-			"address": "120e725050340cab",
+			"address": "f3fcd2c1a78f5eee",
 			"key": "c06a4b0fce3bc3088a2a2e3b11a9ea5d13e251661cefa3f26af1180ad317d3dc"
 		},
 		"emulator-account": {
 			"address": "f8d6e0586b0a20c7",
 			"key": "a08c990a1f7adb14c290d05df0f397d2de2f4d0cb18cdffed592f611f95f5d08"
 		},
+		"emulator-ft": {
+			"address": "ee82856bf20e2aa6",
+			"key": "686779d775e5fcbf8d2f4a85cb4c53525d02b7ef53230d180fc16f35d9b7d025"
+		},
 		"foo": {
-			"address": "e03daebed8ca0615",
+			"address": "01cf0e2f2f715450",
 			"key": "e9b7b36e9d16f47501db73e84c68e441609475ee482ee808411b2fe0bd2329da"
 		}
 	},
@@ -44,7 +103,18 @@
 				"C"
 			],
 			"emulator-account": [
-				"ContractUpdater"
+				{
+					"name": "StagedContractUpdates",
+					"args": [
+						{
+							"type": "UInt64",
+							"value": "10"
+						}
+					]
+				}
+			],
+			"emulator-ft": [
+				"FungibleToken"
 			],
 			"foo": [
 				"Foo"
