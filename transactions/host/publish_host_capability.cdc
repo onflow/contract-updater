@@ -2,14 +2,18 @@
 
 import "StagedContractUpdates"
 
-/// Publishes an Capability on the signer's AuthAccount for the specified recipient
+/// Links the signer's AuthAccount and encapsulates in a Host resource, publishing a Host Capability for the specified
+/// recipient. This would enable the recipient to execute arbitrary contract updates on the signer's behalf.
 ///
 transaction(publishFor: Address) {
 
     prepare(signer: AuthAccount) {
 
-        let accountCapPrivatePath: PrivatePath = /private/StagedContractUpdatesAccountCap
-        let hostPrivatePath: PrivatePath = /private/StagedContractUpdatesHost
+        // Derive paths for AuthAccount & Host Capabilities, identifying the recipient on publishing
+        let accountCapPrivatePath = PrivatePath(
+                identifier: "StagedContractUpdatesAccountCap_".concat(signer.address.toString())
+            )!
+        let hostPrivatePath = PrivatePath(identifier: "StagedContractUpdatesHost_".concat(publishFor.toString()))!
 
         // Setup Capability on underlying signing host account
         if !signer.getCapability<&AuthAccount>(accountCapPrivatePath).check() {
