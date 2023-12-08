@@ -1,6 +1,8 @@
 import "StagedContractUpdates"
 
-transaction(removeID: UInt64) {
+/// Removes Updater Capabilities with given IDs from the signer's Delegatee
+///
+transaction(removeIDs: [UInt64]) {
     
     let delegatee: &StagedContractUpdates.Delegatee
     
@@ -10,6 +12,8 @@ transaction(removeID: UInt64) {
     }
 
     execute {
-        self.delegatee.removeDelegatedUpdater(id: removeID)
+        for id in removeIDs {
+            self.delegatee.removeDelegatedUpdater(id: id)
+        }
     }
 }
