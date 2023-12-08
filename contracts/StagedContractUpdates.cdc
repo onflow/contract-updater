@@ -549,4 +549,4 @@ access(all) contract StagedContractUpdates {
 
         emit ContractBlockUpdateBoundaryUpdated(old: nil, new: blockUpdateBoundary)
     }
-}
+} 

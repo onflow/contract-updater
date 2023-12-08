@@ -6,6 +6,6 @@ transaction(newBoundary: UInt64) {
     prepare(signer: AuthAccount) {
         signer.borrow<&StagedContractUpdates.Coordinator>(from: StagedContractUpdates.CoordinatorStoragePath)
             ?.setBlockUpdateBoundary(new: newBoundary)
-            ?? panic("No Coordinator in found!")
+            ?? panic("Could not borrow reference to Coordinator!")
     }
 }

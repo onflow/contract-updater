@@ -1,11 +1,10 @@
-#allowAccountLinking
-
 import "MetadataViews"
 
 import "StagedContractUpdates"
 
-/// Configures an Updater resource, assuming signing account is the account with the contract to update. This demos an
-/// advanced case where an update deployment involves multiple accounts and contracts.
+/// Retrieves Host Capabilities from the contract-hosting accounts and assigns an update deployment in an encapsulating
+/// Updater. This demos an advanced case where an update deployment involves a network of dependent contracts across
+/// multiple hosting accounts.
 ///
 /// NOTES: deploymentConfig is ordered, and the order is used to determine the order of the contracts in the deployment.
 /// Each entry in the array must be exactly one key-value pair, where the key is the address of the associated contract

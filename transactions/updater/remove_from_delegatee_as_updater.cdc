@@ -1,5 +1,8 @@
 import "StagedContractUpdates"
 
+/// Retrieves an Updater Capability from the signer's account, assuming one is pre-configured, and removes it from the
+/// Delegatee in the StagedContractUpdates contract account.
+///
 transaction {
     
     let delegatee: &{StagedContractUpdates.DelegateePublic}
