@@ -88,4 +88,4 @@ Before contributing, make sure to examine the project to get familiar with the p
 
 ### Additional Notes
 
-Thank you for your interest in contributing to the Flow Token Standards!
+Thank you for your interest in contributing to the Flow Contract updater!
