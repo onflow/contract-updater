@@ -37,9 +37,13 @@ transaction(blockHeightBoundary: UInt64?, contractAddresses: [Address], deployme
         // Construct deployment from config
         let deployments: [[StagedContractUpdates.ContractUpdate]] = StagedContractUpdates.getDeploymentFromConfig(deploymentConfig)
 
+        if blockHeightBoundary == nil && StagedContractUpdates.blockUpdateBoundary == nil {
+            // TODO: THIS IS A PROBLEM - Can't setup Updater without a contract blockHeightBoundary
+            panic("Contract update boundary is not yet set, must specify blockHeightBoundary if not coordinating")
+        }
         // Construct the updater, save and link public Capability
         let contractUpdater: @StagedContractUpdates.Updater <- StagedContractUpdates.createNewUpdater(
-                blockUpdateBoundary: blockHeightBoundary ?? StagedContractUpdates.blockUpdateBoundary,
+                blockUpdateBoundary: blockHeightBoundary ?? StagedContractUpdates.blockUpdateBoundary!,
                 hosts: hostCaps,
                 deployments: deployments
             )

@@ -41,10 +41,15 @@ transaction(blockHeightBoundary: UInt64?, contractName: String, code: String) {
         }
         let hostCap = signer.getCapability<&StagedContractUpdates.Host>(hostPrivatePath)
 
+        if blockHeightBoundary == nil && StagedContractUpdates.blockUpdateBoundary == nil {
+            // TODO: THIS IS A PROBLEM - Can't setup Updater without a contract blockHeightBoundary
+            // Maybe alt is to set to now + 1?
+            panic("Contract update boundary is not yet set, must specify blockHeightBoundary if not coordinating")
+        }
         // Create Updater resource, assigning the contract .blockUpdateBoundary to the new Updater
         signer.save(
             <- StagedContractUpdates.createNewUpdater(
-                blockUpdateBoundary: blockHeightBoundary ?? StagedContractUpdates.blockUpdateBoundary,
+                blockUpdateBoundary: blockHeightBoundary ?? StagedContractUpdates.blockUpdateBoundary!,
                 hosts: [hostCap],
                 deployments: [[
                     StagedContractUpdates.ContractUpdate(
