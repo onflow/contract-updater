@@ -1,5 +1,9 @@
 import "MetadataViews"
 
+/*******************************************************************************************************************
+    NOTICE: THIS CONTRACT IS NOT INTENDED FOR CADENCE 1.0 STAGING - SEE `MigrationContractStaging` FOR 1.0 STAGING
+ *******************************************************************************************************************/
+
 /// This contract defines resources which enable storage of contract code for the purposes of updating at or beyond
 /// some blockheight boundary either by the containing resource's owner or by some delegated party.
 ///
@@ -34,7 +38,7 @@ access(all) contract StagedContractUpdates {
     /// Event emitted when the contract block update boundary is updated
     access(all) event ContractBlockUpdateBoundaryUpdated(old: UInt64?, new: UInt64)
     /// Event emitted when an Updater is created
-    access(all) event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64)
+    access(all) event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64, stagedContracts: [String])
     /// Event emitted when an Updater is updated
     access(all) event UpdaterUpdated(
         updaterUUID: UInt64,
@@ -567,7 +571,13 @@ access(all) contract StagedContractUpdates {
         deployments: [[ContractUpdate]]
     ): @Updater {
         let updater <- create Updater(blockUpdateBoundary: blockUpdateBoundary, hosts: hosts, deployments: deployments)
-        emit UpdaterCreated(updaterUUID: updater.uuid, blockUpdateBoundary: blockUpdateBoundary)
+        let contracts: [String] = []
+        for deployment in deployments {
+            for update in deployment {
+                contracts.append(update.toString())
+            }
+        }
+        emit UpdaterCreated(updaterUUID: updater.uuid, blockUpdateBoundary: blockUpdateBoundary, stagedContracts: contracts)
         return <- updater
     }
 
