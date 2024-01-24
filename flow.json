@@ -44,6 +44,12 @@
 				"testnet": "631e88ae7f1d7c20"
 			}
 		},
+		"MigrationContractStaging": {
+			"source": "./contracts/MigrationContractStaging.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7"
+			}
+		},
 		"NonFungibleToken": {
 			"source": "./contracts/standards/NonFungibleToken.cdc",
 			"aliases": {
@@ -103,15 +109,7 @@
 				"C"
 			],
 			"emulator-account": [
-				{
-					"name": "StagedContractUpdates",
-					"args": [
-						{
-							"type": "UInt64",
-							"value": "10"
-						}
-					]
-				}
+				"MigrationContractStaging"
 			],
 			"emulator-ft": [
 				"FungibleToken"
