@@ -219,6 +219,18 @@ access(all) contract MigrationContractStaging {
             ) ?? panic("Could not derive Updater StoragePath for given address")
     }
 
+    /// Returns a PublicPath to store the Updater of the form:
+    ///     /storage/self.updaterPathPrefix_ADDRESS_NAME
+    access(all) fun deriveUpdaterPublicPath(contractAddress: Address, contractName: String): PublicPath {
+        return PublicPath(
+                identifier: self.updaterPathPrefix
+                    .concat(self.delimiter)
+                    .concat(contractAddress.toString())
+                    .concat(self.delimiter)
+                    .concat(contractName)
+            ) ?? panic("Could not derive Updater PublicPath for given address")
+    }
+
     /// Returns a PrivatePath to store the Account Capability of the form:
     ///     /storage/self.accountCapabilityPathPrefix_ADDRESS
     access(all) fun deriveAccountCapabilityPath(forAddress: Address): PrivatePath {
