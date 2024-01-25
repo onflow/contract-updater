@@ -39,7 +39,7 @@ access(all) contract MigrationContractStaging {
         }
 
         access(all) view fun verify(): Bool {
-            return getAccount(self.address).contracts.borrow<&AnyStruct>(name: self.name) != nil
+            return getAccount(self.address).contracts.names.contains(self.name) != nil
         }
 
         /// Serializes the address and name into a string
