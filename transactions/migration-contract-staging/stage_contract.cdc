@@ -25,6 +25,7 @@ transaction(contractName: String, contractCode: String) {
 
     execute {
         // Call staging contract, storing the contract code that will update during Cadence 1.0 migration
+        // If code is already staged for the given contract, it will be overwritten.
         MigrationContractStaging.stageContract(host: self.host, name: contractName, code: contractCode)
     }
 
