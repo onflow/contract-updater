@@ -1,22 +1,27 @@
 import "MigrationContractStaging"
 
-/// Loads and destroys the existing updater for the given contract name in the signer's account if exists. This means
-/// the contract will no longer be staged for migrated updates.
+/// Unstages the given contract from the staging contract. Only the contract host can perform this action.
+/// After the transaction, the contract will no longer be staged for Cadence 1.0 migration.
 ///
 /// For more context, see the repo - https://github.com/onflow/contract-updater
 ///
 transaction(contractName: String) {
-
+    let host: &MigrationContractStaging.Host
+    
     prepare(signer: AuthAccount) {
-        let updaterStoragePath: StoragePath = MigrationContractStaging.deriveUpdaterStoragePath(
-                contractAddress: signer.address,
-                contractName: contractName
-            )
-        let updaterPublicPath: PublicPath = MigrationContractStaging.deriveUpdaterPublicPath(
-                contractAddress: signer.address,
-                contractName: contractName
-            )
-        signer.unlink(updaterPublicPath)
-        destroy signer.load<@MigrationContractStaging.Updater>(from: updaterStoragePath)
+        // Assign Host reference
+        let hostStoragePath: StoragePath = MigrationContractStaging.deriveHostStoragePath(hostAddress: signer.address)
+        self.host = signer.borrow<&MigrationContractStaging.Host>(from: hostStoragePath)
+            ?? panic("Host was not found in storage")
+    }
+
+    execute {
+        // Call staging contract, storing the contract code that will update during Cadence 1.0 migration
+        MigrationContractStaging.unstageContract(host: self.host, name: contractName)
+    }
+
+    post {
+        MigrationContractStaging.isStaged(address: self.host.address(), name: contractName) == false:
+            "Problem while unstaging update"
     }
 }
