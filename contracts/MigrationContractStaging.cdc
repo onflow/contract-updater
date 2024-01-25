@@ -97,8 +97,8 @@ access(all) contract MigrationContractStaging {
 
     /// Returns the names of all staged contracts for the given address
     ///
-    access(all) fun getStagedContractNames(forAddress: Address): [String]? {
-        return self.stagedContracts[forAddress]
+    access(all) fun getStagedContractNames(forAddress: Address): [String] {
+        return self.stagedContracts[forAddress] ?? []
     }
 
     /// Returns the staged contract Cadence code for the given address and name
