@@ -38,16 +38,20 @@ access(all) contract MigrationContractStaging {
             self.code = code
         }
 
-        access(all) view fun verify(): Bool {
+        /// Validates that the named contract exists at the target address
+        ///
+        access(all) view fun isValid(): Bool {
             return getAccount(self.address).contracts.names.contains(self.name)
         }
 
-        /// Serializes the address and name into a string
+        /// Serializes the address and name into a string of the form 0xADDRESS.NAME
+        ///
         access(all) view fun toString(): String {
             return self.address.toString().concat(".").concat(self.name)
         }
 
-        /// Returns code as a String
+        /// Returns human-readable string of the Cadence code
+        ///
         access(all) view fun codeAsCadence(): String {
             return String.fromUTF8(self.code.decodeHex()) ?? panic("Problem stringifying code!")
         }
@@ -67,7 +71,7 @@ access(all) contract MigrationContractStaging {
 
         /// Verifies that the encapsulated Account is the owner of this Host
         ///
-        access(all) view fun verify(): Bool {
+        access(all) view fun isValid(): Bool {
             return self.getHostAddress() != nil && self.getHostAddress() == self.owner?.address
         }
 
@@ -87,17 +91,20 @@ access(all) contract MigrationContractStaging {
     /* --- Updater --- */
     //
     /// Resource that enables staged contract updates to the Host account. In the context of the Cadence 1.0 migration,
-    /// this Updater should be stored in the account which is to be updated.
+    /// this Updater should be stored with a ContractUpdate in the account which is to be updated. An Updater should be
+    /// configured for each contract in an account.
     ///
     access(all) resource Updater {
+        /// The Host resource encapsulating the Account Capability
         access(self) let host: @Host
+        /// The address, name and code of the contract that will be updated
         access(self) let stagedUpdate: ContractUpdate
 
         init(host: @Host, stagedUpdate: ContractUpdate) {
             pre {
                 host.getHostAddress() == stagedUpdate.address: "Host and update address must match"
                 stagedUpdate.codeAsCadence() != nil: "Staged update code must be valid Cadence"
-                stagedUpdate.verify(): "Target contract does not exist"
+                stagedUpdate.isValid(): "Target contract does not exist"
             }
             self.host <- host
             self.stagedUpdate = stagedUpdate
@@ -106,9 +113,9 @@ access(all) contract MigrationContractStaging {
         /// Returns whether the Updater is properly configured
         /// NOTE: Does NOT check that the staged contract code is valid!
         ///
-        access(all) view fun verify(): Bool {
-            let checks: {String: String} = self.statusCheck()
-            for status in checks.values {
+        access(all) view fun isValid(): Bool {
+            let statuses: {String: String} = self.systemsCheck()
+            for status in statuses.values {
                 if status != "PASSING" {
                     return false
                 }
@@ -132,18 +139,18 @@ access(all) contract MigrationContractStaging {
         /// Platforms may utilize this method to display whether the Updater is properly configured in human-readable
         /// language
         ///
-        access(all) view fun statusCheck(): {String: String} {
+        access(all) view fun systemsCheck(): {String: String} {
             return {
-                "Updater": self.statusCheckUpdater(),
-                "Host": self.statusCheckHost(),
-                "Staged Update": self.statusCheckStagedUpdate(),
-                "Contract Existence": self.statusCheckTargetContractExists()
+                "Updater": self.checkUpdater(),
+                "Host": self.checkHost(),
+                "Staged Update": self.checkStagedUpdate(),
+                "Contract Existence": self.checkTargetContractExists()
             }
         }
 
         /// Returns the status of the Updater based on conditions relevant to the Cadence 1.0 contract migration
         ///
-        access(all) view fun statusCheckUpdater(): String {
+        access(all) view fun checkUpdater(): String {
             if self.owner == nil {
                 return "FAILING: Unowned Updater"
             } else if self.owner!.address == self.host.getHostAddress() &&
@@ -160,8 +167,8 @@ access(all) contract MigrationContractStaging {
 
         /// Returns the status of the Host based on conditions relevant to the Cadence 1.0 contract migration
         ///
-        access(all) view fun statusCheckHost(): String {
-            if self.host.verify() {
+        access(all) view fun checkHost(): String {
+            if self.host.isValid() {
                 return "PASSING"
             } else if self.host.checkAccountCapability() == false {
                 return "FAILING: Account Capability check failed"
@@ -176,7 +183,7 @@ access(all) contract MigrationContractStaging {
 
         /// Returns the status of the staged update based on conditions relevant to the Cadence 1.0 contract migration
         ///
-        access(all) view fun statusCheckStagedUpdate(): String {
+        access(all) view fun checkStagedUpdate(): String {
             if self.stagedUpdate.address != self.host.getHostAddress() {
                 return "FAILING: Staged Update address does not match Host address"
             } else if self.owner == nil {
@@ -191,8 +198,8 @@ access(all) contract MigrationContractStaging {
         /// Returns whether the staged contract exists on the target account. This is important as the contract
         /// migration only affects **existing** contracts
         ///
-        access(all) view fun statusCheckTargetContractExists(): String {
-            if self.stagedUpdate.verify() {
+        access(all) view fun checkTargetContractExists(): String {
+            if self.stagedUpdate.isValid() {
                 return "PASSING"
             } else {
                 return "FAILING: Target contract with name "
