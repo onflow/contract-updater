@@ -1,9 +1,5 @@
 import "MetadataViews"
 
-/*******************************************************************************************************************
-    NOTICE: THIS CONTRACT IS NOT INTENDED FOR CADENCE 1.0 STAGING - SEE `MigrationContractStaging` FOR 1.0 STAGING
- *******************************************************************************************************************/
-
 /// This contract defines resources which enable storage of contract code for the purposes of updating at or beyond
 /// some blockheight boundary either by the containing resource's owner or by some delegated party.
 ///
@@ -22,7 +18,7 @@ access(all) contract StagedContractUpdates {
 
     /// Common update boundary for those coordinating with contract account-managed Delegatee, enabling opt-in
     /// Flow coordinated contract updates
-    access(all) var blockUpdateBoundary: UInt64?
+    access(all) var blockUpdateBoundary: UInt64
 
     /* --- Canonical Paths --- */
     //
@@ -38,7 +34,7 @@ access(all) contract StagedContractUpdates {
     /// Event emitted when the contract block update boundary is updated
     access(all) event ContractBlockUpdateBoundaryUpdated(old: UInt64?, new: UInt64)
     /// Event emitted when an Updater is created
-    access(all) event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64, stagedContracts: [String])
+    access(all) event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64)
     /// Event emitted when an Updater is updated
     access(all) event UpdaterUpdated(
         updaterUUID: UInt64,
@@ -51,10 +47,7 @@ access(all) contract StagedContractUpdates {
         failedContracts: [String],
         updateComplete: Bool
     )
-    /// Represents a change in delegation status for an Updater - delegated: added to Delegatee, !delegated: removed
     access(all) event UpdaterDelegationChanged(updaterUUID: UInt64, updaterAddress: Address?, delegated: Bool)
-    /// Event emitted when a Delegatee's block update boundary is set, signifying the Delegatee is ready for delegation
-    access(all) event DelegateeBlockUpdateBoundarySet(delegateeUUID: UInt64, address: Address?, blockHeight: UInt64)
 
     /// Represents contract and its corresponding code
     ///
@@ -167,7 +160,7 @@ access(all) contract StagedContractUpdates {
     ///
     access(all) resource Updater : UpdaterPublic, MetadataViews.Resolver {
         /// Update to occur at or beyond this block height
-        access(self) var blockUpdateBoundary: UInt64
+        access(self) let blockUpdateBoundary: UInt64
         /// Update status defining whether all update stages have been *attempted*
         /// NOTE: `true` does not necessarily mean all updates were successful
         access(self) var updateComplete: Bool
@@ -331,12 +324,6 @@ access(all) contract StagedContractUpdates {
             }
             return nil
         }
-
-        /* --- Delegatee access override --- */
-
-        access(contract) fun delegateeBoundaryOverride(_ newBoundary: UInt64) {
-            self.blockUpdateBoundary = newBoundary
-        }
     }
 
     /* --- Delegatee --- */
@@ -345,7 +332,6 @@ access(all) contract StagedContractUpdates {
     ///
     access(all) resource interface DelegateePublic {
         access(all) fun check(id: UInt64): Bool?
-        access(all) fun getBlockUpdateBoundary(): UInt64?
         access(all) fun getUpdaterIDs(): [UInt64]
         access(all) fun delegate(updaterCap: Capability<&Updater>)
         access(all) fun removeAsUpdater(updaterCap: Capability<&Updater>)
@@ -357,37 +343,19 @@ access(all) contract StagedContractUpdates {
         /// Block height at which delegated updates will be performed by this Delegatee
         /// NOTE: This may differ from the contract's blockUpdateBoundary, enabling flexibility but any Updaters not
         ///     ready when updates are performed will be revoked from the Delegatee
-        access(self) var blockUpdateBoundary: UInt64?
+        access(self) let blockUpdateBoundary: UInt64
         /// Mapping of all delegated Updater Capabilities by their UUID
         access(self) let delegatedUpdaters: {UInt64: Capability<&Updater>}
 
-        init(blockUpdateBoundary: UInt64?) {
-            pre {
-                blockUpdateBoundary == nil || blockUpdateBoundary! > getCurrentBlock().height:
-                    "Block update boundary must be in the future!"
-            }
+        init(blockUpdateBoundary: UInt64) {
             self.blockUpdateBoundary = blockUpdateBoundary
             self.delegatedUpdaters = {}
-
-            if blockUpdateBoundary != nil {
-                emit DelegateeBlockUpdateBoundarySet(
-                    delegateeUUID: self.uuid,
-                    address: nil,
-                    blockHeight: blockUpdateBoundary!
-                )
-            }
         }
 
         /// Checks if the specified DelegatedUpdater Capability is contained and valid
         ///
         access(all) fun check(id: UInt64): Bool? {
             return self.delegatedUpdaters[id]?.check() ?? nil
-        }
-
-        /// Getter for block update boundary
-        ///
-        access(all) fun getBlockUpdateBoundary(): UInt64? {
-            return self.blockUpdateBoundary
         }
 
         /// Returns the IDs of delegated Updaters
@@ -400,19 +368,15 @@ access(all) contract StagedContractUpdates {
         ///
         access(all) fun delegate(updaterCap: Capability<&Updater>) {
             pre {
-                self.blockUpdateBoundary != nil:
-                    "Delegation is not yet enabled, wait for Delegatee to set block update boundary"
-                getCurrentBlock().height < self.blockUpdateBoundary!:
-                    "Delegation must occur before Delegatee boundary of ".concat(self.blockUpdateBoundary!.toString())
+                getCurrentBlock().height < self.blockUpdateBoundary:
+                    "Delegation must occur before Delegatee boundary of ".concat(self.blockUpdateBoundary.toString())
                 updaterCap.check(): "Invalid DelegatedUpdater Capability!"
                 updaterCap.borrow()!.hasBeenUpdated() == false: "Updater has already been updated!"
-                updaterCap.borrow()!.getBlockUpdateBoundary() <= self.blockUpdateBoundary!:
-                    "Updater will not be ready for updates at Delegatee boundary of ".concat(self.blockUpdateBoundary!.toString())
+                updaterCap.borrow()!.getBlockUpdateBoundary() <= self.blockUpdateBoundary:
+                    "Updater will not be ready for updates at Delegatee boundary of ".concat(self.blockUpdateBoundary.toString())
             }
+
             let updater: &StagedContractUpdates.Updater = updaterCap.borrow()!
-
-            updater.delegateeBoundaryOverride(self.blockUpdateBoundary!)
-
             if self.delegatedUpdaters.containsKey(updater.getID()) {
                 // Upsert if updater Capability already contained
                 self.delegatedUpdaters[updater.getID()] = updaterCap
@@ -433,21 +397,6 @@ access(all) contract StagedContractUpdates {
 
             let updater: &StagedContractUpdates.Updater = updaterCap.borrow()!
             self.removeDelegatedUpdater(id: updater.getID())
-        }
-
-        /// Enables the Delegatee to set the block update boundary if it wasn't set on init, enabling delegation
-        ///
-        access(all) fun setBlockUpdateBoundary(blockHeight: UInt64) {
-            pre {
-                self.blockUpdateBoundary == nil: "Update boundary has already been set"
-                blockHeight > getCurrentBlock().height: "Block update boundary must be in the future!"
-            }
-            self.blockUpdateBoundary = blockHeight
-            emit DelegateeBlockUpdateBoundarySet(
-                delegateeUUID: self.uuid,
-                address: self.owner!.address,
-                blockHeight: blockHeight
-            )
         }
 
         /// Executes update on the specified Updaters. All updates are attempted, and if the Updater is not yet ready
@@ -471,7 +420,6 @@ access(all) contract StagedContractUpdates {
                 // Execute currently staged update
                 let success: Bool? = updaterCap.borrow()!.update()
                 // If update is not ready or complete, remove Capability and continue
-                // NOTE: Checked to prevent revert in case the Updater resource our Capability targets was swapped
                 if success == nil || success! == true {
                     self.delegatedUpdaters.remove(key: id)
                     continue
@@ -504,10 +452,9 @@ access(all) contract StagedContractUpdates {
         access(all) fun setBlockUpdateBoundary(new: UInt64) {
             pre {
                 new > getCurrentBlock().height: "New boundary must be in the future!"
-                StagedContractUpdates.blockUpdateBoundary == nil || new > StagedContractUpdates.blockUpdateBoundary!:
-                    "New block update boundary must be greater than current boundary!"
+                new > StagedContractUpdates.blockUpdateBoundary: "New block update boundary must be greater than current boundary!"
             }
-            let old: UInt64? = StagedContractUpdates.blockUpdateBoundary
+            let old = StagedContractUpdates.blockUpdateBoundary
             StagedContractUpdates.blockUpdateBoundary = new
             emit ContractBlockUpdateBoundaryUpdated(old: old, new: new)
         }
@@ -519,7 +466,7 @@ access(all) contract StagedContractUpdates {
     ///
     access(all) fun getContractDelegateeCapability(): Capability<&{DelegateePublic}> {
         let delegateeCap = self.account.getCapability<&{DelegateePublic}>(self.DelegateePublicPath)
-        assert(delegateeCap.check(), message: "Invalid Delegatee Capability retrieved from contract account")
+        assert(delegateeCap.check(), message: "Invalid Delegatee Capability retrieved")
         return delegateeCap
     }
 
@@ -571,27 +518,21 @@ access(all) contract StagedContractUpdates {
         deployments: [[ContractUpdate]]
     ): @Updater {
         let updater <- create Updater(blockUpdateBoundary: blockUpdateBoundary, hosts: hosts, deployments: deployments)
-        let contracts: [String] = []
-        for deployment in deployments {
-            for update in deployment {
-                contracts.append(update.toString())
-            }
-        }
-        emit UpdaterCreated(updaterUUID: updater.uuid, blockUpdateBoundary: blockUpdateBoundary, stagedContracts: contracts)
+        emit UpdaterCreated(updaterUUID: updater.uuid, blockUpdateBoundary: blockUpdateBoundary)
         return <- updater
     }
 
     /// Creates a new Delegatee resource enabling caller to self-host their Delegatee to be executed at or beyond
     /// given block update boundary
     ///
-    access(all) fun createNewDelegatee(blockUpdateBoundary: UInt64?): @Delegatee {
+    access(all) fun createNewDelegatee(blockUpdateBoundary: UInt64): @Delegatee {
         return <- create Delegatee(blockUpdateBoundary: blockUpdateBoundary)
     }
 
-    init() {
+    init(blockUpdateBoundary: UInt64) {
         let contractAddress = self.account.address.toString()
 
-        self.blockUpdateBoundary = nil
+        self.blockUpdateBoundary = blockUpdateBoundary
         self.inboxHostCapabilityNamePrefix = "StagedContractUpdatesHostCapability_"
 
         self.HostStoragePath = StoragePath(identifier: "StagedContractUpdatesHost_".concat(contractAddress))!
@@ -601,9 +542,11 @@ access(all) contract StagedContractUpdates {
         self.DelegateePublicPath = PublicPath(identifier: "StagedContractUpdatesDelegateePublic_".concat(contractAddress))!
         self.CoordinatorStoragePath = StoragePath(identifier: "StagedContractUpdatesCoordinator_".concat(contractAddress))!
 
-        self.account.save(<-create Delegatee(blockUpdateBoundary: nil), to: self.DelegateeStoragePath)
+        self.account.save(<-create Delegatee(blockUpdateBoundary: blockUpdateBoundary), to: self.DelegateeStoragePath)
         self.account.link<&{DelegateePublic}>(self.DelegateePublicPath, target: self.DelegateeStoragePath)
 
         self.account.save(<-create Coordinator(), to: self.CoordinatorStoragePath)
+
+        emit ContractBlockUpdateBoundaryUpdated(old: nil, new: blockUpdateBoundary)
     }
-}
+} 

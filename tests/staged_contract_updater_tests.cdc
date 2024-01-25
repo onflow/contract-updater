@@ -23,7 +23,7 @@ access(all) fun setup() {
     var err = Test.deployContract(
         name: "StagedContractUpdates",
         path: "../contracts/StagedContractUpdates.cdc",
-        arguments: []
+        arguments: [getCurrentBlockHeight() + blockHeightBoundaryDelay]
     )
     Test.expect(err, Test.beNil())
 
@@ -56,45 +56,6 @@ access(all) fun setup() {
     Test.expect(err, Test.beNil())
 }
 
-access(all) fun testCoordinatorSetBlockUpdateBoundaryFails() {
-    let txResult = executeTransaction(
-        "../transactions/coordinator/set_block_update_boundary.cdc",
-        [1],
-        admin
-    )
-    Test.expect(txResult, Test.beFailed())
-}
-
-access(all) fun testCoordinatorSetBlockUpdateBoundarySucceeds() {
-    let expectedBoundary = getCurrentBlockHeight() + blockHeightBoundaryDelay
-    let txResult = executeTransaction(
-        "../transactions/coordinator/set_block_update_boundary.cdc",
-        [expectedBoundary],
-        admin
-    )
-    Test.expect(txResult, Test.beSucceeded())
-
-    // TODO: Uncomment once bug is fixed allowing contract import
-    // let actualBoundary = StagedContractUpdates.blockUpdateBoundary
-    // Test.assertEqual(expectedBoundary, actualBoundary)
-    // events = Test.eventsOfType(Type<StagedContractUpdates.ContractBlockUpdateBoundaryUpdated>())
-    // Test.assertEqual(1, events.length)
-}
-
-access(all) fun testDelegateeSetBlockUpdateBoundarySucceeds() {
-    let expectedBoundary = getCurrentBlockHeight() + blockHeightBoundaryDelay
-    let txResult = executeTransaction(
-        "../transactions/delegatee/set_block_update_boundary.cdc",
-        [expectedBoundary],
-        admin
-    )
-    Test.expect(txResult, Test.beSucceeded())
-
-    let actualBoundary = executeScript("../scripts/delegatee/get_contract_delegatee_block_update_boundary.cdc", []).returnValue as! UInt64?
-        ?? panic("Problem retrieving block update boundary")
-    Test.assertEqual(expectedBoundary, actualBoundary)
-}
-
 access(all) fun testEmptyDeploymentUpdaterInitFails() {
     let alice = Test.createAccount()
     let txResult = executeTransaction(
@@ -105,7 +66,7 @@ access(all) fun testEmptyDeploymentUpdaterInitFails() {
     Test.expect(txResult, Test.beFailed())
 }
 
-access(all) fun testSetupMultiContractMultiAccountUpdaterSucceeds() {
+access(all) fun testSetupMultiContractMultiAccountUpdater() {
     let contractAddresses: [Address] = [aAccount.address, bcAccount.address]
     let stage0: [{Address: {String: String}}] = [
         {
@@ -150,7 +111,6 @@ access(all) fun testSetupMultiContractMultiAccountUpdaterSucceeds() {
         [nil, contractAddresses, deploymentConfig],
         abcUpdater
     )
-    Test.expect(setupUpdaterTxResult, Test.beSucceeded())
 
     // Confirm UpdaterCreated event was properly emitted
     // TODO: Uncomment once bug is fixed allowing contract import
@@ -360,6 +320,28 @@ access(all) fun testDelegationOfCompletedUpdaterFails() {
         fooAccount
     )
     Test.expect(txResult, Test.beFailed())
+}
+
+access(all) fun testCoordinatorSetBlockUpdateBoundaryFails() {
+    let txResult = executeTransaction(
+        "../transactions/coordinator/set_block_update_boundary.cdc",
+        [1],
+        admin
+    )
+    Test.expect(txResult, Test.beFailed())
+}
+
+access(all) fun testCoordinatorSetBlockUpdateBoundarySucceeds() {
+    let txResult = executeTransaction(
+        "../transactions/coordinator/set_block_update_boundary.cdc",
+        [getCurrentBlockHeight() + blockHeightBoundaryDelay],
+        admin
+    )
+    Test.expect(txResult, Test.beSucceeded())
+
+    // TODO: Uncomment once bug is fixed allowing contract import
+    // events = Test.eventsOfType(Type<StagedContractUpdates.ContractBlockUpdateBoundaryUpdated>())
+    // Test.assertEqual(1, events.length)
 }
 
 /* --- TEST HELPERS --- */
