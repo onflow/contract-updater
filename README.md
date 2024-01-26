@@ -24,9 +24,9 @@ Coordinated Upgrade.
 > here once it has been deployed.
 
 | Network | Address |
-|---|---|
-| Testnet | TBD |
-| Mainnet | TBD |
+| ------- | ------- |
+| Testnet | TBD     |
+| Mainnet | TBD     |
 
 ### Pre-Requisites
 
@@ -116,6 +116,100 @@ import "MigrationContractStaging"
 access(all) fun main(contractAddress: Address, contractName: String): String? {
     return MigrationContractStaging.getStagedContractCode(address: contractAddress, name: contractName)
 }
+```
+
+## `MigrationContractStaging` Contract Details
+
+The basic interface to stage a contract is the same as deploying a contract - name + code. See the
+[`stage_contract`](./transactions/migration-contract-staging/stage_contract.cdc) &
+[`unstage_contract`](./transactions/migration-contract-staging/unstage_contract.cdc) transactions. Note that calling
+`stageContract()` again for the same contract will overwrite any existing staged code for that contract.
+
+```cadence
+/// 1 - Create a host and save it in your contract-hosting account at the path derived from deriveHostStoragePath().
+access(all) fun createHost(): @Host
+/// 2 - Call stageContract() with the host reference and contract name and contract code you wish to stage.
+access(all) fun stageContract(host: &Host, name: String, code: String)
+/// Removes the staged contract code from the staging environment.
+access(all) fun unstageContract(host: &Host, name: String)
+```
+
+To stage a contract, the developer first saves a `Host` resource in their account which they pass as a reference along
+with the contract name and code they wish to stage. The `Host` reference simply serves as proof of authority that the
+caller has access to the contract-hosting account, which in the simplest case would be the signer of the staging
+transaction, though conceivably this could be delegated to some other account via Capability - possibly helpful for some
+multisig contract hosts.
+
+```cadence
+/// Serves as identification for a caller's address.
+access(all) resource Host {
+    /// Returns the resource owner's address
+    access(all) view fun address(): Address
+}
+```
+
+Within the `MigrationContractStaging` contract account, code is saved on a contract-basis as a `ContractUpdate` struct
+within a `Capsule` resource and stored at a the derived path. The `Capsule` simply serves as a dedicated repository for
+staged contract code.
+
+```cadence
+/// Represents contract and its corresponding code.
+access(all) struct ContractUpdate {
+    access(all) let address: Address
+    access(all) let name: String
+    access(all) var code: String
+
+    /// Validates that the named contract exists at the target address.
+    access(all) view fun isValid(): Bool 
+    /// Serializes the address and name into a string of the form 0xADDRESS.NAME
+    access(all) view fun toString(): String
+    /// Returns human-readable string of the Cadence code.
+    access(all) view fun codeAsCadence(): String
+    /// Replaces the ContractUpdate code with that provided.
+    access(contract) fun replaceCode(_ code: String)
+}
+
+/// Resource that stores pending contract updates in a ContractUpdate struct.
+access(all) resource Capsule {
+    /// The address, name and code of the contract that will be updated.
+    access(self) let update: ContractUpdate
+
+    /// Returns the staged contract update in the form of a ContractUpdate struct.
+    access(all) view fun getContractUpdate(): ContractUpdate
+    /// Replaces the staged contract code with the given hex-encoded Cadence code.
+    access(contract) fun replaceCode(code: String)
+}
+```
+
+To support ongoing staging progress across the network, the single `StagingStatusUpdated` event is emitted any time a
+contract is staged (`status == true`), staged code is replaced (`status == false`), or a contract is unstaged (`status
+== nil`).
+
+```cadence
+access(all) event StagingStatusUpdated(
+    capsuleUUID: UInt64,
+    address: Address,
+    codeHash: [UInt8],
+    contract: String,
+    status: Bool?
+)
+```
+Included in the contact are methods for querying staging status and retrieval of staged code. This enables platforms
+like Flowview, Flowdiver, ContractBrowser, etc. to display the staging status of contracts on any given account.
+
+```cadence
+/* --- Public Getters --- */
+//
+/// Returns true if the contract is currently staged.
+access(all) fun isStaged(address: Address, name: String): Bool
+/// Returns the names of all staged contracts for the given address.
+access(all) fun getStagedContractNames(forAddress: Address): [String]
+/// Returns the staged contract Cadence code for the given address and name.
+access(all) fun getStagedContractCode(address: Address, name: String): String?
+/// Returns an array of all staged contract host addresses.
+access(all) view fun getAllStagedContractHosts(): [Address]
+/// Returns a dictionary of all staged contract code for the given address.
+access(all) fun getAllStagedContractCode(forAddress: Address): {String: String}
 ```
 
 ## References
