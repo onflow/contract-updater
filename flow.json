@@ -47,7 +47,8 @@
 		"MigrationContractStaging": {
 			"source": "./contracts/MigrationContractStaging.cdc",
 			"aliases": {
-				"emulator": "f8d6e0586b0a20c7"
+				"emulator": "f8d6e0586b0a20c7",
+				"testing": "0000000000000007"
 			}
 		},
 		"NonFungibleToken": {
