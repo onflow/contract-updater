@@ -95,9 +95,9 @@ this contract's code previously, it will be overwritted by the code you provided
 
 ### Checking Staging Status
 
-You may want to validate that your contract has been staged correctly. To do so, you can run the
-[`get_staged_contract_code.cdc` script](./scripts/migration-contract-staging/get_staged_contract_code.cdc), passing the
-address & name of the contract you're requesting. This script can also help you get the staged code for your
+You may later want to retrieve your contract's staged code. To do so, you can run the [`get_staged_contract_code.cdc`
+script](./scripts/migration-contract-staging/get_staged_contract_code.cdc), passing the address & name of the contract
+you're requesting and getting the Cadence code in return. This script can also help you get the staged code for your
 dependencies if the project owner has staged their code.
 
 ```sh
