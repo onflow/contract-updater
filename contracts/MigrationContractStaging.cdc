@@ -49,7 +49,8 @@ access(all) contract MigrationContractStaging {
     /// 2 - Call stageContract() with the host reference and contract name and contract code you wish to stage
     ///
     /// Stages the contract code for the given contract name at the host address. If the contract is already staged,
-    /// the code will be replaced. 
+    /// the code will be replaced.
+    ///
     access(all) fun stageContract(host: &Host, name: String, code: String) {
         if self.stagedContracts[host.address()] == nil {
             self.stagedContracts.insert(key: host.address(), [name])
@@ -66,7 +67,7 @@ access(all) contract MigrationContractStaging {
         }
     }
 
-    /// Removes the staged contract code from the staging environment
+    /// Removes the staged contract code from the staging environment.
     ///
     access(all) fun unstageContract(host: &Host, name: String) {
         pre {
@@ -89,19 +90,19 @@ access(all) contract MigrationContractStaging {
 
     /* --- Public Getters --- */
 
-    /// Returns true if the contract is currently staged
+    /// Returns true if the contract is currently staged.
     ///
     access(all) fun isStaged(address: Address, name: String): Bool {
         return self.stagedContracts[address]?.contains(name) ?? false
     }
 
-    /// Returns the names of all staged contracts for the given address
+    /// Returns the names of all staged contracts for the given address.
     ///
     access(all) fun getStagedContractNames(forAddress: Address): [String] {
         return self.stagedContracts[forAddress] ?? []
     }
 
-    /// Returns the staged contract Cadence code for the given address and name
+    /// Returns the staged contract Cadence code for the given address and name.
     ///
     access(all) fun getStagedContractCode(address: Address, name: String): String? {
         let capsulePath: StoragePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
@@ -112,13 +113,13 @@ access(all) contract MigrationContractStaging {
         }
     }
 
-    /// Returns an array of all staged contract host addresses
+    /// Returns an array of all staged contract host addresses.
     ///
     access(all) view fun getAllStagedContractHosts(): [Address] {
         return self.stagedContracts.keys
     }
 
-    /// Returns a dictionary of all staged contract code for the given address
+    /// Returns a dictionary of all staged contract code for the given address.
     ///
     access(all) fun getAllStagedContractCode(forAddress: Address): {String: String} {
         if self.stagedContracts[forAddress] == nil {
@@ -169,7 +170,7 @@ access(all) contract MigrationContractStaging {
         ContractUpdate
      ********************/
 
-    /// Represents contract and its corresponding code
+    /// Represents contract and its corresponding code.
     ///
     access(all) struct ContractUpdate {
         access(all) let address: Address
@@ -182,7 +183,7 @@ access(all) contract MigrationContractStaging {
             self.code = code
         }
 
-        /// Validates that the named contract exists at the target address
+        /// Validates that the named contract exists at the target address.
         ///
         access(all) view fun isValid(): Bool {
             return getAccount(self.address).contracts.names.contains(self.name)
@@ -194,12 +195,14 @@ access(all) contract MigrationContractStaging {
             return self.address.toString().concat(".").concat(self.name)
         }
 
-        /// Returns human-readable string of the Cadence code
+        /// Returns human-readable string of the Cadence code.
         ///
         access(all) view fun codeAsCadence(): String {
             return String.fromUTF8(self.code.decodeHex()) ?? panic("Problem stringifying code!")
         }
 
+        /// Replaces the ContractUpdate code with that provided.
+        ///
         access(contract) fun replaceCode(_ code: String) {
             self.code = code
         }
@@ -231,7 +234,7 @@ access(all) contract MigrationContractStaging {
     /// Cadence 1.0 milestone.
     ///
     access(all) resource Capsule {
-        /// The address, name and code of the contract that will be updated
+        /// The address, name and code of the contract that will be updated.
         access(self) let update: ContractUpdate
 
         init(update: ContractUpdate) {
@@ -242,13 +245,13 @@ access(all) contract MigrationContractStaging {
             self.update = update
         }
 
-        /// Returns the staged contract update in the form of a ContractUpdate struct
+        /// Returns the staged contract update in the form of a ContractUpdate struct.
         ///
         access(all) view fun getContractUpdate(): ContractUpdate {
             return self.update
         }
 
-        /// Replaces the staged contract code with the given hex-encoded Cadence code
+        /// Replaces the staged contract code with the given hex-encoded Cadence code.
         ///
         access(contract) fun replaceCode(code: String) {
             post {
@@ -285,6 +288,9 @@ access(all) contract MigrationContractStaging {
         return <- capsule
     }
 
+    /// Removes the staged update's Capsule from storage and returns the UUID of the removed Capsule or nil if it
+    /// wasn't found. Also removes the contract name from the stagedContracts mapping.
+    ///
     access(self) fun removeStagedContract(address: Address, name: String): UInt64? {
         let contractIndex: Int = self.stagedContracts[address]!.firstIndex(of: name)!
         self.stagedContracts[address]!.remove(at: contractIndex)
@@ -295,6 +301,9 @@ access(all) contract MigrationContractStaging {
         return self.destroyCapsule(address: address, name: name)
     }
 
+    /// Destroys the Capsule resource at the derived path in this contract's account storage and returns the UUID of
+    /// the destroyed Capsule if it existed.
+    ///
     access(self) fun destroyCapsule(address: Address, name: String): UInt64? {
         let capsulePath: StoragePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
         if let capsule <- self.account.load<@Capsule>(from: capsulePath) {
