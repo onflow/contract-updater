@@ -64,6 +64,17 @@ access(all) fun testStagedNonExistentContractFails() {
     assertIsStaged(contractAddress: alice.address, contractName: "A", invert: true)
 }
 
+access(all) fun testStageInvalidHexCodeFails() {
+    let txResult = executeTransaction(
+        "../transactions/migration-contract-staging/stage_contract.cdc",
+        ["Foo", "12309fana9u13nuaerf09adf"],
+        fooAccount
+    )
+    Test.expect(txResult, Test.beFailed())
+    
+    assertIsStaged(contractAddress: fooAccount.address, contractName: "Foo", invert: true)
+}
+
 access(all) fun testStageContractSucceeds() {
     let txResult = executeTransaction(
         "../transactions/migration-contract-staging/stage_contract.cdc",
@@ -135,6 +146,15 @@ access(all) fun testStageMultipleContractsSucceeds() {
     let allStagedCodeForBCAccount = getAllStagedContractCodeForAddress(contractAddress: bcAccount.address)
     assertStagedContractCodeEqual({ "A": aUpdateCadence }, allStagedCodeForAAccount)
     assertStagedContractCodeEqual({ "B": bUpdateCadence, "C": cUpdateCadence }, allStagedCodeForBCAccount)
+}
+
+access(all) fun testReplaceStagedCodeSucceeds() {
+    let txResult = executeTransaction(
+        "../transactions/migration-contract-staging/stage_contract.cdc",
+        ["Foo", fooUpdateCode],
+        fooAccount
+    )
+    Test.expect(txResult, Test.beSucceeded())
 }
 
 access(all) fun testUnstageContractSucceeds() {
