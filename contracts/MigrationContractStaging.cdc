@@ -220,12 +220,14 @@ access(all) contract MigrationContractStaging {
      ********************/
 
     /// Serves as identification for a caller's address.
-    /// NOTE: Should be saved in storage and access safeguarded as reference grants access to contract staging.
+    /// NOTE: Should be saved in storage and access safeguarded as reference grants access to contract staging. If a
+    /// contract host wishes to delegate staging to another account (e.g. multisig account setup enabling a developer
+    /// to stage on its behalf), it should create a PRIVATE Host capability and publish it to the receiving account.
     ///
     access(all) resource Host {
         /// Returns the resource owner's address
         ///
-        access(all) view fun address(): Address{
+        access(all) view fun address(): Address {
             return self.owner?.address ?? panic("Host is unowned!")
         }
     }
