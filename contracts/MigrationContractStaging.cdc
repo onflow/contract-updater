@@ -52,18 +52,25 @@ access(all) contract MigrationContractStaging {
     /// the code will be replaced.
     ///
     access(all) fun stageContract(host: &Host, name: String, code: String) {
+        let capsulePath: StoragePath = self.deriveCapsuleStoragePath(contractAddress: host.address(), contractName: name)
         if self.stagedContracts[host.address()] == nil {
+            // First time we're seeing contracts from this address - insert the address and contract name
             self.stagedContracts.insert(key: host.address(), [name])
+            // Create a new Capsule to store the staged code
             let capsule: @Capsule <- self.createCapsule(host: host, name: name, code: code)
-            
-            self.account.save(<-capsule, to: self.deriveCapsuleStoragePath(contractAddress: host.address(), contractName: name))
+            self.account.save(<-capsule, to: capsulePath)
         } else {
+            // We've seen contracts from this host address before
             if let contractIndex: Int = self.stagedContracts[host.address()]!.firstIndex(of: name) {
-                self.stagedContracts[host.address()]!.remove(at: contractIndex)
+                // The contract is already staged - replace the code
+                let capsule: &Capsule = self.account.borrow<&Capsule>(from: capsulePath)
+                    ?? panic("Could not borrow existing Capsule from storage for staged contract")
+                capsule.replaceCode(code: code)
+            } else {
+                // First time staging this contrac - add the contract name to the list of contracts staged for host
+                self.stagedContracts[host.address()]!.append(name)
+                self.account.save(<-self.createCapsule(host: host, name: name, code: code), to: capsulePath)
             }
-            self.stagedContracts[host.address()]!.append(name)
-            let capsulePath: StoragePath = self.deriveCapsuleStoragePath(contractAddress: host.address(), contractName: name)
-            self.account.borrow<&Capsule>(from: capsulePath)!.replaceCode(code: code)
         }
     }
 
