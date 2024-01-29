@@ -17,8 +17,12 @@ access(all) contract MigrationContractStaging {
     access(self) let delimiter: String
     access(self) let capsulePathPrefix: String
     access(all) let HostStoragePath: StoragePath
+    access(all) let AdminStoragePath: StoragePath
     /// Maps contract addresses to an array of staged contract names
     access(self) let stagedContracts: {Address: [String]}
+    /// The block height at which updates can no no longer be staged. If nil, updates can be staged indefinitely until
+    /// the cutoff value is set.
+    access(all) var stagingCutoff: UInt64?
 
     /// Event emitted when a contract's code is staged
     /// status == true - insert | staged == false - replace | staged == nil - remove
@@ -30,6 +34,8 @@ access(all) contract MigrationContractStaging {
         contract: String,
         status: Bool?
     )
+    /// Emitted when the stagingCutoff value is updated
+    access(all) event StagingCutoffUpdated(old: UInt64?, new: UInt64?)
 
     /********************
         Public Methods
@@ -52,6 +58,9 @@ access(all) contract MigrationContractStaging {
     /// the code will be replaced.
     ///
     access(all) fun stageContract(host: &Host, name: String, code: String) {
+        pre {
+            self.stagingCutoff == nil || self.stagingCutoff! > getCurrentBlock().height: "Staging period has ended"
+        }
         let capsulePath: StoragePath = self.deriveCapsuleStoragePath(contractAddress: host.address(), contractName: name)
         if self.stagedContracts[host.address()] == nil {
             // First time we're seeing contracts from this address - insert the address and contract name
@@ -78,6 +87,7 @@ access(all) contract MigrationContractStaging {
     ///
     access(all) fun unstageContract(host: &Host, name: String) {
         pre {
+            self.stagingCutoff == nil || self.stagingCutoff! > getCurrentBlock().height: "Staging period has ended"
             self.isStaged(address: host.address(), name: name): "Contract is not staged"
         }
         post {
@@ -99,13 +109,13 @@ access(all) contract MigrationContractStaging {
 
     /// Returns true if the contract is currently staged.
     ///
-    access(all) fun isStaged(address: Address, name: String): Bool {
+    access(all) view fun isStaged(address: Address, name: String): Bool {
         return self.stagedContracts[address]?.contains(name) ?? false
     }
 
     /// Returns the names of all staged contracts for the given address.
     ///
-    access(all) fun getStagedContractNames(forAddress: Address): [String] {
+    access(all) view fun getStagedContractNames(forAddress: Address): [String] {
         return self.stagedContracts[forAddress] ?? []
     }
 
@@ -128,7 +138,7 @@ access(all) contract MigrationContractStaging {
 
     /// Returns a dictionary of all staged contract code for the given address.
     ///
-    access(all) fun getAllStagedContractCode(forAddress: Address): {String: String} {
+    access(all) view fun getAllStagedContractCode(forAddress: Address): {String: String} {
         if self.stagedContracts[forAddress] == nil {
             return {}
         }
@@ -149,7 +159,7 @@ access(all) contract MigrationContractStaging {
 
     /// Returns a StoragePath to store the Capsule of the form:
     ///     /storage/self.capsulePathPrefix_ADDRESS_NAME
-    access(all) fun deriveCapsuleStoragePath(contractAddress: Address, contractName: String): StoragePath {
+    access(all) view fun deriveCapsuleStoragePath(contractAddress: Address, contractName: String): StoragePath {
         return StoragePath(
                 identifier: self.capsulePathPrefix
                     .concat(self.delimiter)
@@ -267,6 +277,26 @@ access(all) contract MigrationContractStaging {
         }
     }
 
+    /********************
+            Admin
+     ********************/
+
+    /// Admin resource for updating the stagingCutoff value
+    ///
+    access(all) resource Admin {
+
+        /// Sets the block height at which updates can no longer be staged
+        ///
+        access(all) fun setStagingCutoff(atHeight: UInt64?) {
+            pre {
+                atHeight == nil || atHeight! > getCurrentBlock().height:
+                    "Height must be nil or greater than current block height"
+            }
+            emit StagingCutoffUpdated(old: MigrationContractStaging.stagingCutoff, new: atHeight)
+            MigrationContractStaging.stagingCutoff = atHeight
+        }
+    }
+
     /*********************
         Internal Methods
      *********************/
@@ -318,9 +348,13 @@ access(all) contract MigrationContractStaging {
         self.HostStoragePath = StoragePath(
                 identifier: "MigrationContractStagingHost".concat(self.delimiter).concat(self.account.address.toString())
             ) ?? panic("Could not derive Host StoragePath")
+        self.AdminStoragePath = /storage/MigrationContractStagingAdmin
         self.capsulePathPrefix = "MigrationContractStagingCapsule"
             .concat(self.delimiter)
             .concat(self.account.address.toString())
         self.stagedContracts = {}
+        self.stagingCutoff = nil
+
+        self.account.save(<-create Admin(), to: self.AdminStoragePath)
     }
 }

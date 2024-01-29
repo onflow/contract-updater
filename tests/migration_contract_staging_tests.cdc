@@ -1,5 +1,6 @@
 import Test
 import BlockchainHelpers
+import "MigrationContractStaging"
 
 // Contract hosts as defined in flow.json
 access(all) let fooAccount = Test.getAccount(0x0000000000000008)
@@ -15,6 +16,9 @@ access(all) let bUpdateCode = "696d706f727420412066726f6d20307830303030303030303
 access(all) let bUpdateCadence = String.fromUTF8(bUpdateCode.decodeHex()) ?? panic("Problem decoding bUpdateCode")
 access(all) let cUpdateCode = "696d706f727420412066726f6d203078303030303030303030303030303030390a696d706f727420422066726f6d203078303030303030303030303030303031300a0a61636365737328616c6c2920636f6e74726163742043207b0a0a2020202061636365737328616c6c29206c65742053746f72616765506174683a2053746f72616765506174680a2020202061636365737328616c6c29206c6574205075626c6963506174683a205075626c6963506174680a0a2020202061636365737328616c6c29207265736f7572636520696e74657266616365204f757465725075626c6963207b0a202020202020202061636365737328616c6c292066756e20676574466f6f46726f6d2869643a2055496e743634293a20537472696e670a202020202020202061636365737328616c6c292066756e2067657442617246726f6d2869643a2055496e743634293a20537472696e670a202020207d0a0a2020202061636365737328616c6c29207265736f75726365204f75746572203a204f757465725075626c6963207b0a202020202020202061636365737328616c6c29206c657420696e6e65723a20407b55496e7436343a20412e527d0a0a2020202020202020696e69742829207b0a20202020202020202020202073656c662e696e6e6572203c2d207b7d0a20202020202020207d0a0a202020202020202061636365737328616c6c292066756e20676574466f6f46726f6d2869643a2055496e743634293a20537472696e67207b0a20202020202020202020202072657475726e2073656c662e626f72726f775265736f75726365286964293f2e666f6f2829203f3f2070616e696328224e6f207265736f7572636520666f756e64207769746820676976656e20494422290a20202020202020207d0a0a202020202020202061636365737328616c6c292066756e2067657442617246726f6d2869643a2055496e743634293a20537472696e67207b0a20202020202020202020202072657475726e2073656c662e626f72726f775265736f75726365286964293f2e6261722829203f3f2070616e696328224e6f207265736f7572636520666f756e64207769746820676976656e20494422290a20202020202020207d0a0a202020202020202061636365737328616c6c292066756e206164645265736f75726365285f20693a2040412e5229207b0a20202020202020202020202073656c662e696e6e65725b692e757569645d203c2d2120690a20202020202020207d0a0a202020202020202061636365737328616c6c292066756e20626f72726f775265736f75726365285f2069643a2055496e743634293a20267b412e497d3f207b0a20202020202020202020202072657475726e202673656c662e696e6e65725b69645d20617320267b412e497d3f0a20202020202020207d0a0a202020202020202061636365737328616c6c292066756e2072656d6f76655265736f75726365285f2069643a2055496e743634293a2040412e523f207b0a20202020202020202020202072657475726e203c2d2073656c662e696e6e65722e72656d6f7665286b65793a206964290a20202020202020207d0a0a202020202020202064657374726f792829207b0a20202020202020202020202064657374726f792073656c662e696e6e65720a20202020202020207d0a202020207d0a0a20202020696e69742829207b0a202020202020202073656c662e53746f7261676550617468203d202f73746f726167652f4f757465720a202020202020202073656c662e5075626c696350617468203d202f7075626c69632f4f757465725075626c69630a0a202020202020202073656c662e6163636f756e742e736176653c404f757465723e283c2d637265617465204f7574657228292c20746f3a2073656c662e53746f7261676550617468290a202020202020202073656c662e6163636f756e742e6c696e6b3c267b4f757465725075626c69637d3e2873656c662e5075626c6963506174682c207461726765743a2073656c662e53746f7261676550617468290a0a20202020202020206c6574206f75746572203d2073656c662e6163636f756e742e626f72726f773c264f757465723e2866726f6d3a2073656c662e53746f726167655061746829210a20202020202020206f757465722e6164645265736f75726365283c2d20422e637265617465522829290a202020207d0a7d"
 access(all) let cUpdateCadence = String.fromUTF8(cUpdateCode.decodeHex()) ?? panic("Problem decoding cUpdateCode")
+
+// Block height different to add to the staging cutoff
+access(all) let blockHeightDelta: UInt64 = 10
 
 access(all) fun setup() {
     var err = Test.deployContract(
@@ -97,6 +101,14 @@ access(all) fun testStageContractSucceeds() {
 
     let allStagedCodeForFooAccount = getAllStagedContractCodeForAddress(contractAddress: fooAccount.address)
     assertStagedContractCodeEqual({ "Foo": fooUpdateCadence}, allStagedCodeForFooAccount)
+
+    let events = Test.eventsOfType(Type<MigrationContractStaging.StagingStatusUpdated>())
+    Test.assertEqual(1, events.length)
+
+    let evt = events[0] as! MigrationContractStaging.StagingStatusUpdated
+    Test.assertEqual(fooAccount.address, evt.address)
+    Test.assertEqual("Foo", evt.contract)
+    Test.assertEqual(true, evt.status!)
 }
 
 access(all) fun testStageMultipleContractsSucceeds() {
@@ -123,6 +135,21 @@ access(all) fun testStageMultipleContractsSucceeds() {
     assertIsStaged(contractAddress: aAccount.address, contractName: "A", invert: false)
     assertIsStaged(contractAddress: bcAccount.address, contractName: "B", invert: false)
     assertIsStaged(contractAddress: bcAccount.address, contractName: "C", invert: false)
+
+    let events = Test.eventsOfType(Type<MigrationContractStaging.StagingStatusUpdated>())
+    Test.assertEqual(4, events.length)
+    let cEvt = events[1] as! MigrationContractStaging.StagingStatusUpdated
+    Test.assertEqual(bcAccount.address, cEvt.address)
+    Test.assertEqual("C", cEvt.contract)
+    Test.assertEqual(true, cEvt.status!)
+    let bEvt = events[2] as! MigrationContractStaging.StagingStatusUpdated
+    Test.assertEqual(bcAccount.address, cEvt.address)
+    Test.assertEqual("B", bEvt.contract)
+    Test.assertEqual(true, bEvt.status!)
+    let aEvt = events[3] as! MigrationContractStaging.StagingStatusUpdated
+    Test.assertEqual(aAccount.address, aEvt.address)
+    Test.assertEqual("A", aEvt.contract)
+    Test.assertEqual(true, aEvt.status!)
 
     let aAccountStagedContractNames = getStagedContractNamesForAddress(aAccount.address)
     let bcAccountStagedContractNames = getStagedContractNamesForAddress(bcAccount.address)
@@ -155,6 +182,13 @@ access(all) fun testReplaceStagedCodeSucceeds() {
         fooAccount
     )
     Test.expect(txResult, Test.beSucceeded())
+
+    let events = Test.eventsOfType(Type<MigrationContractStaging.StagingStatusUpdated>())
+    Test.assertEqual(5, events.length)
+    let evt = events[4] as! MigrationContractStaging.StagingStatusUpdated
+    Test.assertEqual(fooAccount.address, evt.address)
+    Test.assertEqual("Foo", evt.contract)
+    Test.assertEqual(false, evt.status!)
 }
 
 access(all) fun testUnstageContractSucceeds() {
@@ -164,6 +198,13 @@ access(all) fun testUnstageContractSucceeds() {
         fooAccount
     )
     Test.expect(txResult, Test.beSucceeded())
+
+    let events = Test.eventsOfType(Type<MigrationContractStaging.StagingStatusUpdated>())
+    Test.assertEqual(6, events.length)
+    let evt = events[5] as! MigrationContractStaging.StagingStatusUpdated
+    Test.assertEqual(fooAccount.address, evt.address)
+    Test.assertEqual("Foo", evt.contract)
+    Test.assertEqual(nil, evt.status)
 
     assertIsStaged(contractAddress: fooAccount.address, contractName: "Foo", invert: true)
 
@@ -178,6 +219,46 @@ access(all) fun testUnstageContractSucceeds() {
 
     let allStagedCodeForFooAccount = getAllStagedContractCodeForAddress(contractAddress: fooAccount.address)
     assertStagedContractCodeEqual({}, allStagedCodeForFooAccount)
+}
+
+access(all) fun testSetStagingCutoffSucceeds() {
+    let admin = Test.getAccount(0x07)
+    let currentHeight = executeScript(
+        "../scripts/test/get_current_block_height.cdc",
+        []
+    ).returnValue as! UInt64? ?? panic("Problem retrieving current block height")
+    let expectedCutoff: UInt64 = currentHeight + blockHeightDelta
+    let txResult = executeTransaction(
+        "../transactions/migration-contract-staging/admin/set_staging_cutoff.cdc",
+        [expectedCutoff],
+        admin
+    )
+    Test.expect(txResult, Test.beSucceeded())
+
+    let events = Test.eventsOfType(Type<MigrationContractStaging.StagingCutoffUpdated>())
+    Test.assertEqual(1, events.length)
+    let evt = events[0] as! MigrationContractStaging.StagingCutoffUpdated
+    Test.assertEqual(nil, evt.old)
+    Test.assertEqual(expectedCutoff, evt.new!)
+
+    let stagingCutoffResult = executeScript(
+        "../scripts/migration-contract-staging/get_staging_cutoff.cdc",
+        []
+    )
+    let stagingCutoff = stagingCutoffResult.returnValue as! UInt64? ?? panic("Problem retrieving staging cutoff value")
+    Test.assertEqual(expectedCutoff, stagingCutoff)
+
+    tickTock(advanceBlocks: blockHeightDelta + 1, admin)
+}
+
+access(all) fun testStageBeyondCutoffFails() {
+
+    let stageAttemptResult = executeTransaction(
+        "../transactions/migration-contract-staging/stage_contract.cdc",
+        ["Foo"],
+        fooAccount
+    )
+    Test.expect(stageAttemptResult, Test.beFailed())
 }
 
 /* --- Test Helpers --- */
@@ -242,4 +323,15 @@ access(all) fun getAllStagedContractCodeForAddress(contractAddress: Address): {S
     )
     return allStagedContractCodeForAddressResult.returnValue as! {String: String}?
         ?? panic("Problem retrieving result of getAllStagedContractCodeForAddress()")
+}
+
+access(all) fun tickTock(advanceBlocks: UInt64, _ signer: Test.Account) {
+    var blocksAdvanced: UInt64 = 0
+    while blocksAdvanced < advanceBlocks {
+        
+        let txResult = executeTransaction("../transactions/test/tick_tock.cdc", [], signer)
+        Test.expect(txResult, Test.beSucceeded())
+
+        blocksAdvanced = blocksAdvanced + 1
+    }
 }
