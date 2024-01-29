@@ -76,7 +76,7 @@ access(all) contract MigrationContractStaging {
                     ?? panic("Could not borrow existing Capsule from storage for staged contract")
                 capsule.replaceCode(code: code)
             } else {
-                // First time staging this contrac - add the contract name to the list of contracts staged for host
+                // First time staging this contract - add the contract name to the list of contracts staged for host
                 self.stagedContracts[host.address()]!.append(name)
                 self.account.save(<-self.createCapsule(host: host, name: name, code: code), to: capsulePath)
             }

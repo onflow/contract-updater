@@ -86,7 +86,7 @@ transaction(contractName: String, contractCode: String) {
 ```
 
 At the end of this transaction, your contract will be staged in the `MigrationContractStaging` account. If you staged
-this contract's code previously, it will be overwritted by the code you provided in this transaction.
+this contract's code previously, it will be overwritten by the code you provided in this transaction.
 
 > :warning: NOTE: Staging your contract successfully does not mean that your contract code is correct. Your testing and
 > validation processes should include testing your contract code against the Cadence 1.0 interpreter to ensure your
