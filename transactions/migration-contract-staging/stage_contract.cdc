@@ -15,12 +15,11 @@ transaction(contractName: String, contractCode: String) {
     
     prepare(signer: AuthAccount) {
         // Configure Host resource if needed
-        let hostStoragePath: StoragePath = MigrationContractStaging.deriveHostStoragePath(hostAddress: signer.address)
-        if signer.borrow<&MigrationContractStaging.Host>(from: hostStoragePath) == nil {
-            signer.save(<-MigrationContractStaging.createHost(), to: hostStoragePath)
+        if signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath) == nil {
+            signer.save(<-MigrationContractStaging.createHost(), to: MigrationContractStaging.HostStoragePath)
         }
         // Assign Host reference
-        self.host = signer.borrow<&MigrationContractStaging.Host>(from: hostStoragePath)!
+        self.host = signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath)!
     }
 
     execute {

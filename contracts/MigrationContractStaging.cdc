@@ -12,11 +12,11 @@
 ///
 access(all) contract MigrationContractStaging {
 
-    // Path derivation constants
+    // Path constants
     //
     access(self) let delimiter: String
-    access(self) let hostPathPrefix: String
     access(self) let capsulePathPrefix: String
+    access(all) let HostStoragePath: StoragePath
     /// Maps contract addresses to an array of staged contract names
     access(self) let stagedContracts: {Address: [String]}
 
@@ -37,7 +37,7 @@ access(all) contract MigrationContractStaging {
 
     /* --- Staging Methods --- */
 
-    /// 1 - Create a host and save it in your contract-hosting account at the path derived from deriveHostStoragePath()
+    /// 1 - Create a host and save it in your contract-hosting account at MigrationContractStaging.HostStoragePath
     ///
     /// Creates a Host serving as identification for the contract account. Reference to this resource identifies the
     /// calling address so it must be saved in account storage before being used to stage a contract update.
@@ -145,16 +145,6 @@ access(all) contract MigrationContractStaging {
             }
         }
         return stagedCode
-    }
-
-    /// Returns a StoragePath to store the Host of the form:
-    ///     /storage/self.hostPathPrefix_ADDRESS
-    access(all) fun deriveHostStoragePath(hostAddress: Address): StoragePath {
-        return StoragePath(
-                identifier: self.hostPathPrefix
-                    .concat(self.delimiter)
-                    .concat(hostAddress.toString())
-            ) ?? panic("Could not derive Host StoragePath for given address")
     }
 
     /// Returns a StoragePath to store the Capsule of the form:
@@ -325,9 +315,9 @@ access(all) contract MigrationContractStaging {
 
     init() {
         self.delimiter = "_"
-        self.hostPathPrefix = "MigrationContractStagingHost".concat(self.delimiter)
-            .concat(self.delimiter)
-            .concat(self.account.address.toString())
+        self.HostStoragePath = StoragePath(
+                identifier: "MigrationContractStagingHost".concat(self.delimiter).concat(self.account.address.toString())
+            ) ?? panic("Could not derive Host StoragePath")
         self.capsulePathPrefix = "MigrationContractStagingCapsule"
             .concat(self.delimiter)
             .concat(self.account.address.toString())

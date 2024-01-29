@@ -10,8 +10,7 @@ transaction(contractName: String) {
     
     prepare(signer: AuthAccount) {
         // Assign Host reference
-        let hostStoragePath: StoragePath = MigrationContractStaging.deriveHostStoragePath(hostAddress: signer.address)
-        self.host = signer.borrow<&MigrationContractStaging.Host>(from: hostStoragePath)
+        self.host = signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath)
             ?? panic("Host was not found in storage")
     }
 

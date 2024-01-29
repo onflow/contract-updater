@@ -65,12 +65,11 @@ transaction(contractName: String, contractCode: String) {
     
     prepare(signer: AuthAccount) {
         // Configure Host resource if needed
-        let hostStoragePath: StoragePath = MigrationContractStaging.deriveHostStoragePath(hostAddress: signer.address)
-        if signer.borrow<&MigrationContractStaging.Host>(from: hostStoragePath) == nil {
-            signer.save(<-MigrationContractStaging.createHost(), to: hostStoragePath)
+        if signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath) == nil {
+            signer.save(<-MigrationContractStaging.createHost(), to: MigrationContractStaging.HostStoragePath)
         }
         // Assign Host reference
-        self.host = signer.borrow<&MigrationContractStaging.Host>(from: hostStoragePath)!
+        self.host = signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath)!
     }
 
     execute {
@@ -126,7 +125,7 @@ The basic interface to stage a contract is the same as deploying a contract - na
 `stageContract()` again for the same contract will overwrite any existing staged code for that contract.
 
 ```cadence
-/// 1 - Create a host and save it in your contract-hosting account at the path derived from deriveHostStoragePath().
+/// 1 - Create a host and save it in your contract-hosting account at MigrationContractStaging.HostStoragePath
 access(all) fun createHost(): @Host
 /// 2 - Call stageContract() with the host reference and contract name and contract code you wish to stage.
 access(all) fun stageContract(host: &Host, name: String, code: String)
@@ -181,7 +180,7 @@ access(all) resource Capsule {
 }
 ```
 
-To support ongoing staging progress across the network, the single `StagingStatusUpdated` event is emitted any time a
+To support monitoring staging progress across the network, the single `StagingStatusUpdated` event is emitted any time a
 contract is staged (`status == true`), staged code is replaced (`status == false`), or a contract is unstaged (`status
 == nil`).
 
