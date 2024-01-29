@@ -88,12 +88,14 @@ access(all) contract MigrationContractStaging {
     access(all) fun unstageContract(host: &Host, name: String) {
         pre {
             self.stagingCutoff == nil || self.stagingCutoff! > getCurrentBlock().height: "Staging period has ended"
-            self.isStaged(address: host.address(), name: name): "Contract is not staged"
         }
         post {
             !self.isStaged(address: host.address(), name: name): "Contract is still staged"
         }
         let address: Address = host.address()
+        if self.stagedContracts[address] == nil {
+            return
+        }
         let capsuleUUID: UInt64 = self.removeStagedContract(address: address, name: name)
             ?? panic("Problem destroying update Capsule")
         emit StagingStatusUpdated(
