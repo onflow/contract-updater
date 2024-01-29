@@ -35,12 +35,8 @@ Coordinated Upgrade.
 - A Cadence 1.0 compatible contract serving as an update to your existing contract. Extending our example, if you're
   staging `A` in address `0x01`, you should have a contract named `A` that is Cadence 1.0 compatible. See the references
   below for more information on Cadence 1.0 language changes.
-- Your contract as a hex string.
-  - Included in this repo is a Python util to hex-encode your contract which outputs your contract's code as a hex
-    string. With Python installed, run:
-    ```sh
-    python3 ./src/get_code_hex.py <PATH_TO_YOUR_CONTRACT>
-    ```
+- Your contract as a hex string. You can get this by running `./hex-encode.sh <CONTRACT_FILENAME>` - **be sure to
+  explicitly state your contract's import addresses!**
 
 ### Staging Your Contract Update
 
