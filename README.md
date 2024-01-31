@@ -177,8 +177,8 @@ access(all) resource Capsule {
 ```
 
 To support monitoring staging progress across the network, the single `StagingStatusUpdated` event is emitted any time a
-contract is staged (`status == true`), staged code is replaced (`status == false`), or a contract is unstaged (`status
-== nil`).
+contract is staged (`status == "stage"`), staged code is replaced (`status == "replace"`), or a contract is unstaged
+(`status == "unstage"`).
 
 ```cadence
 access(all) event StagingStatusUpdated(
@@ -186,7 +186,7 @@ access(all) event StagingStatusUpdated(
     address: Address,
     codeHash: [UInt8],
     contract: String,
-    status: Bool?
+    action: String
 )
 ```
 Included in the contact are methods for querying staging status and retrieval of staged code. This enables platforms
