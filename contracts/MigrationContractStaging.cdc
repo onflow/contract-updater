@@ -25,14 +25,14 @@ access(all) contract MigrationContractStaging {
     access(all) var stagingCutoff: UInt64?
 
     /// Event emitted when a contract's code is staged
-    /// status == true - insert | staged == false - replace | staged == nil - remove
+    /// `action` ∈ {"stage", "replace", "unstage"} each denoting the action being taken on the staged contract
     /// NOTE: Does not guarantee that the contract code is valid Cadence
     access(all) event StagingStatusUpdated(
         capsuleUUID: UInt64,
         address: Address,
         codeHash: [UInt8],
         contract: String,
-        status: Bool?
+        action: String
     )
     /// Emitted when the stagingCutoff value is updated
     access(all) event StagingCutoffUpdated(old: UInt64?, new: UInt64?)
@@ -68,19 +68,19 @@ access(all) contract MigrationContractStaging {
             // Create a new Capsule to store the staged code
             let capsule: @Capsule <- self.createCapsule(host: host, name: name, code: code)
             self.account.save(<-capsule, to: capsulePath)
-        } else {
-            // We've seen contracts from this host address before
-            if let contractIndex: Int = self.stagedContracts[host.address()]!.firstIndex(of: name) {
-                // The contract is already staged - replace the code
-                let capsule: &Capsule = self.account.borrow<&Capsule>(from: capsulePath)
-                    ?? panic("Could not borrow existing Capsule from storage for staged contract")
-                capsule.replaceCode(code: code)
-            } else {
-                // First time staging this contract - add the contract name to the list of contracts staged for host
-                self.stagedContracts[host.address()]!.append(name)
-                self.account.save(<-self.createCapsule(host: host, name: name, code: code), to: capsulePath)
-            }
+            return
         }
+        // We've seen contracts from this host address before - check if the contract is already staged
+        if let contractIndex: Int = self.stagedContracts[host.address()]!.firstIndex(of: name) {
+            // The contract is already staged - replace the code
+            let capsule: &Capsule = self.account.borrow<&Capsule>(from: capsulePath)
+                ?? panic("Could not borrow existing Capsule from storage for staged contract")
+            capsule.replaceCode(code: code)
+            return
+        }
+        // First time staging this contract - add the contract name to the list of contracts staged for host
+        self.stagedContracts[host.address()]!.append(name)
+        self.account.save(<-self.createCapsule(host: host, name: name, code: code), to: capsulePath)
     }
 
     /// Removes the staged contract code from the staging environment.
@@ -103,7 +103,7 @@ access(all) contract MigrationContractStaging {
             address: address,
             codeHash: [],
             contract: name,
-            status: nil
+            action: "unstage"
         )
     }
 
@@ -274,7 +274,7 @@ access(all) contract MigrationContractStaging {
                 address: self.update.address,
                 codeHash: code.decodeHex(),
                 contract: self.update.name,
-                status: false
+                action: "replace"
             )
         }
     }
@@ -314,7 +314,7 @@ access(all) contract MigrationContractStaging {
             address: host.address(),
             codeHash: code.decodeHex(),
             contract: name,
-            status: true
+            action: "stage"
         )
         return <- capsule
     }

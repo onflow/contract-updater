@@ -108,7 +108,7 @@ access(all) fun testStageContractSucceeds() {
     let evt = events[0] as! MigrationContractStaging.StagingStatusUpdated
     Test.assertEqual(fooAccount.address, evt.address)
     Test.assertEqual("Foo", evt.contract)
-    Test.assertEqual(true, evt.status!)
+    Test.assertEqual("stage", evt.action)
 }
 
 access(all) fun testStageMultipleContractsSucceeds() {
@@ -141,15 +141,15 @@ access(all) fun testStageMultipleContractsSucceeds() {
     let cEvt = events[1] as! MigrationContractStaging.StagingStatusUpdated
     Test.assertEqual(bcAccount.address, cEvt.address)
     Test.assertEqual("C", cEvt.contract)
-    Test.assertEqual(true, cEvt.status!)
+    Test.assertEqual("stage", cEvt.action)
     let bEvt = events[2] as! MigrationContractStaging.StagingStatusUpdated
     Test.assertEqual(bcAccount.address, cEvt.address)
     Test.assertEqual("B", bEvt.contract)
-    Test.assertEqual(true, bEvt.status!)
+    Test.assertEqual("stage", bEvt.action)
     let aEvt = events[3] as! MigrationContractStaging.StagingStatusUpdated
     Test.assertEqual(aAccount.address, aEvt.address)
     Test.assertEqual("A", aEvt.contract)
-    Test.assertEqual(true, aEvt.status!)
+    Test.assertEqual("stage", aEvt.action)
 
     let aAccountStagedContractNames = getStagedContractNamesForAddress(aAccount.address)
     let bcAccountStagedContractNames = getStagedContractNamesForAddress(bcAccount.address)
@@ -188,7 +188,7 @@ access(all) fun testReplaceStagedCodeSucceeds() {
     let evt = events[4] as! MigrationContractStaging.StagingStatusUpdated
     Test.assertEqual(fooAccount.address, evt.address)
     Test.assertEqual("Foo", evt.contract)
-    Test.assertEqual(false, evt.status!)
+    Test.assertEqual("replace", evt.action)
 }
 
 access(all) fun testUnstageContractSucceeds() {
@@ -204,7 +204,7 @@ access(all) fun testUnstageContractSucceeds() {
     let evt = events[5] as! MigrationContractStaging.StagingStatusUpdated
     Test.assertEqual(fooAccount.address, evt.address)
     Test.assertEqual("Foo", evt.contract)
-    Test.assertEqual(nil, evt.status)
+    Test.assertEqual("unstage", evt.action)
 
     assertIsStaged(contractAddress: fooAccount.address, contractName: "Foo", invert: true)
 
