@@ -20,7 +20,7 @@ transaction(contractName: String) {
     }
 
     post {
-        MigrationContractStaging.isStaged(address: self.host.address(), name: contractName) == false:
+        !MigrationContractStaging.isStaged(address: self.host.address(), name: contractName):
             "Problem while unstaging update"
     }
 }

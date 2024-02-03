@@ -8,7 +8,7 @@ import "MigrationContractStaging"
 /// For more context, see the repo - https://github.com/onflow/contract-updater
 ///
 /// @param contractName: The name of the contract to be updated with the given code
-/// @param contractCode: The updated contract code as a hex-encoded String
+/// @param contractCode: The updated contract code
 ///
 transaction(contractName: String, contractCode: String) {
     let host: &MigrationContractStaging.Host
