@@ -35,18 +35,16 @@ Coordinated Upgrade.
 - A Cadence 1.0 compatible contract serving as an update to your existing contract. Extending our example, if you're
   staging `A` in address `0x01`, you should have a contract named `A` that is Cadence 1.0 compatible. See the references
   below for more information on Cadence 1.0 language changes.
-- Your contract as a hex string. You can get this by running `./hex-encode.sh <CONTRACT_FILENAME>` - **be sure to
-  explicitly state your contract's import addresses!**
 
 ### Staging Your Contract Update
 
 Armed with your pre-requisites, you're ready to stage your contract update. Simply run the [`stage_contract.cdc`
-transaction](./transactions/migration-contract-staging/stage_contract.cdc), passing your contract's name and hex string
-as arguments and signing as the contract host account.
+transaction](./transactions/migration-contract-staging/stage_contract.cdc), passing your contract's name and Cadence
+code as arguments and signing as the contract host account.
 
 ```sh
 flow transactions send ./transactions/migration-contract-staging/stage_contract.cdc \
-    <CONTRACT_NAME> <CONTRACT_HEX_CODE> \
+    <CONTRACT_NAME> "$(cat <CONTRACT_FILEPATH>)" \
     --signer <YOUR_SIGNER_ALIAS> \
     --network <TARGET_NETWORK>
 ```
@@ -171,7 +169,7 @@ access(all) resource Capsule {
 
     /// Returns the staged contract update in the form of a ContractUpdate struct.
     access(all) view fun getContractUpdate(): ContractUpdate
-    /// Replaces the staged contract code with the given hex-encoded Cadence code.
+    /// Replaces the staged contract code with the given Cadence code.
     access(contract) fun replaceCode(code: String)
 }
 ```

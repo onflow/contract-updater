@@ -30,7 +30,7 @@ access(all) contract MigrationContractStaging {
     access(all) event StagingStatusUpdated(
         capsuleUUID: UInt64,
         address: Address,
-        codeHash: [UInt8],
+        codeUTF8: [UInt8],
         contract: String,
         action: String
     )
@@ -101,7 +101,7 @@ access(all) contract MigrationContractStaging {
         emit StagingStatusUpdated(
             capsuleUUID: capsuleUUID,
             address: address,
-            codeHash: [],
+            codeUTF8: [],
             contract: name,
             action: "unstage"
         )
@@ -138,7 +138,7 @@ access(all) contract MigrationContractStaging {
     access(all) fun getStagedContractCode(address: Address, name: String): String? {
         let capsulePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
         if let capsule = self.account.borrow<&Capsule>(from: capsulePath) {
-            return capsule.getContractUpdate().codeAsCadence()
+            return capsule.getContractUpdate().code
         } else {
             return nil
         }
@@ -165,7 +165,7 @@ access(all) contract MigrationContractStaging {
         for path in capsulePaths {
             if let capsule = self.account.borrow<&Capsule>(from: path) {
                 let update = capsule.getContractUpdate()
-                stagedCode[update.name] = update.codeAsCadence()
+                stagedCode[update.name] = update.code
             }
         }
         return stagedCode
@@ -216,12 +216,6 @@ access(all) contract MigrationContractStaging {
             return self.address.toString().concat(".").concat(self.name)
         }
 
-        /// Returns human-readable string of the Cadence code.
-        ///
-        access(all) view fun codeAsCadence(): String {
-            return String.fromUTF8(self.code.decodeHex()) ?? panic("Problem stringifying code!")
-        }
-
         /// Replaces the ContractUpdate code with that provided.
         ///
         access(contract) fun replaceCode(_ code: String) {
@@ -262,7 +256,6 @@ access(all) contract MigrationContractStaging {
 
         init(update: ContractUpdate) {
             pre {
-                update.codeAsCadence() != nil: "Staged update code must be valid Cadence"
                 update.isValid(): "Target contract does not exist"
             }
             self.update = update
@@ -277,14 +270,11 @@ access(all) contract MigrationContractStaging {
         /// Replaces the staged contract code with the given updated Cadence code.
         ///
         access(contract) fun replaceCode(code: String) {
-            post {
-                self.update.codeAsCadence() != nil: "Staged update code must be valid Cadence"
-            }
             self.update.replaceCode(code)
             emit StagingStatusUpdated(
                 capsuleUUID: self.uuid,
                 address: self.update.address,
-                codeHash: code.decodeHex(),
+                codeUTF8: code.utf8,
                 contract: self.update.name,
                 action: "replace"
             )
@@ -324,7 +314,7 @@ access(all) contract MigrationContractStaging {
         emit StagingStatusUpdated(
             capsuleUUID: capsule.uuid,
             address: host.address(),
-            codeHash: code.decodeHex(),
+            codeUTF8: code.utf8,
             contract: name,
             action: "stage"
         )

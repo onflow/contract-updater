@@ -61,28 +61,17 @@ access(all) fun testStagedNonExistentContractFails() {
     let alice = Test.createAccount()
     let txResult = executeTransaction(
         "../transactions/migration-contract-staging/stage_contract.cdc",
-        ["A", aUpdateCode],
+        ["A", aUpdateCadence],
         alice
     )
     Test.expect(txResult, Test.beFailed())
     assertIsStaged(contractAddress: alice.address, contractName: "A", invert: true)
 }
 
-access(all) fun testStageInvalidHexCodeFails() {
-    let txResult = executeTransaction(
-        "../transactions/migration-contract-staging/stage_contract.cdc",
-        ["Foo", "12309fana9u13nuaerf09adf"],
-        fooAccount
-    )
-    Test.expect(txResult, Test.beFailed())
-    
-    assertIsStaged(contractAddress: fooAccount.address, contractName: "Foo", invert: true)
-}
-
 access(all) fun testStageContractSucceeds() {
     let txResult = executeTransaction(
         "../transactions/migration-contract-staging/stage_contract.cdc",
-        ["Foo", fooUpdateCode],
+        ["Foo", fooUpdateCadence],
         fooAccount
     )
     Test.expect(txResult, Test.beSucceeded())
@@ -97,7 +86,7 @@ access(all) fun testStageContractSucceeds() {
 
     let fooStagedContractCode = getStagedContractCode(contractAddress: fooAccount.address, contractName: "Foo")
         ?? panic("Problem retrieving result of getStagedContractCode()")
-    Test.assertEqual(fooUpdateCode, String.encodeHex(fooStagedContractCode.utf8))
+    Test.assertEqual(fooUpdateCadence, fooStagedContractCode)
 
     let allStagedCodeForFooAccount = getAllStagedContractCodeForAddress(contractAddress: fooAccount.address)
     assertStagedContractCodeEqual({ "Foo": fooUpdateCadence}, allStagedCodeForFooAccount)
@@ -115,19 +104,19 @@ access(all) fun testStageMultipleContractsSucceeds() {
     // Demonstrating staging multiple contracts on the same host & out of dependency order
     let cStagingTxResult = executeTransaction(
         "../transactions/migration-contract-staging/stage_contract.cdc",
-        ["C", cUpdateCode],
+        ["C", cUpdateCadence],
         bcAccount
     )
     Test.expect(cStagingTxResult, Test.beSucceeded())
     let bStagingTxResult = executeTransaction(
         "../transactions/migration-contract-staging/stage_contract.cdc",
-        ["B", bUpdateCode],
+        ["B", bUpdateCadence],
         bcAccount
     )
     Test.expect(bStagingTxResult, Test.beSucceeded())
     let aStagingTxResult = executeTransaction(
         "../transactions/migration-contract-staging/stage_contract.cdc",
-        ["A", aUpdateCode],
+        ["A", aUpdateCadence],
         aAccount
     )
     Test.expect(aStagingTxResult, Test.beSucceeded())
@@ -165,9 +154,9 @@ access(all) fun testStageMultipleContractsSucceeds() {
         ?? panic("Problem retrieving result of getStagedContractCode()")
     let cStagedCode = getStagedContractCode(contractAddress: bcAccount.address, contractName: "C")
         ?? panic("Problem retrieving result of getStagedContractCode()")
-    Test.assertEqual(aUpdateCode, String.encodeHex(aStagedCode.utf8))
-    Test.assertEqual(bUpdateCode, String.encodeHex(bStagedCode.utf8))
-    Test.assertEqual(cUpdateCode, String.encodeHex(cStagedCode.utf8))
+    Test.assertEqual(aUpdateCadence, aStagedCode)
+    Test.assertEqual(bUpdateCadence, bStagedCode)
+    Test.assertEqual(cUpdateCadence, cStagedCode)
 
     let allStagedCodeForAAccount = getAllStagedContractCodeForAddress(contractAddress: aAccount.address)
     let allStagedCodeForBCAccount = getAllStagedContractCodeForAddress(contractAddress: bcAccount.address)
@@ -178,7 +167,7 @@ access(all) fun testStageMultipleContractsSucceeds() {
 access(all) fun testReplaceStagedCodeSucceeds() {
     let txResult = executeTransaction(
         "../transactions/migration-contract-staging/stage_contract.cdc",
-        ["Foo", fooUpdateCode],
+        ["Foo", fooUpdateCadence],
         fooAccount
     )
     Test.expect(txResult, Test.beSucceeded())
