@@ -6,7 +6,7 @@
 ///
 /// To stage your contract update:
 /// 1. create a Host & save in your contract-hosting account
-/// 2. call stageContract() passing a reference to you Host, the contract name, and the hex-encoded Cadence code
+/// 2. call stageContract() passing a reference to you Host, the contract name, and the updated Cadence code
 ///
 /// This can be done in a single transaction! For more code context, see https://github.com/onflow/contract-updater
 ///
@@ -59,19 +59,19 @@ access(all) contract MigrationContractStaging {
     ///
     access(all) fun stageContract(host: &Host, name: String, code: String) {
         pre {
-            self.stagingCutoff == nil || self.stagingCutoff! > getCurrentBlock().height: "Staging period has ended"
+            self.stagingCutoff == nil || getCurrentBlock().height <= self.stagingCutoff!: "Staging period has ended"
         }
-        let capsulePath: StoragePath = self.deriveCapsuleStoragePath(contractAddress: host.address(), contractName: name)
+        let capsulePath = self.deriveCapsuleStoragePath(contractAddress: host.address(), contractName: name)
         if self.stagedContracts[host.address()] == nil {
             // First time we're seeing contracts from this address - insert the address and contract name
             self.stagedContracts.insert(key: host.address(), [name])
             // Create a new Capsule to store the staged code
-            let capsule: @Capsule <- self.createCapsule(host: host, name: name, code: code)
+            let capsule <- self.createCapsule(host: host, name: name, code: code)
             self.account.save(<-capsule, to: capsulePath)
             return
         }
         // We've seen contracts from this host address before - check if the contract is already staged
-        if let contractIndex: Int = self.stagedContracts[host.address()]!.firstIndex(of: name) {
+        if let contractIndex = self.stagedContracts[host.address()]!.firstIndex(of: name) {
             // The contract is already staged - replace the code
             let capsule: &Capsule = self.account.borrow<&Capsule>(from: capsulePath)
                 ?? panic("Could not borrow existing Capsule from storage for staged contract")
@@ -162,13 +162,13 @@ access(all) contract MigrationContractStaging {
     /// Returns a StoragePath to store the Capsule of the form:
     ///     /storage/self.capsulePathPrefix_ADDRESS_NAME
     access(all) view fun deriveCapsuleStoragePath(contractAddress: Address, contractName: String): StoragePath {
-        return StoragePath(
-                identifier: self.capsulePathPrefix
-                    .concat(self.delimiter)
-                    .concat(contractAddress.toString())
-                    .concat(self.delimiter)
-                    .concat(contractName)
-            ) ?? panic("Could not derive Capsule StoragePath for given address")
+        let identifier = self.capsulePathPrefix
+            .concat(self.delimiter)
+            .concat(contractAddress.toString())
+            .concat(self.delimiter)
+            .concat(contractName)
+        return StoragePath(identifier: identifier)
+            ?? panic("Could not derive Capsule StoragePath for given address")
     }
 
     /* ------------------------------------------------------------------------------------------------------------ */
@@ -262,7 +262,7 @@ access(all) contract MigrationContractStaging {
             return self.update
         }
 
-        /// Replaces the staged contract code with the given hex-encoded Cadence code.
+        /// Replaces the staged contract code with the given updated Cadence code.
         ///
         access(contract) fun replaceCode(code: String) {
             post {
@@ -289,13 +289,13 @@ access(all) contract MigrationContractStaging {
 
         /// Sets the block height at which updates can no longer be staged
         ///
-        access(all) fun setStagingCutoff(atHeight: UInt64?) {
+        access(all) fun setStagingCutoff(at height: UInt64?) {
             pre {
-                atHeight == nil || atHeight! > getCurrentBlock().height:
+                height == nil || height! > getCurrentBlock().height:
                     "Height must be nil or greater than current block height"
             }
-            emit StagingCutoffUpdated(old: MigrationContractStaging.stagingCutoff, new: atHeight)
-            MigrationContractStaging.stagingCutoff = atHeight
+            emit StagingCutoffUpdated(old: MigrationContractStaging.stagingCutoff, new: height)
+            MigrationContractStaging.stagingCutoff = height
         }
     }
 
