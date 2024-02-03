@@ -22,7 +22,7 @@ access(all) contract MigrationContractStaging {
     access(self) let stagedContracts: {Address: [String]}
     /// The block height at which updates can no no longer be staged. If nil, updates can be staged indefinitely until
     /// the cutoff value is set.
-    access(all) var stagingCutoff: UInt64?
+    access(self) var stagingCutoff: UInt64?
 
     /// Event emitted when a contract's code is staged
     /// `action` ∈ {"stage", "replace", "unstage"} each denoting the action being taken on the staged contract
@@ -59,7 +59,7 @@ access(all) contract MigrationContractStaging {
     ///
     access(all) fun stageContract(host: &Host, name: String, code: String) {
         pre {
-            self.stagingCutoff == nil || getCurrentBlock().height <= self.stagingCutoff!: "Staging period has ended"
+            self.isActiveStagingPeriod(): "Staging period has ended"
         }
         let capsulePath = self.deriveCapsuleStoragePath(contractAddress: host.address(), contractName: name)
         if self.stagedContracts[host.address()] == nil {
@@ -87,7 +87,7 @@ access(all) contract MigrationContractStaging {
     ///
     access(all) fun unstageContract(host: &Host, name: String) {
         pre {
-            self.stagingCutoff == nil || self.stagingCutoff! > getCurrentBlock().height: "Staging period has ended"
+            self.isActiveStagingPeriod(): "Staging period has ended"
         }
         post {
             !self.isStaged(address: host.address(), name: name): "Contract is still staged"
@@ -108,6 +108,18 @@ access(all) contract MigrationContractStaging {
     }
 
     /* --- Public Getters --- */
+
+    /// Returns the last block height at which updates can be staged
+    ///
+    access(all) fun getStagingCutoff(): UInt64? {
+        return self.stagingCutoff
+    }
+
+    /// Returns whether the staging period is currently active
+    ///
+    access(all) fun isActiveStagingPeriod(): Bool {
+        return self.stagingCutoff == nil || getCurrentBlock().height <= self.stagingCutoff!
+    }
 
     /// Returns true if the contract is currently staged.
     ///

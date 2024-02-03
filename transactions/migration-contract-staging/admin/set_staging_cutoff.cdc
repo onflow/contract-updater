@@ -12,11 +12,11 @@ transaction(cutoff: UInt64) {
     }
 
     execute {
-        self.admin.setStagingCutoff(atHeight: cutoff)
+        self.admin.setStagingCutoff(at: cutoff)
     }
 
     post {
-        MigrationContractStaging.stagingCutoff == cutoff:
+        MigrationContractStaging.getStagingCutoff() == cutoff:
             "Staging cutoff was not set properly"
     }
 }
