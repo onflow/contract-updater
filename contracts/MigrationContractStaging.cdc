@@ -59,7 +59,7 @@ access(all) contract MigrationContractStaging {
     ///
     access(all) fun stageContract(host: &Host, name: String, code: String) {
         pre {
-            self.isActiveStagingPeriod(): "Staging period has ended"
+            self.isStagingPeriodActive(): "Staging period has ended"
         }
         let capsulePath = self.deriveCapsuleStoragePath(contractAddress: host.address(), contractName: name)
         if self.stagedContracts[host.address()] == nil {
@@ -73,7 +73,7 @@ access(all) contract MigrationContractStaging {
         // We've seen contracts from this host address before - check if the contract is already staged
         if let contractIndex = self.stagedContracts[host.address()]!.firstIndex(of: name) {
             // The contract is already staged - replace the code
-            let capsule: &Capsule = self.account.borrow<&Capsule>(from: capsulePath)
+            let capsule = self.account.borrow<&Capsule>(from: capsulePath)
                 ?? panic("Could not borrow existing Capsule from storage for staged contract")
             capsule.replaceCode(code: code)
             return
@@ -87,16 +87,16 @@ access(all) contract MigrationContractStaging {
     ///
     access(all) fun unstageContract(host: &Host, name: String) {
         pre {
-            self.isActiveStagingPeriod(): "Staging period has ended"
+            self.isStagingPeriodActive(): "Staging period has ended"
         }
         post {
             !self.isStaged(address: host.address(), name: name): "Contract is still staged"
         }
-        let address: Address = host.address()
+        let address = host.address()
         if self.stagedContracts[address] == nil {
             return
         }
-        let capsuleUUID: UInt64 = self.removeStagedContract(address: address, name: name)
+        let capsuleUUID = self.removeStagedContract(address: address, name: name)
             ?? panic("Problem destroying update Capsule")
         emit StagingStatusUpdated(
             capsuleUUID: capsuleUUID,
@@ -117,7 +117,7 @@ access(all) contract MigrationContractStaging {
 
     /// Returns whether the staging period is currently active
     ///
-    access(all) fun isActiveStagingPeriod(): Bool {
+    access(all) fun isStagingPeriodActive(): Bool {
         return self.stagingCutoff == nil || getCurrentBlock().height <= self.stagingCutoff!
     }
 
@@ -136,7 +136,7 @@ access(all) contract MigrationContractStaging {
     /// Returns the staged contract Cadence code for the given address and name.
     ///
     access(all) fun getStagedContractCode(address: Address, name: String): String? {
-        let capsulePath: StoragePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
+        let capsulePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
         if let capsule = self.account.borrow<&Capsule>(from: capsulePath) {
             return capsule.getContractUpdate().codeAsCadence()
         } else {
@@ -153,18 +153,18 @@ access(all) contract MigrationContractStaging {
     /// Returns a dictionary of all staged contract code for the given address.
     ///
     access(all) view fun getAllStagedContractCode(forAddress: Address): {String: String} {
-        if self.stagedContracts[forAddress] == nil {
+        let contractNames = self.stagedContracts[forAddress]
+        if contractNames == nil {
             return {}
         }
         let capsulePaths: [StoragePath] = []
         let stagedCode: {String: String} = {}
-        let contractNames: [String] = self.stagedContracts[forAddress]!
-        for name in contractNames {
+        for name in contractNames! {
             capsulePaths.append(self.deriveCapsuleStoragePath(contractAddress: forAddress, contractName: name))
         }
         for path in capsulePaths {
             if let capsule = self.account.borrow<&Capsule>(from: path) {
-                let update: ContractUpdate = capsule.getContractUpdate()
+                let update = capsule.getContractUpdate()
                 stagedCode[update.name] = update.codeAsCadence()
             }
         }
@@ -335,7 +335,7 @@ access(all) contract MigrationContractStaging {
     /// wasn't found. Also removes the contract name from the stagedContracts mapping.
     ///
     access(self) fun removeStagedContract(address: Address, name: String): UInt64? {
-        let contractIndex: Int = self.stagedContracts[address]!.firstIndex(of: name)!
+        let contractIndex = self.stagedContracts[address]!.firstIndex(of: name)!
         self.stagedContracts[address]!.remove(at: contractIndex)
         // Remove the Address from the stagedContracts mapping if it has no staged contracts remain for the host address
         if self.stagedContracts[address]!.length == 0 {
@@ -348,7 +348,7 @@ access(all) contract MigrationContractStaging {
     /// the destroyed Capsule if it existed.
     ///
     access(self) fun destroyCapsule(address: Address, name: String): UInt64? {
-        let capsulePath: StoragePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
+        let capsulePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
         if let capsule <- self.account.load<@Capsule>(from: capsulePath) {
             let capsuleUUID = capsule.uuid
             destroy capsule
