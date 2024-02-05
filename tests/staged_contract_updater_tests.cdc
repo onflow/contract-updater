@@ -22,7 +22,7 @@ access(all) let cUpdateCode = "696d706f727420412066726f6d20307830303030303030303
 access(all) fun setup() {
     var err = Test.deployContract(
         name: "StagedContractUpdates",
-        path: "../contracts/StagedContractUpdates.cdc",
+        path: "../contracts/staged-contract-updates/StagedContractUpdates.cdc",
         arguments: [getCurrentBlockHeight() + blockHeightBoundaryDelay]
     )
     Test.expect(err, Test.beNil())
