@@ -24,7 +24,7 @@ access(all) contract MigrationContractStaging {
     /// the cutoff value is set.
     access(self) var stagingCutoff: UInt64?
 
-    /// Event emitted when a contract's code is staged
+    /// Event emitted when a contract's code is staged, replaced or unstaged
     /// `action` ∈ {"stage", "replace", "unstage"} each denoting the action being taken on the staged contract
     /// NOTE: Does not guarantee that the contract code is valid Cadence
     access(all) event StagingStatusUpdated(
