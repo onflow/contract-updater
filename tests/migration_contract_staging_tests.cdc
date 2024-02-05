@@ -96,6 +96,7 @@ access(all) fun testStageContractSucceeds() {
 
     let evt = events[0] as! MigrationContractStaging.StagingStatusUpdated
     Test.assertEqual(fooAccount.address, evt.address)
+    Test.assertEqual(fooUpdateCadence, evt.code)
     Test.assertEqual("Foo", evt.contract)
     Test.assertEqual("stage", evt.action)
 }
@@ -129,14 +130,17 @@ access(all) fun testStageMultipleContractsSucceeds() {
     Test.assertEqual(4, events.length)
     let cEvt = events[1] as! MigrationContractStaging.StagingStatusUpdated
     Test.assertEqual(bcAccount.address, cEvt.address)
+    Test.assertEqual(cUpdateCadence, cEvt.code)
     Test.assertEqual("C", cEvt.contract)
     Test.assertEqual("stage", cEvt.action)
     let bEvt = events[2] as! MigrationContractStaging.StagingStatusUpdated
-    Test.assertEqual(bcAccount.address, cEvt.address)
+    Test.assertEqual(bcAccount.address, bEvt.address)
+    Test.assertEqual(bUpdateCadence, bEvt.code)
     Test.assertEqual("B", bEvt.contract)
     Test.assertEqual("stage", bEvt.action)
     let aEvt = events[3] as! MigrationContractStaging.StagingStatusUpdated
     Test.assertEqual(aAccount.address, aEvt.address)
+    Test.assertEqual(aUpdateCadence, aEvt.code)
     Test.assertEqual("A", aEvt.contract)
     Test.assertEqual("stage", aEvt.action)
 
@@ -176,6 +180,7 @@ access(all) fun testReplaceStagedCodeSucceeds() {
     Test.assertEqual(5, events.length)
     let evt = events[4] as! MigrationContractStaging.StagingStatusUpdated
     Test.assertEqual(fooAccount.address, evt.address)
+    Test.assertEqual(fooUpdateCadence, evt.code)
     Test.assertEqual("Foo", evt.contract)
     Test.assertEqual("replace", evt.action)
 }
@@ -192,6 +197,7 @@ access(all) fun testUnstageContractSucceeds() {
     Test.assertEqual(6, events.length)
     let evt = events[5] as! MigrationContractStaging.StagingStatusUpdated
     Test.assertEqual(fooAccount.address, evt.address)
+    Test.assertEqual("", evt.code)
     Test.assertEqual("Foo", evt.contract)
     Test.assertEqual("unstage", evt.action)
 
