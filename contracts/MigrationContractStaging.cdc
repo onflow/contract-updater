@@ -30,7 +30,7 @@ access(all) contract MigrationContractStaging {
     access(all) event StagingStatusUpdated(
         capsuleUUID: UInt64,
         address: Address,
-        codeUTF8: [UInt8],
+        code: String,
         contract: String,
         action: String
     )
@@ -101,7 +101,7 @@ access(all) contract MigrationContractStaging {
         emit StagingStatusUpdated(
             capsuleUUID: capsuleUUID,
             address: address,
-            codeUTF8: [],
+            code: "",
             contract: name,
             action: "unstage"
         )
@@ -274,7 +274,7 @@ access(all) contract MigrationContractStaging {
             emit StagingStatusUpdated(
                 capsuleUUID: self.uuid,
                 address: self.update.address,
-                codeUTF8: code.utf8,
+                code: code,
                 contract: self.update.name,
                 action: "replace"
             )
@@ -314,7 +314,7 @@ access(all) contract MigrationContractStaging {
         emit StagingStatusUpdated(
             capsuleUUID: capsule.uuid,
             address: host.address(),
-            codeUTF8: code.utf8,
+            code: code,
             contract: name,
             action: "stage"
         )
