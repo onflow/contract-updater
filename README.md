@@ -156,8 +156,6 @@ access(all) struct ContractUpdate {
     access(all) view fun isValid(): Bool 
     /// Serializes the address and name into a string of the form 0xADDRESS.NAME
     access(all) view fun toString(): String
-    /// Returns human-readable string of the Cadence code.
-    access(all) view fun codeAsCadence(): String
     /// Replaces the ContractUpdate code with that provided.
     access(contract) fun replaceCode(_ code: String)
 }
@@ -182,27 +180,29 @@ contract is staged (`status == "stage"`), staged code is replaced (`status == "r
 access(all) event StagingStatusUpdated(
     capsuleUUID: UInt64,
     address: Address,
-    codeHash: [UInt8],
+    code: String,
     contract: String,
     action: String
 )
 ```
-Included in the contact are methods for querying staging status and retrieval of staged code. This enables platforms
-like Flowview, Flowdiver, ContractBrowser, etc. to display the staging status of contracts on any given account.
+Included in the contact are methods for querying staging status and retrieval of staged code. This enables platforms to
+display the staging status of contracts on any given account should.
 
 ```cadence
 /* --- Public Getters --- */
 //
 /// Returns true if the contract is currently staged.
-access(all) fun isStaged(address: Address, name: String): Bool
+access(all) view fun isStaged(address: Address, name: String): Bool
 /// Returns the names of all staged contracts for the given address.
-access(all) fun getStagedContractNames(forAddress: Address): [String]
+access(all) view fun getStagedContractNames(forAddress: Address): [String]
 /// Returns the staged contract Cadence code for the given address and name.
-access(all) fun getStagedContractCode(address: Address, name: String): String?
+access(all) view fun getStagedContractCode(address: Address, name: String): String?
 /// Returns an array of all staged contract host addresses.
 access(all) view fun getAllStagedContractHosts(): [Address]
 /// Returns a dictionary of all staged contract code for the given address.
-access(all) fun getAllStagedContractCode(forAddress: Address): {String: String}
+access(all) view fun getAllStagedContractCode(forAddress: Address): {String: String}
+/// Returns all staged contracts as a mapping of address to an array of contract names
+access(all) view fun getAllStagedContracts(): {Address: [String]}
 ```
 
 ## References
