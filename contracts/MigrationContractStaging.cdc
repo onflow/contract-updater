@@ -135,7 +135,7 @@ access(all) contract MigrationContractStaging {
 
     /// Returns the staged contract Cadence code for the given address and name.
     ///
-    access(all) fun getStagedContractCode(address: Address, name: String): String? {
+    access(all) view fun getStagedContractCode(address: Address, name: String): String? {
         let capsulePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
         if let capsule = self.account.borrow<&Capsule>(from: capsulePath) {
             return capsule.getContractUpdate().code
@@ -169,6 +169,12 @@ access(all) contract MigrationContractStaging {
             }
         }
         return stagedCode
+    }
+
+    /// Returns all staged contracts as a mapping of address to an array of contract names
+    ///
+    access(all) view fun getAllStagedContracts(): {Address: [String]} {
+        return self.stagedContracts
     }
 
     /// Returns a StoragePath to store the Capsule of the form:
