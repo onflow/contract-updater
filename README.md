@@ -6,6 +6,35 @@
 This repo contains contracts enabling onchain staging of contract updates, providing mechanisms to store code,
 delegate update capabilities, and execute staged updates.
 
+## Context
+
+Cadence 1.0 is a momentous milestone, introducing many advanced features to the language of Flow, the introduction of
+which will require changes to all contracts on the network. This makes crossing that milestone a coordinated effort,
+read on for how to prepare.
+
+![Path to Cadence 1.0](./resources/path_to_cadence_1.png)
+ 
+Your contract's path to Cadence 1.0 can be broken down into the following four high-level phases:
+
+1. **Updated:** Update your code, validating refactored contracts, transactions and scripts via local testing and
+   emulated migration.
+2. **Staged:** Upload your Cadence 1.0 code to the `MigrationContractStaging` contract so your contract updates take
+   effect at the network-wide height coordinated upgrade (HCU). 
+3. **Validated:** This step is automated and serves as external feedback provided by Flow that your contract is good
+   as-is, indicating readiness for the network migration. If your contract fails validation, you will need to update
+   your code and stage it again.
+4. **Migrated:** all core and staged contracts are updated via state migration
+
+Steps 1 & 2 require your effort and execution - you must update your contract and execute a transaction to stage it for
+migration. Step 3 is an asynchronous feedback loop between Flow and contract owners where staged contracts are migrated
+in an emulated environment offchain, the results of which will be submitted to the staging contract on a set interval
+(TBD). Step 4 will be completed by the network, executed as an HCU.
+
+> :mag: This repo addresses steps 2 & 3 above, providing a central coordination point for contract updates to be staged,
+code and staging status to be retrieved, and offchain validation results to be committed, queried and broadcast. Focus
+on reaching validated status across all of your contracts before the HCU, giving you confidence your contract updates
+will be successful.
+
 ## Overview
 
 > :information_source: This document proceeds with an emphasis on the `MigrationContractStaging` contract, which will be
@@ -113,6 +142,8 @@ access(all) fun main(contractAddress: Address, contractName: String): String? {
 
 ## `MigrationContractStaging` Contract Details
 
+### Developer Paths
+
 The basic interface to stage a contract is the same as deploying a contract - name + code. See the
 [`stage_contract`](./transactions/migration-contract-staging/stage_contract.cdc) &
 [`unstage_contract`](./transactions/migration-contract-staging/unstage_contract.cdc) transactions. Note that calling
@@ -122,6 +153,7 @@ The basic interface to stage a contract is the same as deploying a contract - na
 /// 1 - Create a host and save it in your contract-hosting account at MigrationContractStaging.HostStoragePath
 access(all) fun createHost(): @Host
 /// 2 - Call stageContract() with the host reference and contract name and contract code you wish to stage.
+/// NOTE: making updates to staged code resets validation status for that contract.
 access(all) fun stageContract(host: &Host, name: String, code: String)
 /// Removes the staged contract code from the staging environment.
 access(all) fun unstageContract(host: &Host, name: String)
@@ -143,19 +175,31 @@ access(all) resource Host {
 
 Within the `MigrationContractStaging` contract account, code is saved on a contract-basis as a `ContractUpdate` struct
 within a `Capsule` resource and stored at a the derived path. The `Capsule` simply serves as a dedicated repository for
-staged contract code.
+staged contract code. (See [Validation Path](#validation-path) for more on how `isValidated()` is determined.)
 
 ```cadence
 /// Represents contract and its corresponding code.
 access(all) struct ContractUpdate {
+    /// Address of the contract host
     access(all) let address: Address
+    /// Name of the contract
     access(all) let name: String
+    /// The updated Cadence 1.0 code
     access(all) var code: String
+    /// Timestamp the code was last updated
+    access(all) var lastUpdated: UFix64
 
     /// Validates that the named contract exists at the target address.
-    access(all) view fun isValid(): Bool 
+    access(all) view fun exists(): Bool 
     /// Serializes the address and name into a string of the form 0xADDRESS.NAME
     access(all) view fun toString(): String
+    /// Serializes contact into its string identifier of the form A.ADDRESS.NAME where ADDRESS is lacks 0x
+    access(all) view fun identifier(): String
+    /// Returns whether this contract update passed the last emulated migration, validating the contained code
+    /// If emulated migration has not yet been committed, returns nil. Otherwise, returns whether the code was
+    /// included in the last emulated migration and did not fail.
+    /// NOTE: False could mean that the code was not included in the emulation or that it failed
+    access(all) view fun isValidated(): Bool? {
     /// Replaces the ContractUpdate code with that provided.
     access(contract) fun replaceCode(_ code: String)
 }
@@ -185,6 +229,7 @@ access(all) event StagingStatusUpdated(
     action: String
 )
 ```
+
 Included in the contact are methods for querying staging status and retrieval of staged code. This enables platforms to
 display the staging status of contracts on any given account should.
 
@@ -199,16 +244,65 @@ access(all) view fun getStagedContractNames(forAddress: Address): [String]
 access(all) view fun getStagedContractCode(address: Address, name: String): String?
 /// Returns an array of all staged contract host addresses.
 access(all) view fun getAllStagedContractHosts(): [Address]
+/// Returns the ContractUpdate struct for the given contract if it's been staged.
+access(all) view fun getStagedContractUpdate(address: Address, name: String): ContractUpdate?
 /// Returns a dictionary of all staged contract code for the given address.
 access(all) view fun getAllStagedContractCode(forAddress: Address): {String: String}
 /// Returns all staged contracts as a mapping of address to an array of contract names
 access(all) view fun getAllStagedContracts(): {Address: [String]}
 ```
 
+### Validation Path
+
+In addition to monitoring the number of staged contracts, it will also be important to monitor staged contracts that
+fail validation.
+
+The `EmulatedMigrationResult` event will be emitted whenever the `Admin` commits the result of offchain emulated migration.
+
+```cadence
+/// Emitted when emulated contract migrations have been completed, where failedContracts are named by their
+/// contract identifier - A.ADDRESS.NAME where ADDRESS is the host address without 0x
+access(all) event EmulatedMigrationResultCommitted(
+    snapshotTimestamp: UFix64,
+    committedTimestamp: UFix64,
+    failedContracts: [String]
+)
+```
+
+Emulated migration results will be saved as `MigrationContractStaging.lastEmulatedMigrationResult: EmulatedMigrationResult?`,
+the value of which will be `nil` until offchain emulation begins. `ContractUpdate.isValidated()` will check against
+this value to determine if the staged contract code has been validated.
+
+```cadence 
+access(all) struct EmulatedMigrationResult {
+    /// Timestamp that the migration snapshot was taken
+    access(all) let snapshot: UFix64
+    /// Timestamp that the migration results were committed
+    access(all) let committed: UFix64
+    /// Identifiers of the contracts that failed validation during the emulated migration
+    access(all) let failedContracts: [String]
+}
+```
+
+Finally, the the entities empowered with coordinating both contract validation and the HCU can perform admin
+functionalities via the `Admin` resource.
+
+```cadence
+access(all) resource Admin {
+    /// Sets the block height at which updates can no longer be staged
+    access(all) fun setStagingCutoff(at height: UInt64?)
+    /// Commits the results of an emulated contract migration
+    access(all) fun commitMigrationResults(snapshot: UFix64, failed: [String])
+}
+```
+
 ## References
 
+> Please feel free to submit a PR with updated references as they become available!
+
 More tooling is slated to support Cadence 1.0 code changes and will be added as it arises. For any real-time help, be
-sure to join the [Flow discord](https://discord.com/invite/J6fFnh2xx6) and ask away in the developer channels!
+sure to join the [Flow discord](https://discord.com/invite/J6fFnh2xx6) (especially the developer channels) and the [Flow
+forum](https://forum.flow.com/).
 
 - [Cadence 1.0 contract migration plan](https://forum.flow.com/t/update-on-cadence-1-0-upgrade-plan/5597)
 - [Cadence 1.0 language update breakdown](https://forum.flow.com/t/update-on-cadence-1-0/5197)
