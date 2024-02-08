@@ -3,6 +3,7 @@ import BlockchainHelpers
 import "MigrationContractStaging"
 
 // Contract hosts as defined in flow.json
+access(all) let adminAccount = Test.getAccount(0x0000000000000007)
 access(all) let fooAccount = Test.getAccount(0x0000000000000008)
 access(all) let aAccount = Test.getAccount(0x0000000000000009)
 access(all) let bcAccount = Test.getAccount(0x0000000000000010)
@@ -256,6 +257,33 @@ access(all) fun testStageBeyondCutoffFails() {
     Test.expect(stageAttemptResult, Test.beFailed())
 }
 
+access(all) fun testCommitMigrationResultsSucceeds() {
+    Test.moveTime(by: 10.0)
+    let currentTimestamp = executeScript(
+        "../scripts/test/get_current_block_timestamp.cdc",
+        []
+    ).returnValue as! UFix64? ?? panic("Problem retrieving snapshot timestamp")
+    let snapshotTimestamp = currentTimestamp - 1.0
+    let commitResult = executeTransaction(
+        "../transactions/migration-contract-staging/admin/commit_migration_results.cdc",
+        [snapshotTimestamp, []],
+        adminAccount
+    )
+    Test.expect(commitResult, Test.beSucceeded())
+
+    let events = Test.eventsOfType(Type<MigrationContractStaging.EmulatedMigrationResult>())
+    Test.assertEqual(1, events.length)
+    let evt = events[0] as! MigrationContractStaging.EmulatedMigrationResult
+    Test.assertEqual(snapshotTimestamp, evt.snapshotTimestamp)
+    Test.assertEqual(currentTimestamp, evt.committedTimestamp)
+
+    let aContractUpdateIsValidated = executeScript(
+        "../scripts/migration-contract-staging/contract_update_is_validated.cdc",
+        [aAccount.address, "A"]
+    ).returnValue as! Bool?
+    Test.assertEqual(true, aContractUpdateIsValidated!)
+}
+
 /* --- Test Helpers --- */
 
 access(all) fun assertIsStaged(contractAddress: Address, contractName: String, invert: Bool) {
@@ -323,7 +351,7 @@ access(all) fun getAllStagedContractCodeForAddress(contractAddress: Address): {S
 access(all) fun tickTock(advanceBlocks: UInt64, _ signer: Test.Account) {
     var blocksAdvanced: UInt64 = 0
     while blocksAdvanced < advanceBlocks {
-        
+
         let txResult = executeTransaction("../transactions/test/tick_tock.cdc", [], signer)
         Test.expect(txResult, Test.beSucceeded())
 
