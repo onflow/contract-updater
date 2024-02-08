@@ -2,7 +2,7 @@ import "MigrationContractStaging"
 
 /// Commits the results of offchain emulated migration
 ///
-transaction(startTimestamp: UFix64, failedContracts: [String]) {
+transaction(snapshotTimestamp: UFix64, failedContracts: [String]) {
   
     let admin: &MigrationContractStaging.Admin
 
@@ -12,12 +12,12 @@ transaction(startTimestamp: UFix64, failedContracts: [String]) {
     }
 
     execute {
-        self.admin.commitMigrationResults(start: startTimestamp, failed: failedContracts)
+        self.admin.commitMigrationResults(snapshot: snapshotTimestamp, failed: failedContracts)
     }
 
     post {
         MigrationContractStaging.lastEmulatedMigrationResults!.failedContracts == failedContracts &&
-        MigrationContractStaging.lastEmulatedMigrationResults!.start == startTimestamp:
+        MigrationContractStaging.lastEmulatedMigrationResults!.snapshot == snapshotTimestamp:
             "Problem committing migration results"
     }
 }

@@ -38,9 +38,9 @@ access(all) contract MigrationContractStaging {
     )
     /// Emitted when emulated contract migrations have been completed, where failedContracts are named by their
     /// contract identifier - A.ADDRESS.NAME where ADDRESS is the host address without 0x
-    access(all) event EmulatedMigrationUpdate(
-        startTimestamp: UFix64,
-        commitedTimestamp: UFix64,
+    access(all) event EmulatedMigrationResult(
+        snapshotTimestamp: UFix64,
+        committedTimestamp: UFix64,
         failedContracts: [String]
     )
     /// Emitted when the stagingCutoff value is updated
@@ -214,12 +214,15 @@ access(all) contract MigrationContractStaging {
     /// can be considered successful
     ///
     access(all) struct EmulatedMigrationResults {
-        access(all) let start: UFix64
+        access(all) let snapshot: UFix64
         access(all) let committed: UFix64
         access(all) let failedContracts: [String]
 
-        init(start: UFix64, failedContracts: [String]) {
-            self.start = start
+        init(snapshot: UFix64, failedContracts: [String]) {
+            post {
+                self.snapshot < self.committed: "Snapshot must be in the past"
+            }
+            self.snapshot = snapshot
             self.committed = getCurrentBlock().timestamp
             self.failedContracts = failedContracts
         }
@@ -272,7 +275,7 @@ access(all) contract MigrationContractStaging {
                 return nil
             }
             // This code was contained in the last emulated migration and didn't fail
-            if self.lastUpdated < MigrationContractStaging.lastEmulatedMigrationResults!.start &&
+            if self.lastUpdated < MigrationContractStaging.lastEmulatedMigrationResults!.snapshot &&
                 !MigrationContractStaging.lastEmulatedMigrationResults!.failedContracts.contains(self.identifier()) {
                 return true
             }
@@ -366,17 +369,14 @@ access(all) contract MigrationContractStaging {
 
         /// Commits the results of an emulated contract migration
         ///
-        access(all) fun commitMigrationResults(start: UFix64, failed: [String]) {
+        access(all) fun commitMigrationResults(snapshot: UFix64, failed: [String]) {
             MigrationContractStaging.lastEmulatedMigrationResults = EmulatedMigrationResults(
-                start: start,
+                snapshot: snapshot,
                 failedContracts: failed
             )
-            for staged in failed {
-
-            }
-            emit EmulatedMigrationUpdate(
-                startTimestamp: start,
-                commitedTimestamp: MigrationContractStaging.lastEmulatedMigrationResults!.committed,
+            emit EmulatedMigrationResult(
+                snapshotTimestamp: snapshot,
+                committedTimestamp: MigrationContractStaging.lastEmulatedMigrationResults!.committed,
                 failedContracts: failed
             )
         }
