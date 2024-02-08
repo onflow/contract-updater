@@ -23,6 +23,8 @@ access(all) contract MigrationContractStaging {
     /// The block height at which updates can no no longer be staged. If nil, updates can be staged indefinitely until
     /// the cutoff value is set.
     access(self) var stagingCutoff: UInt64?
+    /// Results of the last emulated contract migration, committed by the admin after offchain contract migration
+    access(all) var lastEmulatedMigrationResults: EmulatedMigrationResults?
 
     /// Event emitted when a contract's code is staged, replaced or unstaged
     /// `action` ∈ {"stage", "replace", "unstage"} each denoting the action being taken on the staged contract
@@ -34,8 +36,15 @@ access(all) contract MigrationContractStaging {
         contract: String,
         action: String
     )
+    /// Emitted when emulated contract migrations have been completed, where failedContracts are named by their
+    /// contract identifier - A.ADDRESS.NAME where ADDRESS is the host address without 0x
+    access(all) event EmulatedMigrationUpdate(
+        commitedTimestamp: UFix64,
+        failedContracts: [String]
+    )
     /// Emitted when the stagingCutoff value is updated
     access(all) event StagingCutoffUpdated(old: UInt64?, new: UInt64?)
+
 
     /********************
         Public Methods
@@ -136,9 +145,15 @@ access(all) contract MigrationContractStaging {
     /// Returns the staged contract Cadence code for the given address and name.
     ///
     access(all) view fun getStagedContractCode(address: Address, name: String): String? {
+        return self.getStagedContractUpdate(address: address, name: name)?.code
+    }
+
+    /// Returns the ContractUpdate struct for the given contract
+    ///
+    access(all) view fun getStagedContractUpdate(address: Address, name: String): ContractUpdate? {
         let capsulePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
         if let capsule = self.account.borrow<&Capsule>(from: capsulePath) {
-            return capsule.getContractUpdate().code
+            return capsule.getContractUpdate()
         } else {
             return nil
         }
@@ -157,14 +172,9 @@ access(all) contract MigrationContractStaging {
         if contractNames == nil {
             return {}
         }
-        let capsulePaths: [StoragePath] = []
         let stagedCode: {String: String} = {}
         for name in contractNames! {
-            capsulePaths.append(self.deriveCapsuleStoragePath(contractAddress: forAddress, contractName: name))
-        }
-        for path in capsulePaths {
-            if let capsule = self.account.borrow<&Capsule>(from: path) {
-                let update = capsule.getContractUpdate()
+            if let update = self.getStagedContractUpdate(address: forAddress, name: name) {
                 stagedCode[update.name] = update.code
             }
         }
@@ -193,6 +203,27 @@ access(all) contract MigrationContractStaging {
     /* ------------------------------------------------ Constructs ------------------------------------------------ */
     /* ------------------------------------------------------------------------------------------------------------ */
 
+
+    /*******************************
+        EmulatedMigrationResults
+     *******************************/
+
+    /// Represents the results of an emulated contract migration, containing the start & committed time and any failed
+    /// contract names. If a contract was staged by the start time and is not listed in failedContracts, its migration
+    /// can be considered successful
+    ///
+    access(all) struct EmulatedMigrationResults {
+        access(all) let start: UFix64
+        access(all) let committed: UFix64
+        access(all) let failedContracts: [String]
+
+        init(start: UFix64, failedContracts: [String]) {
+            self.start = start
+            self.committed = getCurrentBlock().timestamp
+            self.failedContracts = failedContracts
+        }
+    }
+
     /********************
         ContractUpdate
      ********************/
@@ -203,16 +234,18 @@ access(all) contract MigrationContractStaging {
         access(all) let address: Address
         access(all) let name: String
         access(all) var code: String
+        access(all) var lastUpdated: UFix64
 
         init(address: Address, name: String, code: String) {
             self.address = address
             self.name = name
             self.code = code
+            self.lastUpdated = getCurrentBlock().timestamp
         }
 
         /// Validates that the named contract exists at the target address.
         ///
-        access(all) view fun isValid(): Bool {
+        access(all) view fun exists(): Bool {
             return getAccount(self.address).contracts.names.contains(self.name)
         }
 
@@ -222,10 +255,34 @@ access(all) contract MigrationContractStaging {
             return self.address.toString().concat(".").concat(self.name)
         }
 
+        /// Serializes contact into its string identifier of the form A.ADDRESS.NAME where ADDRESS is lacks 0x
+        ///
+        access(all) view fun identifier(): String {
+            let sans0x = self.address.toString().slice(from: 2, upTo: self.address.toString().length)
+            let prefix = "A".concat(".").concat(sans0x).concat(".")
+            return prefix.concat(self.name)
+        }
+
+        /// Returns whether this contract update passed the last emulated migration, validating the contained code
+        ///
+        access(all) view fun isValidated(): Bool? {
+            // No emulated migration results to validate against
+            if MigrationContractStaging.lastEmulatedMigrationResults == nil {
+                return nil
+            }
+            // This code was contained in the last emulated migration and didn't fail
+            if self.lastUpdated < MigrationContractStaging.lastEmulatedMigrationResults!.start &&
+                !MigrationContractStaging.lastEmulatedMigrationResults!.failedContracts.contains(self.identifier()) {
+                return true
+            }
+            return false
+        }
+
         /// Replaces the ContractUpdate code with that provided.
         ///
         access(contract) fun replaceCode(_ code: String) {
             self.code = code
+            self.lastUpdated = getCurrentBlock().timestamp
         }
     }
 
@@ -262,7 +319,7 @@ access(all) contract MigrationContractStaging {
 
         init(update: ContractUpdate) {
             pre {
-                update.isValid(): "Target contract does not exist"
+                update.exists(): "Target contract does not exist"
             }
             self.update = update
         }
@@ -304,6 +361,22 @@ access(all) contract MigrationContractStaging {
             }
             emit StagingCutoffUpdated(old: MigrationContractStaging.stagingCutoff, new: height)
             MigrationContractStaging.stagingCutoff = height
+        }
+
+        /// Commits the results of an emulated contract migration
+        ///
+        access(all) fun commitMigrationResults(start: UFix64, failed: [String]) {
+            MigrationContractStaging.lastEmulatedMigrationResults = EmulatedMigrationResults(
+                start: start,
+                failedContracts: failed
+            )
+            for staged in failed {
+
+            }
+            emit EmulatedMigrationUpdate(
+                commitedTimestamp: MigrationContractStaging.lastEmulatedMigrationResults!.committed,
+                failedContracts: failed
+            )
         }
     }
 
@@ -364,6 +437,7 @@ access(all) contract MigrationContractStaging {
             .concat(self.account.address.toString())
         self.stagedContracts = {}
         self.stagingCutoff = nil
+        self.lastEmulatedMigrationResults = nil
 
         self.account.save(<-create Admin(), to: self.AdminStoragePath)
     }
