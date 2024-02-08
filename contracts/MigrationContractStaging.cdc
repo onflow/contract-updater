@@ -39,6 +39,7 @@ access(all) contract MigrationContractStaging {
     /// Emitted when emulated contract migrations have been completed, where failedContracts are named by their
     /// contract identifier - A.ADDRESS.NAME where ADDRESS is the host address without 0x
     access(all) event EmulatedMigrationUpdate(
+        startTimestamp: UFix64,
         commitedTimestamp: UFix64,
         failedContracts: [String]
     )
@@ -374,6 +375,7 @@ access(all) contract MigrationContractStaging {
 
             }
             emit EmulatedMigrationUpdate(
+                startTimestamp: start,
                 commitedTimestamp: MigrationContractStaging.lastEmulatedMigrationResults!.committed,
                 failedContracts: failed
             )
