@@ -24,7 +24,7 @@ access(all) contract MigrationContractStaging {
     /// the cutoff value is set.
     access(self) var stagingCutoff: UInt64?
     /// Results of the last emulated contract migration, committed by the admin after offchain contract migration
-    access(all) var lastEmulatedMigrationResults: EmulatedMigrationResults?
+    access(all) var lastEmulatedMigrationResult: EmulatedMigrationResult?
 
     /// Event emitted when a contract's code is staged, replaced or unstaged
     /// `action` ∈ {"stage", "replace", "unstage"} each denoting the action being taken on the staged contract
@@ -38,7 +38,7 @@ access(all) contract MigrationContractStaging {
     )
     /// Emitted when emulated contract migrations have been completed, where failedContracts are named by their
     /// contract identifier - A.ADDRESS.NAME where ADDRESS is the host address without 0x
-    access(all) event EmulatedMigrationResult(
+    access(all) event EmulatedMigrationResultCommitted(
         snapshotTimestamp: UFix64,
         committedTimestamp: UFix64,
         failedContracts: [String]
@@ -66,6 +66,7 @@ access(all) contract MigrationContractStaging {
     ///
     /// Stages the contract code for the given contract name at the host address. If the contract is already staged,
     /// the code will be replaced.
+    /// NOTE: making updates to staged code resets validation status for that contract.
     ///
     access(all) fun stageContract(host: &Host, name: String, code: String) {
         pre {
@@ -149,7 +150,7 @@ access(all) contract MigrationContractStaging {
         return self.getStagedContractUpdate(address: address, name: name)?.code
     }
 
-    /// Returns the ContractUpdate struct for the given contract
+    /// Returns the ContractUpdate struct for the given contract if it's been staged.
     ///
     access(all) view fun getStagedContractUpdate(address: Address, name: String): ContractUpdate? {
         let capsulePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
@@ -206,16 +207,19 @@ access(all) contract MigrationContractStaging {
 
 
     /*******************************
-        EmulatedMigrationResults
+        EmulatedMigrationResult
      *******************************/
 
     /// Represents the results of an emulated contract migration, containing the start & committed time and any failed
     /// contract names. If a contract was staged by the start time and is not listed in failedContracts, its migration
     /// can be considered successful
     ///
-    access(all) struct EmulatedMigrationResults {
+    access(all) struct EmulatedMigrationResult {
+        /// Timestamp that the migration snapshot was taken
         access(all) let snapshot: UFix64
+        /// Timestamp that the migration results were committed
         access(all) let committed: UFix64
+        /// Identifiers of the contracts that failed validation during the emulated migration
         access(all) let failedContracts: [String]
 
         init(snapshot: UFix64, failedContracts: [String]) {
@@ -235,9 +239,13 @@ access(all) contract MigrationContractStaging {
     /// Represents contract and its corresponding code.
     ///
     access(all) struct ContractUpdate {
+        /// Address of the contract host
         access(all) let address: Address
+        /// Name of the contract
         access(all) let name: String
+        /// The updated Cadence 1.0 code
         access(all) var code: String
+        /// Timestamp the code was last updated
         access(all) var lastUpdated: UFix64
 
         init(address: Address, name: String, code: String) {
@@ -268,15 +276,18 @@ access(all) contract MigrationContractStaging {
         }
 
         /// Returns whether this contract update passed the last emulated migration, validating the contained code
+        /// If emulated migration has not yet been committed, returns nil. Otherwise, returns whether the code was
+        /// included in the last emulated migration and did not fail.
+        /// NOTE: False could mean that the code was not included in the emulation or that it failed
         ///
         access(all) view fun isValidated(): Bool? {
             // No emulated migration results to validate against
-            if MigrationContractStaging.lastEmulatedMigrationResults == nil {
+            if MigrationContractStaging.lastEmulatedMigrationResult == nil {
                 return nil
             }
             // This code was contained in the last emulated migration and didn't fail
-            if self.lastUpdated < MigrationContractStaging.lastEmulatedMigrationResults!.snapshot &&
-                !MigrationContractStaging.lastEmulatedMigrationResults!.failedContracts.contains(self.identifier()) {
+            if self.lastUpdated < MigrationContractStaging.lastEmulatedMigrationResult!.snapshot &&
+                !MigrationContractStaging.lastEmulatedMigrationResult!.failedContracts.contains(self.identifier()) {
                 return true
             }
             return false
@@ -370,13 +381,13 @@ access(all) contract MigrationContractStaging {
         /// Commits the results of an emulated contract migration
         ///
         access(all) fun commitMigrationResults(snapshot: UFix64, failed: [String]) {
-            MigrationContractStaging.lastEmulatedMigrationResults = EmulatedMigrationResults(
+            MigrationContractStaging.lastEmulatedMigrationResult = EmulatedMigrationResult(
                 snapshot: snapshot,
                 failedContracts: failed
             )
-            emit EmulatedMigrationResult(
+            emit EmulatedMigrationResultCommitted(
                 snapshotTimestamp: snapshot,
-                committedTimestamp: MigrationContractStaging.lastEmulatedMigrationResults!.committed,
+                committedTimestamp: MigrationContractStaging.lastEmulatedMigrationResult!.committed,
                 failedContracts: failed
             )
         }
@@ -439,7 +450,7 @@ access(all) contract MigrationContractStaging {
             .concat(self.account.address.toString())
         self.stagedContracts = {}
         self.stagingCutoff = nil
-        self.lastEmulatedMigrationResults = nil
+        self.lastEmulatedMigrationResult = nil
 
         self.account.save(<-create Admin(), to: self.AdminStoragePath)
     }

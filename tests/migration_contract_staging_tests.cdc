@@ -271,9 +271,9 @@ access(all) fun testCommitMigrationResultsSucceeds() {
     )
     Test.expect(commitResult, Test.beSucceeded())
 
-    let events = Test.eventsOfType(Type<MigrationContractStaging.EmulatedMigrationResult>())
+    let events = Test.eventsOfType(Type<MigrationContractStaging.EmulatedMigrationResultCommitted>())
     Test.assertEqual(1, events.length)
-    let evt = events[0] as! MigrationContractStaging.EmulatedMigrationResult
+    let evt = events[0] as! MigrationContractStaging.EmulatedMigrationResultCommitted
     Test.assertEqual(snapshotTimestamp, evt.snapshotTimestamp)
     Test.assertEqual(currentTimestamp, evt.committedTimestamp)
 

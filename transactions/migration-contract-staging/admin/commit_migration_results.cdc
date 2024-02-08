@@ -16,8 +16,8 @@ transaction(snapshotTimestamp: UFix64, failedContracts: [String]) {
     }
 
     post {
-        MigrationContractStaging.lastEmulatedMigrationResults!.failedContracts == failedContracts &&
-        MigrationContractStaging.lastEmulatedMigrationResults!.snapshot == snapshotTimestamp:
+        MigrationContractStaging.lastEmulatedMigrationResult!.failedContracts == failedContracts &&
+        MigrationContractStaging.lastEmulatedMigrationResult!.snapshot == snapshotTimestamp:
             "Problem committing migration results"
     }
 }
