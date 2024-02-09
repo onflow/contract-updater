@@ -286,10 +286,9 @@ access(all) contract MigrationContractStaging {
         ///
         access(all) view fun isValidated(): Bool {
             // This code was contained in the last emulated migration and didn't fail
-            if MigrationContractStaging.lastEmulatedMigrationResult != nil &&
-                self.lastUpdated < MigrationContractStaging.lastEmulatedMigrationResult!.snapshot &&
-                !MigrationContractStaging.lastEmulatedMigrationResult!.failedContracts.contains(self.identifier()) {
-                return true
+            if let lastEmulatedMigrationResult = MigrationContractStaging.lastEmulatedMigrationResult {
+                return self.lastUpdated < lastEmulatedMigrationResult.snapshot 
+                    && !lastEmulatedMigrationResult.failedContracts.contains(self.identifier())
             }
             return false
         }
