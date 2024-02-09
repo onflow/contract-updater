@@ -282,7 +282,7 @@ access(all) contract MigrationContractStaging {
         }
 
         /// Returns whether this contract update passed the last emulated migration, validating the contained code.
-        /// NOTE: False could mean validation hasn't begun, the code wasn't included in the emulation or that it failed
+        /// NOTE: false could mean validation hasn't begun, the code wasn't included in emulation, or validation failed
         ///
         access(all) view fun isValidated(): Bool {
             // This code was contained in the last emulated migration and didn't fail

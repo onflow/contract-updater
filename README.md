@@ -195,11 +195,9 @@ access(all) struct ContractUpdate {
     access(all) view fun toString(): String
     /// Serializes contact into its string identifier of the form A.ADDRESS.NAME where ADDRESS is lacks 0x
     access(all) view fun identifier(): String
-    /// Returns whether this contract update passed the last emulated migration, validating the contained code
-    /// If emulated migration has not yet been committed, returns nil. Otherwise, returns whether the code was
-    /// included in the last emulated migration and did not fail.
-    /// NOTE: False could mean that the code was not included in the emulation or that it failed
-    access(all) view fun isValidated(): Bool? {
+    /// Returns whether this contract update passed the last emulated migration, validating the contained code.
+    /// NOTE: false could mean validation hasn't begun, the code wasn't included in emulation, or validation failed
+    access(all) view fun isValidated(): Bool {
     /// Replaces the ContractUpdate code with that provided.
     access(contract) fun replaceCode(_ code: String)
 }
@@ -238,6 +236,8 @@ display the staging status of contracts on any given account should.
 //
 /// Returns true if the contract is currently staged.
 access(all) view fun isStaged(address: Address, name: String): Bool
+/// Returns true if the contract is currently validated and nil if it's not staged.
+access(all) view fun isValidated(address: Address, name: String): Bool?
 /// Returns the names of all staged contracts for the given address.
 access(all) view fun getStagedContractNames(forAddress: Address): [String]
 /// Returns the staged contract Cadence code for the given address and name.
