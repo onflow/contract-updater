@@ -138,6 +138,12 @@ access(all) contract MigrationContractStaging {
         return self.stagedContracts[address]?.contains(name) ?? false
     }
 
+    /// Returns true if the contract is currently validated and nil if it's not staged.
+    ///
+    access(all) view fun isValidated(address: Address, name: String): Bool? {
+        return self.getStagedContractUpdate(address: address, name: name)?.isValidated() ?? nil
+    }
+
     /// Returns the names of all staged contracts for the given address.
     ///
     access(all) view fun getStagedContractNames(forAddress: Address): [String] {
@@ -275,18 +281,13 @@ access(all) contract MigrationContractStaging {
             return prefix.concat(self.name)
         }
 
-        /// Returns whether this contract update passed the last emulated migration, validating the contained code
-        /// If emulated migration has not yet been committed, returns nil. Otherwise, returns whether the code was
-        /// included in the last emulated migration and did not fail.
-        /// NOTE: False could mean that the code was not included in the emulation or that it failed
+        /// Returns whether this contract update passed the last emulated migration, validating the contained code.
+        /// NOTE: False could mean validation hasn't begun, the code wasn't included in the emulation or that it failed
         ///
-        access(all) view fun isValidated(): Bool? {
-            // No emulated migration results to validate against
-            if MigrationContractStaging.lastEmulatedMigrationResult == nil {
-                return nil
-            }
+        access(all) view fun isValidated(): Bool {
             // This code was contained in the last emulated migration and didn't fail
-            if self.lastUpdated < MigrationContractStaging.lastEmulatedMigrationResult!.snapshot &&
+            if MigrationContractStaging.lastEmulatedMigrationResult != nil &&
+                self.lastUpdated < MigrationContractStaging.lastEmulatedMigrationResult!.snapshot &&
                 !MigrationContractStaging.lastEmulatedMigrationResult!.failedContracts.contains(self.identifier()) {
                 return true
             }

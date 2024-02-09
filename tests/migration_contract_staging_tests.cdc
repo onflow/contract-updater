@@ -163,6 +163,14 @@ access(all) fun testStageMultipleContractsSucceeds() {
     Test.assertEqual(bUpdateCadence, bStagedCode)
     Test.assertEqual(cUpdateCadence, cStagedCode)
 
+    // TRIAGE
+    let currentTimestamp = executeScript(
+        "../scripts/test/get_current_block_timestamp.cdc",
+        []
+    ).returnValue as! UFix64? ?? panic("Problem retrieving snapshot timestamp")
+    log(currentTimestamp)
+    // 
+
     let allStagedCodeForAAccount = getAllStagedContractCodeForAddress(contractAddress: aAccount.address)
     let allStagedCodeForBCAccount = getAllStagedContractCodeForAddress(contractAddress: bcAccount.address)
     assertStagedContractCodeEqual({ "A": aUpdateCadence }, allStagedCodeForAAccount)
@@ -258,7 +266,7 @@ access(all) fun testStageBeyondCutoffFails() {
 }
 
 access(all) fun testCommitMigrationResultsSucceeds() {
-    Test.moveTime(by: 10.0)
+    Test.moveTime(by: 20.0)
     let currentTimestamp = executeScript(
         "../scripts/test/get_current_block_timestamp.cdc",
         []
@@ -271,6 +279,11 @@ access(all) fun testCommitMigrationResultsSucceeds() {
     )
     Test.expect(commitResult, Test.beSucceeded())
 
+    // TRIAGE
+    log(snapshotTimestamp)
+    log(currentTimestamp)
+    // 
+
     let events = Test.eventsOfType(Type<MigrationContractStaging.EmulatedMigrationResultCommitted>())
     Test.assertEqual(1, events.length)
     let evt = events[0] as! MigrationContractStaging.EmulatedMigrationResultCommitted
@@ -278,7 +291,7 @@ access(all) fun testCommitMigrationResultsSucceeds() {
     Test.assertEqual(currentTimestamp, evt.committedTimestamp)
 
     let aContractUpdateIsValidated = executeScript(
-        "../scripts/migration-contract-staging/contract_update_is_validated.cdc",
+        "../scripts/migration-contract-staging/is_validated.cdc",
         [aAccount.address, "A"]
     ).returnValue as! Bool?
     Test.assertEqual(true, aContractUpdateIsValidated!)
