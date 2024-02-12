@@ -23,7 +23,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Install Flow CLI
-        run: sh -ci "$(curl -fsSL https://raw.githubusercontent.com/onflow/flow-cli/master/install.sh)" -- v1.8.0
+        run: sh -ci "$(curl -fsSL https://raw.githubusercontent.com/onflow/flow-cli/master/install.sh)" -- v1.13.1
       - name: Flow CLI Version
         run: flow version
       - name: Update PATH
@@ -31,7 +31,7 @@ jobs:
       - name: Run tests
         run: make ci
       - name: Normalize coverage report filepaths
-        run : sh ./normalize_coverage_report.sh
+        run : sh ./local/normalize_coverage_report.sh
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         env:
