@@ -68,6 +68,7 @@
 		}
 	},
 	"networks": {
+		"crescendo": "access.crescendo.nodes.onflow.org: 9000",
 		"emulator": "127.0.0.1:3569",
 		"mainnet": "access.mainnet.nodes.onflow.org:9000",
 		"sandboxnet": "access.sandboxnet.nodes.onflow.org:9000",
@@ -98,9 +99,37 @@
 		"foo": {
 			"address": "01cf0e2f2f715450",
 			"key": "e9b7b36e9d16f47501db73e84c68e441609475ee482ee808411b2fe0bd2329da"
+		},
+		"migration-contract-staging-crescendo": {
+			"address": "27b2302520211b67",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/migration-contract-staging-testnet/cryptoKeys/evm-storage-testnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"migration-contract-staging-testnet": {
+			"address": "2ceae959ed1a7e7a",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/migration-contract-staging-testnet/cryptoKeys/evm-storage-testnet-key/cryptoKeyVersions/1"
+			}
+		},
+		"originator-crescendo": {
+			"address": "c3d589f831db1bb8",
+			"key": {
+				"type": "file",
+				"location": "crescendo-originator.pkey"
+			}
 		}
 	},
 	"deployments": {
+		"crescendo": {
+			"migration-contract-staging-crescendo": [
+				"MigrationContractStaging"
+			]
+		},
 		"emulator": {
 			"a-account": [
 				"A"
@@ -117,6 +146,11 @@
 			],
 			"foo": [
 				"Foo"
+			]
+		},
+		"testnet": {
+			"migration-contract-staging-testnet": [
+				"MigrationContractStaging"
 			]
 		}
 	}

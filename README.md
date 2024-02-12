@@ -12,8 +12,6 @@ Cadence 1.0 is a momentous milestone, introducing many advanced features to the 
 which will require changes to all contracts on the network. This makes crossing that milestone a coordinated effort,
 read on for how to prepare.
 
-![Path to Cadence 1.0](./resources/path_to_cadence_1.png)
- 
 Your contract's path to Cadence 1.0 can be broken down into the following four high-level phases:
 
 1. **Updated:** Update your code, validating refactored contracts, transactions and scripts via local testing and
@@ -25,22 +23,28 @@ Your contract's path to Cadence 1.0 can be broken down into the following four h
    your code and stage it again.
 4. **Migrated:** all core and staged contracts are updated via state migration
 
+![Path to Cadence 1.0](./resources/path_to_cadence_1.png)
+ 
 Steps 1 & 2 require your effort and execution - you must update your contract and execute a transaction to stage it for
 migration. Step 3 is an asynchronous feedback loop between Flow and contract owners where staged contracts are migrated
 in an emulated environment offchain, the results of which will be submitted to the staging contract on a set interval
 (TBD). Step 4 will be completed by the network, executed as an HCU.
 
+This process will need to be completed for all contracts on all networks, with a number of opportunities to collectively
+practice on Crescendo Migration Testnet (CMT) before the HCU on Testnet and Mainnet.
+
 > :mag: This repo addresses steps 2 & 3 above, providing a central coordination point for contract updates to be staged,
-code and staging status to be retrieved, and offchain validation results to be committed, queried and broadcast. Focus
-on reaching validated status across all of your contracts before the HCU, giving you confidence your contract updates
-will be successful.
+> code and staging status to be retrieved, and offchain validation results to be committed, queried and broadcast. Focus
+> on reaching validated status across all of your contracts before the HCU, giving you confidence your contract updates
+> will be successful.
 
 ## Overview
 
 > :information_source: This document proceeds with an emphasis on the `MigrationContractStaging` contract, which will be
-> used for the upcoming Cadence 1.0 network migration. Any contracts currently on Mainnet **WILL** need to be updated
-> via state migration on the Cadence 1.0 milestone. This means you **MUST** stage your contract updates before the
-> milestone for your contract to continue functioning. Keep reading to understand how to stage your contract update.
+> used for the upcoming Cadence 1.0 network migration. Any contracts currently deployed on Testnet & Mainnet **WILL**
+> need to be updated via state migration on the Cadence 1.0 milestone. This means you **MUST** stage your contract
+> updates before the milestone for your contract to continue functioning. Keep reading to understand how to stage your
+> contract update.
 
 The `MigrationContractStaging` contract provides a mechanism for staging contract updates onchain in preparation for
 Cadence 1.0. Once you have refactored your existing contracts to be Cadence 1.0 compatible, you will need to stage your
@@ -52,10 +56,11 @@ Coordinated Upgrade.
 > :information_source: The `MigrationContractStaging` contract is not yet deployed. Its deployment address will be added
 > here once it has been deployed.
 
-| Network | Address |
-| ------- | ------- |
-| Testnet | TBD     |
-| Mainnet | TBD     |
+| Network                     | Address                                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Crescendo Migration Testnet | [0x27b2302520211b67](https://crescendo.flowdiver.io/contract/A.27b2302520211b67.MigrationContractStaging?tab=deployments) |
+| Testnet                     | [0x2ceae959ed1a7e7a](https://contractbrowser.com/A.2ceae959ed1a7e7a.MigrationContractStaging)                             |
+| Mainnet                     | TBD                                                                                                                       |
 
 ### Pre-Requisites
 
