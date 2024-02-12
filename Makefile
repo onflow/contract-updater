@@ -4,5 +4,5 @@ test:
 
 .PHONY: ci
 ci:
-	$(MAKE) generate -C lib/go
+	$(MAKE) ci -C lib/go
 	$(MAKE) test
