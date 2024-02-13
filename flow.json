@@ -47,7 +47,9 @@
 		"MigrationContractStaging": {
 			"source": "./contracts/MigrationContractStaging.cdc",
 			"aliases": {
+				"crescendo": "27b2302520211b67",
 				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "2ceae959ed1a7e7a",
 				"testing": "0000000000000007"
 			}
 		},
