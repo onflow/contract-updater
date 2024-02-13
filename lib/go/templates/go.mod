@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/kevinburke/go-bindata v3.23.0+incompatible
-	github.com/onflow/flow-go-sdk v1.0.0-M1
+	github.com/onflow/flow-go-sdk v0.41.20
 	github.com/stretchr/testify v1.8.4
 )
 
