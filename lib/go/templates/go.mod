@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/kevinburke/go-bindata v3.23.0+incompatible
-	github.com/onflow/flow-go-sdk v0.41.15
+	github.com/onflow/flow-go-sdk v0.41.20
 	github.com/stretchr/testify v1.8.4
 )
 
@@ -28,7 +28,7 @@ require (
 	github.com/onflow/atree v0.6.1-0.20230711151834-86040b30171f // indirect
 	github.com/onflow/cadence v0.42.9 // indirect
 	github.com/onflow/crypto v0.25.0 // indirect
-	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231018182244-e72527c55c63 // indirect
+	github.com/onflow/flow/protobuf/go/flow v0.3.2-0.20231121210617-52ee94b830c2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
@@ -39,7 +39,6 @@ require (
 	github.com/zeebo/blake3 v0.2.3 // indirect
 	go.opentelemetry.io/otel v1.16.0 // indirect
 	golang.org/x/crypto v0.16.0 // indirect
-	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.16.0 // indirect
