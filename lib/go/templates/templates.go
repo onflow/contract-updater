@@ -2,6 +2,7 @@ package templates
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/onflow/flow-go-sdk"
 )
@@ -9,11 +10,11 @@ import (
 //go:generate go run github.com/kevinburke/go-bindata/go-bindata -prefix ../../../ -o internal/assets/assets.go -pkg assets -nometadata -nomemcopy ../../../scripts/... ../../../transactions/...
 
 var (
-	placeholderMigrationContractStagingString = "\"MigrationContractStaging\""
+	placeholderMigrationContractStaging = regexp.MustCompile(`"MigrationContractStaging"`)
 )
 
-func replaceAddresses(code string, migrationContractStagingAddress flow.Address) []byte {
-	code = placeholderMigrationContractStagingString.ReplaceAllString(code, "0x"+migrationContractStagingAddress.String())
+func replaceMigrationContractStagingImports(code string, migrationContractStagingAddress flow.Address) []byte {
+	code = placeholderMigrationContractStaging.ReplaceAllString(code, "0x"+migrationContractStagingAddress.String())
 	return []byte(code)
 }
 

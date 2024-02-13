@@ -17,20 +17,20 @@ const (
 
 func GenerateStageContractScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameStageContract)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
 
 func GenerateUnstageContractScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameUnstageContract)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
 
 func GenerateCommitMigrationResultsScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameCommitMigrationResults)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
 
 func GenerateSetStagingCutoffScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameSetStagingCutoff)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }

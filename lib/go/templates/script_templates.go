@@ -20,45 +20,45 @@ const (
 
 func GenerateGetAllStagedContractCodeForAddressScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameGetAllStagedContractCodeForAddress)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
 
 func GenerateGetAllStagedContractHostsScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameGetAllStagedContractHosts)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
 
 func GenerateGetAllStagedContractsScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameGetAllStagedContracts)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
 
 func GenerateGetStagedContractCodeScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameGetStagedContractCode)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
 
 func GenerateGetStagedContractNamesForAddressScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameGetStagedContractNamesForAddress)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
 
 func GenerateGetStagedContractUpdateScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameGetStagedContractUpdate)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
 
 func GenerateGetStagingCutoffScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameGetStagingCutoff)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
 
 func GenerateIsStagedScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameIsStaged)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
 
 func GenerateIsValidatedScript(migrationContractStagingAddress flow.Address) []byte {
 	code := assets.MustAssetString(filenameIsValidated)
-	return replaceAddresses(code, migrationContractStagingAddress)
+	return replaceMigrationContractStagingImports(code, migrationContractStagingAddress)
 }
