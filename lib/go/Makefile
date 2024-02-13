@@ -1,3 +1,7 @@
+.PHONY: test
+test:
+	$(MAKE) test -C templates
+
 .PHONY: generate
 generate:
 	$(MAKE) generate -C contracts
