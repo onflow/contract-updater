@@ -76,8 +76,14 @@ Armed with your pre-requisites, you're ready to stage your contract update. Simp
 transaction](./transactions/migration-contract-staging/stage_contract.cdc), passing your contract's name and Cadence
 code as arguments and signing as the contract host account.
 
+You can stage your contract using the [Flow Interaction Templates
+(FLIX)](https://developers.flow.com/tools/flow-cli/flix) and the following command to execute the staging transaction
+from [its interaction template](./flix/stage_contract.cdc.flix.json):
+
+> :warning: Be sure to execute this transaction passing your contract's updated Cadence 1.0-compatible code
+
 ```sh
-flow transactions send ./transactions/migration-contract-staging/stage_contract.cdc \
+flow flix execute https://raw.githubusercontent.com/onflow/contract-updater/main/flix/stage_contract.cdc.flix.json \
     <CONTRACT_NAME> "$(cat <CONTRACT_FILEPATH>)" \
     --signer <YOUR_SIGNER_ALIAS> \
     --network <TARGET_NETWORK>
@@ -127,9 +133,13 @@ script](./scripts/migration-contract-staging/get_staged_contract_code.cdc), pass
 you're requesting and getting the Cadence code in return. This script can also help you get the staged code for your
 dependencies if the project owner has staged their code.
 
+You can run this script from [its template](./flix/get_staged_contract_code.cdc.flix.json) using
+[FLIX](https://developers.flow.com/tools/flow-cli/flix) without the need to pull dependencies into your local project
+with the Flow CLI command below.
+
 ```sh
-flow scripts execute ./scripts/migration-contract-staging/get_staged_contract_code.cdc \
-    <CONTRACT_ADDRESS> <CONTRACT_NAME> \
+flow flix execute https://raw.githubusercontent.com/onflow/contract-updater/main/flix/get_staged_contract_code.cdc.flix.json \
+    <CONTRACT_NAME> \
     --network <TARGET_NETWORK>
 ```
 
