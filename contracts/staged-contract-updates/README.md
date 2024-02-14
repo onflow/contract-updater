@@ -25,7 +25,7 @@ advanced deployments are possible with support for multiple contract accounts an
 1. Setup emulator environment - this creates our emulator accounts & deploys contracts:
 
     ```sh
-    sh staged_contract_updates_setup.sh
+    sh local/staged_contract_updates_setup.sh
     ```
 
 ### Walkthrough
@@ -52,7 +52,7 @@ advanced deployments are possible with support for multiple contract accounts an
 1. Simulate block creation, running transactions to iterate over blocks to the pre-configured block update height:
 
     ```sh
-    sh tick_tock.sh
+    sh local/tick_tock.sh
     ```
 
 1. We can get details from our `Updater` before updating:
