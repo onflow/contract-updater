@@ -14,7 +14,7 @@ for directory in "${directories[@]}"; do
         flow flix generate "$filepath" --save "$filepath.flix.json"
     done
 
-    # Move all *.template.json files to the flix directory
-    find "./$directory" -type f -name "*.template.json" -exec mv {} "./flix" \;
+    # Move all *.flix.json files to the flix directory
+    find "./$directory" -type f -name "*.flix.json" -exec mv {} "./flix" \;
 done
 
