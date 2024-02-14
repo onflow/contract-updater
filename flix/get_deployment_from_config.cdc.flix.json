@@ -1,0 +1,49 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "0561eea8dc789d3c72b2860a9c39632def7e188b31eb4aa0e088f3124d8507ce",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "import \"StagedContractUpdates\"\n\npub fun main(config: [[{Address: {String: String}}]]): [[StagedContractUpdates.ContractUpdate]] {\n    return StagedContractUpdates.getDeploymentFromConfig(config)\n}",
+            "network_pins": []
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "StagedContractUpdates",
+                        "networks": [
+                            {
+                                "network": "emulator",
+                                "address": "0x3662306132306337",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "testing",
+                                "address": "0x3030303030303037",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "config",
+                "index": 0,
+                "type": "[[{Address: {String: String}}]]",
+                "messages": []
+            }
+        ],
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "[[StagedContractUpdates.ContractUpdate]]",
+            "messages": []
+        }
+    }
+}

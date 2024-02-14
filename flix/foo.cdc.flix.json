@@ -1,0 +1,42 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "0c42395a1390e41ea0ceab7ef88958d99c6879121b717ddca5e8b29b4b995c3e",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "import \"Foo\"\n\npub fun main(): String {\n    return Foo.foo()\n}",
+            "network_pins": []
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "Foo",
+                        "networks": [
+                            {
+                                "network": "emulator",
+                                "address": "0x3266373135343530",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "testing",
+                                "address": "0x3030303030303038",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": null,
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "String",
+            "messages": []
+        }
+    }
+}

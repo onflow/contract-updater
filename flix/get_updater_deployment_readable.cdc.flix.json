@@ -1,0 +1,49 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "cfc3e5b89fbe26925732fb0b129f7e8fb0d106e6abfa9d1e199769d015765330",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "import \"StagedContractUpdates\"\n\npub struct ContractUpdateReadable {\n    pub let address: Address\n    pub let name: String\n    pub let code: String\n\n    init(\n        address: Address,\n        name: String,\n        code: String\n    ) {\n        self.address = address\n        self.name = name\n        self.code = code\n    }\n}\n\n/// Returns values of the Updater at the given Address\n///\npub fun main(address: Address): [[ContractUpdateReadable]]? {\n    \n    let account = getAuthAccount(address)\n     \n    if let updater = account.borrow\u003c\u0026StagedContractUpdates.Updater\u003e(from: StagedContractUpdates.UpdaterStoragePath) {\n\n        let result: [[ContractUpdateReadable]] = []\n        let deployments = updater.getDeployments()\n\n        for stage in deployments {\n            let data: [ContractUpdateReadable] = []\n            for contractUpdate in stage {\n                data.append(\n                        ContractUpdateReadable(\n                        address: contractUpdate.address,\n                        name: contractUpdate.name,\n                        code: contractUpdate.codeAsCadence()\n                    )\n                )\n            }\n            result.append(data)\n        }\n        \n        return result\n    }\n\n    return nil\n\n}\n",
+            "network_pins": []
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "StagedContractUpdates",
+                        "networks": [
+                            {
+                                "network": "emulator",
+                                "address": "0x3662306132306337",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "testing",
+                                "address": "0x3030303030303037",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "address",
+                "index": 0,
+                "type": "Address",
+                "messages": []
+            }
+        ],
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "[[ContractUpdateReadable]]?",
+            "messages": []
+        }
+    }
+}

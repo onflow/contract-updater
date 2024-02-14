@@ -1,0 +1,31 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "45bb20f103824a6150e9a1addeee827a0fa9ad2361b037aad03fd473682c8309",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "access(all) fun main(): UInt64 {\n    return getCurrentBlock().height\n}",
+            "network_pins": [
+                {
+                    "network": "mainnet",
+                    "pin_self": "415eac62f6312a10489cdeb4daf772d34c006ce21279896c4196dc803c52266d"
+                },
+                {
+                    "network": "testnet",
+                    "pin_self": "415eac62f6312a10489cdeb4daf772d34c006ce21279896c4196dc803c52266d"
+                }
+            ]
+        },
+        "dependencies": null,
+        "parameters": null,
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "UInt64",
+            "messages": []
+        }
+    }
+}

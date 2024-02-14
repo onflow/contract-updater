@@ -1,0 +1,36 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "231bc826586485d67c7424237bf0386b6dd86b6e415735747b681a788da31917",
+    "data": {
+        "type": "transaction",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "import \"StagedContractUpdates\"\n\n/// Creates a private Updater Capability and gives it to the StagedContractUpdates Delegatee\n///\ntransaction {\n\n    let delegatee: \u0026{StagedContractUpdates.DelegateePublic}\n    let updaterCap: Capability\u003c\u0026StagedContractUpdates.Updater\u003e\n    let updaterID: UInt64\n\n    prepare(signer: AuthAccount) {\n\n        // Revert if the signer doesn't already have an Updater configured\n        if signer.type(at: StagedContractUpdates.UpdaterStoragePath) == nil {\n            panic(\"Signer does not have an Updater configured\")\n        }\n        // Continue...\n\n        // Get reference to the contract's DelegateePublic\n        self.delegatee = StagedContractUpdates.getContractDelegateeCapability().borrow()\n            ?? panic(\"Could not borrow Delegatee reference\")\n\n        let updaterPrivatePath = PrivatePath(\n                identifier: \"StagedContractUpdatesUpdater_\".concat(\n                    self.delegatee.owner?.address?.toString() ?? panic(\"Problem referencing contract's DelegateePublic owner address\")\n                )\n            )!\n\n        // Link Updater Capability in private if needed \u0026 retrieve\n        if !signer.getCapability\u003c\u0026StagedContractUpdates.Updater\u003e(updaterPrivatePath).check() {\n            signer.unlink(updaterPrivatePath)\n            signer.link\u003c\u0026StagedContractUpdates.Updater\u003e(\n                updaterPrivatePath,\n                target: StagedContractUpdates.UpdaterStoragePath\n            )\n        }\n        self.updaterCap = signer.getCapability\u003c\u0026StagedContractUpdates.Updater\u003e(updaterPrivatePath)\n        self.updaterID = self.updaterCap.borrow()?.getID() ?? panic(\"Invalid Updater Capability retrieved from signer!\")\n    }\n\n    execute {\n        self.delegatee.delegate(updaterCap: self.updaterCap)\n    }\n\n    post {\n        // Confirm successful delegation\n        self.delegatee.check(id: self.updaterID) == true: \"Updater Capability was not properly delegated\"\n    }\n}",
+            "network_pins": []
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "StagedContractUpdates",
+                        "networks": [
+                            {
+                                "network": "testing",
+                                "address": "0x3030303030303037",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0x3662306132306337",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": null
+    }
+}

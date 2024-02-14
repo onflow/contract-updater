@@ -1,0 +1,31 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "6c32e4382b0b10467120e4cb0e94c1c39d0a0e6ff115ada676a995d81fcf364d",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "access(all) fun main(): UFix64 {\n    return getCurrentBlock().timestamp\n}\n",
+            "network_pins": [
+                {
+                    "network": "mainnet",
+                    "pin_self": "87ffc1ee36bb21ba867ab8d3bbfed6d1c2a9545faa007c6ebe33f2b268410a32"
+                },
+                {
+                    "network": "testnet",
+                    "pin_self": "87ffc1ee36bb21ba867ab8d3bbfed6d1c2a9545faa007c6ebe33f2b268410a32"
+                }
+            ]
+        },
+        "dependencies": null,
+        "parameters": null,
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "UFix64",
+            "messages": []
+        }
+    }
+}

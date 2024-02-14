@@ -1,0 +1,49 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "7ea84a9c2b3b6006a5f2940cecc3ad418a27836bc90af2d16e3d645d202dbc4c",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "import \"StagedContractUpdates\"\n\n/// Returns values of the Updater at the given Address\n///\npub fun main(address: Address): [[{Address: String}]]? {\n    let account = getAuthAccount(address)\n     \n    if let updater = account.borrow\u003c\u0026StagedContractUpdates.Updater\u003e(from: StagedContractUpdates.UpdaterStoragePath) {\n        let result: [[{Address: String}]] = []\n        let deployments = updater.getDeployments()\n\n        for i, stage in deployments {\n            let data: [{Address: String}] = []\n            for contractUpdate in stage {\n                data.append({\n                    contractUpdate.address: contractUpdate.name\n                })\n            }\n            result.append(data)\n        }\n        \n        return result\n    }\n\n    return nil\n\n}\n",
+            "network_pins": []
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "StagedContractUpdates",
+                        "networks": [
+                            {
+                                "network": "testing",
+                                "address": "0x3030303030303037",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0x3662306132306337",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "address",
+                "index": 0,
+                "type": "Address",
+                "messages": []
+            }
+        ],
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "[[{Address: String}]]?",
+            "messages": []
+        }
+    }
+}

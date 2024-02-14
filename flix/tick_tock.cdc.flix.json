@@ -1,0 +1,25 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "b334829f34a175a066b5515bfa105a7495aa26b70f2064d4e11dc0d893892ca7",
+    "data": {
+        "type": "transaction",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "/// TEST TRANSACTION\n/// Used to mock block advancement in test suite\n///\ntransaction {\n    prepare(signer: AuthAccount) {\n        log(\"Block height incremented to: \".concat(getCurrentBlock().height.toString()))\n    }\n}\n",
+            "network_pins": [
+                {
+                    "network": "mainnet",
+                    "pin_self": "549ea2f9a4092500fb19e143401e8f10eb2aee1c90c9b93b89e3337f7beec890"
+                },
+                {
+                    "network": "testnet",
+                    "pin_self": "549ea2f9a4092500fb19e143401e8f10eb2aee1c90c9b93b89e3337f7beec890"
+                }
+            ]
+        },
+        "dependencies": null,
+        "parameters": null
+    }
+}

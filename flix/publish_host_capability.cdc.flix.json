@@ -1,0 +1,43 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "d4bf2993d05b37daeabddd578555eabca6526ce529699a37814fbc483d871d34",
+    "data": {
+        "type": "transaction",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "#allowAccountLinking\n\nimport \"StagedContractUpdates\"\n\n/// Links the signer's AuthAccount and encapsulates in a Host resource, publishing a Host Capability for the specified\n/// recipient. This would enable the recipient to execute arbitrary contract updates on the signer's behalf.\n///\ntransaction(publishFor: Address) {\n\n    prepare(signer: AuthAccount) {\n\n        // Derive paths for AuthAccount \u0026 Host Capabilities, identifying the recipient on publishing\n        let accountCapPrivatePath = PrivatePath(\n                identifier: \"StagedContractUpdatesAccountCap_\".concat(signer.address.toString())\n            )!\n        let hostPrivatePath = PrivatePath(identifier: \"StagedContractUpdatesHost_\".concat(publishFor.toString()))!\n\n        // Setup Capability on underlying signing host account\n        if !signer.getCapability\u003c\u0026AuthAccount\u003e(accountCapPrivatePath).check() {\n            signer.unlink(accountCapPrivatePath)\n            signer.linkAccount(accountCapPrivatePath)\n                ?? panic(\"Problem linking AuthAccount Capability\")\n        }\n        let accountCap = signer.getCapability\u003c\u0026AuthAccount\u003e(accountCapPrivatePath)\n\n        assert(accountCap.check(), message: \"Invalid AuthAccount Capability retrieved\")\n\n        // Setup Host resource, wrapping the previously configured account capabaility\n        if signer.type(at: StagedContractUpdates.HostStoragePath) == nil {\n            signer.save(\n                \u003c- StagedContractUpdates.createNewHost(accountCap: accountCap),\n                to: StagedContractUpdates.HostStoragePath\n            )\n        }\n        if !signer.getCapability\u003c\u0026StagedContractUpdates.Host\u003e(hostPrivatePath).check() {\n            signer.unlink(hostPrivatePath)\n            signer.link\u003c\u0026StagedContractUpdates.Host\u003e(hostPrivatePath, target: StagedContractUpdates.HostStoragePath)\n        }\n        let hostCap = signer.getCapability\u003c\u0026StagedContractUpdates.Host\u003e(hostPrivatePath)\n\n        assert(hostCap.check(), message: \"Invalid Host Capability retrieved\")\n\n        // Finally publish the Host Capability to the account that will store the Updater\n        signer.inbox.publish(\n            hostCap,\n            name: StagedContractUpdates.inboxHostCapabilityNamePrefix.concat(publishFor.toString()),\n            recipient: publishFor\n        )\n    }\n}\n",
+            "network_pins": []
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "StagedContractUpdates",
+                        "networks": [
+                            {
+                                "network": "testing",
+                                "address": "0x3030303030303037",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0x3662306132306337",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "publishFor",
+                "index": 0,
+                "type": "Address",
+                "messages": []
+            }
+        ]
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "5c637a0e71c029d653dd7b2121a6f2de9047716188285283fe41f405b7c4d154",
+    "data": {
+        "type": "transaction",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "import \"StagedContractUpdates\"\n\n/// Retrieves an Updater Capability from the signer's account, assuming one is pre-configured, and removes it from the\n/// Delegatee in the StagedContractUpdates contract account.\n///\ntransaction {\n    \n    let delegatee: \u0026{StagedContractUpdates.DelegateePublic}\n    let updaterCap: Capability\u003c\u0026StagedContractUpdates.Updater\u003e\n    let updaterID: UInt64\n    \n    prepare(signer: AuthAccount) {\n        self.delegatee = StagedContractUpdates.getContractDelegateeCapability().borrow()\n            ?? panic(\"Could not borrow Delegatee reference\")\n\n        let updaterPrivatePath = PrivatePath(\n                identifier: \"StagedContractUpdatesUpdater_\".concat(\n                    self.delegatee.owner?.address?.toString() ?? panic(\"Problem referencing contract's DelegateePublic owner address\")\n                )\n            )!\n\n        self.updaterCap = signer.getCapability\u003c\u0026StagedContractUpdates.Updater\u003e(updaterPrivatePath)\n        self.updaterID = self.updaterCap.borrow()?.getID() ?? panic(\"Invalid Updater Capability retrieved from signer!\")\n    }\n\n    execute {\n        self.delegatee.removeAsUpdater(updaterCap: self.updaterCap)\n    }\n\n    post {\n        self.delegatee.check(id: self.updaterID) == nil: \"Updater Capability was not properly removed from Delegatee\"\n    }\n}\n",
+            "network_pins": []
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "StagedContractUpdates",
+                        "networks": [
+                            {
+                                "network": "emulator",
+                                "address": "0x3662306132306337",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "testing",
+                                "address": "0x3030303030303037",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": null
+    }
+}

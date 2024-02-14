@@ -1,0 +1,49 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "db680c9b4e0721705a46eda59b454be061965df465bd73d11f35e796e0f79961",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "import \"StagedContractUpdates\"\n\n/// Retrieves the current deployment stage of the Updater at the given Address or nil if an Updater is not found\n///\naccess(all) fun main(updaterAddress: Address): Int? {\n    return getAccount(updaterAddress).getCapability\u003c\u0026{StagedContractUpdates.UpdaterPublic}\u003e(\n        StagedContractUpdates.UpdaterPublicPath\n    ).borrow()\n    ?.getCurrentDeploymentStage()\n}\n",
+            "network_pins": []
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "StagedContractUpdates",
+                        "networks": [
+                            {
+                                "network": "emulator",
+                                "address": "0x3662306132306337",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "testing",
+                                "address": "0x3030303030303037",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "updaterAddress",
+                "index": 0,
+                "type": "Address",
+                "messages": []
+            }
+        ],
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "Int?",
+            "messages": []
+        }
+    }
+}

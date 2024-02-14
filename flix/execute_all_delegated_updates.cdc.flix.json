@@ -1,0 +1,36 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "2ad0e41388caddd6e1a727a902615ea124aec95c70ef6feeeb422cede84a7386",
+    "data": {
+        "type": "transaction",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "import \"StagedContractUpdates\"\n\n/// Updates all current stages of delegated contract updates in contained Updater Capabilities\n/// Note: If there are enough Updaters delegated to the signer's Delegatee, this may need to be done in batches\n/// due to transaction computation limits\n///\ntransaction {\n\n    let delegatee: \u0026StagedContractUpdates.Delegatee\n\n    prepare(signer: AuthAccount) {\n        self.delegatee = signer.borrow\u003c\u0026StagedContractUpdates.Delegatee\u003e(from: StagedContractUpdates.DelegateeStoragePath)\n            ?? panic(\"Could not borrow Delegatee reference from signer\")\n    }\n\n    execute {\n        self.delegatee.update(updaterIDs: self.delegatee.getUpdaterIDs())\n    }\n}\n",
+            "network_pins": []
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "StagedContractUpdates",
+                        "networks": [
+                            {
+                                "network": "testing",
+                                "address": "0x3030303030303037",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0x3662306132306337",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": null
+    }
+}

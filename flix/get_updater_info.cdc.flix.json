@@ -1,0 +1,117 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "fb1445dbf69e1556ae2e69da7c36e31a8b7adbf069cae01d0cbee6c640c8d537",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "import \"MetadataViews\"\n\nimport \"StagedContractUpdates\"\n\n/// Returns UpdaterInfo view from the Updater at the given address or nil if none is found\n///\npub fun main(address: Address): StagedContractUpdates.UpdaterInfo? {\n    return getAccount(address).getCapability\u003c\u0026{StagedContractUpdates.UpdaterPublic, MetadataViews.Resolver}\u003e(\n            StagedContractUpdates.UpdaterPublicPath\n        ).borrow()\n        ?.resolveView(Type\u003cStagedContractUpdates.UpdaterInfo\u003e()) as! StagedContractUpdates.UpdaterInfo?\n}\n",
+            "network_pins": []
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "MetadataViews",
+                        "networks": [
+                            {
+                                "network": "mainnet",
+                                "address": "0x1d7e57aa55817448",
+                                "dependency_pin_block_height": 72002371,
+                                "dependency_pin": {
+                                    "pin": "48cdb16fa01e24bc986b68c33e8f196dfbdb48dc93ff11cf7689c4a90dbe345e",
+                                    "pin_self": "16312239523708c4413ecd508ae41c5c7075949b1c07ac42c3ac0027f72bdbf5",
+                                    "pin_contract_name": "MetadataViews",
+                                    "pin_contract_address": "0x1d7e57aa55817448",
+                                    "imports": [
+                                        {
+                                            "pin": "ac0208f93d07829ec96584d618ddbec6af3cf4e2866bd5071249e8ec93c7e0dc",
+                                            "pin_self": "cdadd5b5897f2dfe35d8b25f4e41fea9f8fca8f40f8a8b506b33701ef5033076",
+                                            "pin_contract_name": "FungibleToken",
+                                            "pin_contract_address": "0xf233dcee88fe0abe",
+                                            "imports": []
+                                        },
+                                        {
+                                            "pin": "b2ab6c499be905685f1b34cfd0e6fb5740be90421589a9a230bc6b193d813b74",
+                                            "pin_self": "dde9cd040a14d91d43fd551f92199bfa8742811c293446ea950fa4f5f0543404",
+                                            "pin_contract_name": "NonFungibleToken",
+                                            "pin_contract_address": "0x1d7e57aa55817448",
+                                            "imports": []
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "network": "testnet",
+                                "address": "0x631e88ae7f1d7c20",
+                                "dependency_pin_block_height": 156134253,
+                                "dependency_pin": {
+                                    "pin": "22f424750f179e097ef1e36dc0c032e6b923f1c68d654e39a7788f3f322bd58c",
+                                    "pin_self": "2ea8816094f91e7df89f254a3523bca39604f933d185ba8535070158afe5af3c",
+                                    "pin_contract_name": "MetadataViews",
+                                    "pin_contract_address": "0x631e88ae7f1d7c20",
+                                    "imports": [
+                                        {
+                                            "pin": "ac0208f93d07829ec96584d618ddbec6af3cf4e2866bd5071249e8ec93c7e0dc",
+                                            "pin_self": "cdadd5b5897f2dfe35d8b25f4e41fea9f8fca8f40f8a8b506b33701ef5033076",
+                                            "pin_contract_name": "FungibleToken",
+                                            "pin_contract_address": "0x9a0766d93b6608b7",
+                                            "imports": []
+                                        },
+                                        {
+                                            "pin": "b2ab6c499be905685f1b34cfd0e6fb5740be90421589a9a230bc6b193d813b74",
+                                            "pin_self": "dde9cd040a14d91d43fd551f92199bfa8742811c293446ea950fa4f5f0543404",
+                                            "pin_contract_name": "NonFungibleToken",
+                                            "pin_contract_address": "0x631e88ae7f1d7c20",
+                                            "imports": []
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0xf8d6e0586b0a20c7",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "contracts": [
+                    {
+                        "contract": "StagedContractUpdates",
+                        "networks": [
+                            {
+                                "network": "emulator",
+                                "address": "0x3662306132306337",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "testing",
+                                "address": "0x3030303030303037",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "address",
+                "index": 0,
+                "type": "Address",
+                "messages": []
+            }
+        ],
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "StagedContractUpdates.UpdaterInfo?",
+            "messages": []
+        }
+    }
+}

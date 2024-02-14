@@ -1,0 +1,43 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "046677e6010c0a613e6a1eaa24e1aa7c1feb18bf537a31837ba1256da24d5187",
+    "data": {
+        "type": "transaction",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "import \"StagedContractUpdates\"\n\n/// Allows the contract Coordinator to set a new blockUpdateBoundary\n///\ntransaction(newBoundary: UInt64) {\n    prepare(signer: AuthAccount) {\n        signer.borrow\u003c\u0026StagedContractUpdates.Coordinator\u003e(from: StagedContractUpdates.CoordinatorStoragePath)\n            ?.setBlockUpdateBoundary(new: newBoundary)\n            ?? panic(\"Could not borrow reference to Coordinator!\")\n    }\n}\n",
+            "network_pins": []
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "StagedContractUpdates",
+                        "networks": [
+                            {
+                                "network": "testing",
+                                "address": "0x3030303030303037",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0x3662306132306337",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "newBoundary",
+                "index": 0,
+                "type": "UInt64",
+                "messages": []
+            }
+        ]
+    }
+}
