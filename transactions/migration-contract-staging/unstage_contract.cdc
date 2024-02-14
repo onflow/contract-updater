@@ -1,5 +1,12 @@
 import "MigrationContractStaging"
 
+#interaction (
+    version: "1.0.0",
+    title: "Unstage Contract Update",
+    description: "Removes the staged contract code from the staging contract. Only the contract host can perform this action.",
+    language: "en-US",
+)
+
 /// Unstages the given contract from the staging contract. Only the contract host can perform this action.
 /// After the transaction, the contract will no longer be staged for Cadence 1.0 migration.
 ///

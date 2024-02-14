@@ -1,5 +1,12 @@
 import "MigrationContractStaging"
 
+#interaction (
+    version: "1.0.0",
+    title: "Stage Contract Update",
+    description: "Stages the provided contract code in the staging contract for Cadence 1.0 contract migrations. Only the contract host can perform this action.",
+    language: "en-US",
+)
+
 /// This transaction is used to stage a contract update for Cadence 1.0 contract migrations.
 ///
 /// Ensure that this transaction is signed by the account that owns the contract to be updated and that the contract

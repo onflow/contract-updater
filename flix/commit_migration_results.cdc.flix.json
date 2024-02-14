@@ -1,0 +1,66 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "b5d035292a57c659f4b7736626fc6499fb1e8395fee480da950f07f6e8c19c63",
+    "data": {
+        "type": "transaction",
+        "interface": "",
+        "messages": null,
+        "cadence": {
+            "body": "import \"MigrationContractStaging\"\n\n/// Commits the results of offchain emulated migration\n///\ntransaction(snapshotTimestamp: UFix64, failedContracts: [String]) {\n  \n    let admin: \u0026MigrationContractStaging.Admin\n\n    prepare(signer: AuthAccount) {\n        self.admin = signer.borrow\u003c\u0026MigrationContractStaging.Admin\u003e(from: MigrationContractStaging.AdminStoragePath)\n            ?? panic(\"Could not borrow Admin reference\")\n    }\n\n    execute {\n        self.admin.commitMigrationResults(snapshot: snapshotTimestamp, failed: failedContracts)\n    }\n\n    post {\n        MigrationContractStaging.lastEmulatedMigrationResult!.failedContracts == failedContracts \u0026\u0026\n        MigrationContractStaging.lastEmulatedMigrationResult!.snapshot == snapshotTimestamp:\n            \"Problem committing migration results\"\n    }\n}\n",
+            "network_pins": [
+                {
+                    "network": "testnet",
+                    "pin_self": "8d65a5baf3b2110f7aad12849a3339f469c7f422962f15b1958b654d41864f5f"
+                }
+            ]
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "MigrationContractStaging",
+                        "networks": [
+                            {
+                                "network": "testnet",
+                                "address": "0x2ceae959ed1a7e7a",
+                                "dependency_pin_block_height": 156159269,
+                                "dependency_pin": {
+                                    "pin": "3db75e59355d07498d1dbd1719a383a487562c7cf558450898103212109954cb",
+                                    "pin_self": "ebb923e929faf7299d117ff5159becccb54378c47b08bf30c6d0774f3ee21d61",
+                                    "pin_contract_name": "MigrationContractStaging",
+                                    "pin_contract_address": "0x2ceae959ed1a7e7a",
+                                    "imports": []
+                                }
+                            },
+                            {
+                                "network": "crescendo",
+                                "address": "0x27b2302520211b67",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0xf8d6e0586b0a20c7",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "snapshotTimestamp",
+                "index": 0,
+                "type": "UFix64",
+                "messages": []
+            },
+            {
+                "label": "failedContracts",
+                "index": 1,
+                "type": "[String]",
+                "messages": []
+            }
+        ]
+    }
+}

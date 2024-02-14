@@ -1,0 +1,85 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "fcf2ac689615b6bef7f4ca05a3b8687d96cee57ec75ca8f58e2738e1ad6ec9c0",
+    "data": {
+        "type": "transaction",
+        "interface": "",
+        "messages": [
+            {
+                "key": "title",
+                "i18n": [
+                    {
+                        "tag": "en-US",
+                        "translation": "Stage Contract Update"
+                    }
+                ]
+            },
+            {
+                "key": "description",
+                "i18n": [
+                    {
+                        "tag": "en-US",
+                        "translation": "Stages the provided contract code in the staging contract for Cadence 1.0 contract migrations. Only the contract host can perform this action."
+                    }
+                ]
+            }
+        ],
+        "cadence": {
+            "body": "import \"MigrationContractStaging\"\n\n#interaction (\n    version: \"1.0.0\",\n    title: \"Stage Contract Update\",\n    description: \"Stages the provided contract code in the staging contract for Cadence 1.0 contract migrations. Only the contract host can perform this action.\",\n    language: \"en-US\",\n)\n\n/// This transaction is used to stage a contract update for Cadence 1.0 contract migrations.\n///\n/// Ensure that this transaction is signed by the account that owns the contract to be updated and that the contract\n/// has already been deployed to the signing account.\n///\n/// For more context, see the repo - https://github.com/onflow/contract-updater\n///\n/// @param contractName: The name of the contract to be updated with the given code\n/// @param contractCode: The updated contract code\n///\ntransaction(contractName: String, contractCode: String) {\n    let host: \u0026MigrationContractStaging.Host\n    \n    prepare(signer: AuthAccount) {\n        // Configure Host resource if needed\n        if signer.borrow\u003c\u0026MigrationContractStaging.Host\u003e(from: MigrationContractStaging.HostStoragePath) == nil {\n            signer.save(\u003c-MigrationContractStaging.createHost(), to: MigrationContractStaging.HostStoragePath)\n        }\n        // Assign Host reference\n        self.host = signer.borrow\u003c\u0026MigrationContractStaging.Host\u003e(from: MigrationContractStaging.HostStoragePath)!\n    }\n\n    execute {\n        // Call staging contract, storing the contract code that will update during Cadence 1.0 migration\n        // If code is already staged for the given contract, it will be overwritten.\n        MigrationContractStaging.stageContract(host: self.host, name: contractName, code: contractCode)\n    }\n\n    post {\n        MigrationContractStaging.isStaged(address: self.host.address(), name: contractName):\n            \"Problem while staging update\"\n    }\n}\n",
+            "network_pins": [
+                {
+                    "network": "testnet",
+                    "pin_self": "d167adbd96a47bf9557dd8e6aacf7fb506923f78dc0465c22b6bc1bbc8c8201e"
+                }
+            ]
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "MigrationContractStaging",
+                        "networks": [
+                            {
+                                "network": "crescendo",
+                                "address": "0x27b2302520211b67",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0xf8d6e0586b0a20c7",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "testnet",
+                                "address": "0x2ceae959ed1a7e7a",
+                                "dependency_pin_block_height": 156159265,
+                                "dependency_pin": {
+                                    "pin": "3db75e59355d07498d1dbd1719a383a487562c7cf558450898103212109954cb",
+                                    "pin_self": "ebb923e929faf7299d117ff5159becccb54378c47b08bf30c6d0774f3ee21d61",
+                                    "pin_contract_name": "MigrationContractStaging",
+                                    "pin_contract_address": "0x2ceae959ed1a7e7a",
+                                    "imports": []
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "contractName",
+                "index": 0,
+                "type": "String",
+                "messages": []
+            },
+            {
+                "label": "contractCode",
+                "index": 1,
+                "type": "String",
+                "messages": []
+            }
+        ]
+    }
+}

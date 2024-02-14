@@ -1,0 +1,91 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "1642ad4669ec335b07bb8fc1a6d256c3ebc842bcf30992306660d89b71ebe329",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": [
+            {
+                "key": "title",
+                "i18n": [
+                    {
+                        "tag": "en-US",
+                        "translation": "Is Contract Validated Query"
+                    }
+                ]
+            },
+            {
+                "key": "description",
+                "i18n": [
+                    {
+                        "tag": "en-US",
+                        "translation": "Returns whether a contract is staged and validated. Nil is returned if the contract is not staged."
+                    }
+                ]
+            }
+        ],
+        "cadence": {
+            "body": "import \"MigrationContractStaging\"\n\n#interaction (\n    version: \"1.0.0\",\n    title: \"Is Contract Validated Query\",\n    description: \"Returns whether a contract is staged and validated. Nil is returned if the contract is not staged.\",\n    language: \"en-US\",\n)\n\n/// Returns whether a contract update has been validated, returning nil if it isn't staged\n///\naccess(all) fun main(address: Address, name: String): Bool? {\n    return MigrationContractStaging.isValidated(address: address, name: name)\n}\n",
+            "network_pins": [
+                {
+                    "network": "testnet",
+                    "pin_self": "324bbbaa311f2146ac928534e3af8b91154620c33bec75793b265e65717f0f9b"
+                }
+            ]
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "MigrationContractStaging",
+                        "networks": [
+                            {
+                                "network": "crescendo",
+                                "address": "0x27b2302520211b67",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0xf8d6e0586b0a20c7",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "testnet",
+                                "address": "0x2ceae959ed1a7e7a",
+                                "dependency_pin_block_height": 156159283,
+                                "dependency_pin": {
+                                    "pin": "3db75e59355d07498d1dbd1719a383a487562c7cf558450898103212109954cb",
+                                    "pin_self": "ebb923e929faf7299d117ff5159becccb54378c47b08bf30c6d0774f3ee21d61",
+                                    "pin_contract_name": "MigrationContractStaging",
+                                    "pin_contract_address": "0x2ceae959ed1a7e7a",
+                                    "imports": []
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "address",
+                "index": 0,
+                "type": "Address",
+                "messages": []
+            },
+            {
+                "label": "name",
+                "index": 1,
+                "type": "String",
+                "messages": []
+            }
+        ],
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "Bool?",
+            "messages": []
+        }
+    }
+}
