@@ -1,7 +1,7 @@
 import "MigrationContractStaging"
 
 #interaction (
-    version: "1.0.0",
+    version: "1.1.0",
     title: "Unstage Contract Update",
     description: "Removes the staged contract code from the staging contract. Only the contract host can perform this action.",
     language: "en-US",

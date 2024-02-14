@@ -1,7 +1,7 @@
 import "MigrationContractStaging"
 
 #interaction (
-    version: "1.0.0",
+    version: "1.1.0",
     title: "Get Staged Contract Names for given Address",
     description: "Retrieves a list of contract names that are staged for the given address",
     language: "en-US",

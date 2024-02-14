@@ -1,7 +1,7 @@
 import "MigrationContractStaging"
 
 #interaction (
-    version: "1.0.0",
+    version: "1.1.0",
     title: "Get Staged ContractUpdate",
     description:
         "Returns the ContractUpdate struct containing the staged update info for the given contract name and address or nil if not yet staged",

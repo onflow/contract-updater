@@ -1,7 +1,7 @@
 import "MigrationContractStaging"
 
 #interaction (
-    version: "1.0.0",
+    version: "1.1.0",
     title: "Get All Staged Contracts",
     description: "Returns a mapping of all staged contract updates.",
     language: "en-US",

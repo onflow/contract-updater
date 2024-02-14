@@ -1,7 +1,7 @@
 import "MigrationContractStaging"
 
 #interaction (
-    version: "1.0.0",
+    version: "1.1.0",
     title: "Get All Staged Contract Hosts",
     description: "Returns an array containing the addresses of all contract hosting accounts that have staged contracts.",
     language: "en-US",

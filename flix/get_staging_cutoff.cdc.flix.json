@@ -1,7 +1,7 @@
 {
     "f_type": "InteractionTemplate",
     "f_version": "1.1.0",
-    "id": "96578012e1b837af2b74a75d196109763fbc874daad5a15a3263a20f0126e13c",
+    "id": "8bb04d2ad08dfd4ee7edb577933259ec18a1f63efae88f4e041f63533abe05f8",
     "data": {
         "type": "script",
         "interface": "",
@@ -26,11 +26,11 @@
             }
         ],
         "cadence": {
-            "body": "import \"MigrationContractStaging\"\n\n#interaction (\n    version: \"1.0.0\",\n    title: \"Get Staging Cutoff Query\",\n    description: \"Returns the block height at which contracts can no longer be staged or nil if it is not yet set.\",\n    language: \"en-US\",\n)\n\n/// Returns the block height at which contracts can no longer be staged.\n///\naccess(all) fun main(): UInt64? {\n    return MigrationContractStaging.getStagingCutoff()\n}\n",
+            "body": "import \"MigrationContractStaging\"\n\n#interaction (\n    version: \"1.1.0\",\n    title: \"Get Staging Cutoff Query\",\n    description: \"Returns the block height at which contracts can no longer be staged or nil if it is not yet set.\",\n    language: \"en-US\",\n)\n\n/// Returns the block height at which contracts can no longer be staged.\n///\naccess(all) fun main(): UInt64? {\n    return MigrationContractStaging.getStagingCutoff()\n}\n",
             "network_pins": [
                 {
                     "network": "testnet",
-                    "pin_self": "f49e312b371758c8b15cfc4ece2ca916109764f048b54ef40ea4466f3190e27f"
+                    "pin_self": "a4f808619ea080f161d38e5317d5970330e04f198c8dba5d3038d239c53a1fa5"
                 }
             ]
         },
@@ -41,9 +41,14 @@
                         "contract": "MigrationContractStaging",
                         "networks": [
                             {
+                                "network": "emulator",
+                                "address": "0xf8d6e0586b0a20c7",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
                                 "network": "testnet",
                                 "address": "0x2ceae959ed1a7e7a",
-                                "dependency_pin_block_height": 156159282,
+                                "dependency_pin_block_height": 156164552,
                                 "dependency_pin": {
                                     "pin": "3db75e59355d07498d1dbd1719a383a487562c7cf558450898103212109954cb",
                                     "pin_self": "ebb923e929faf7299d117ff5159becccb54378c47b08bf30c6d0774f3ee21d61",
@@ -55,11 +60,6 @@
                             {
                                 "network": "crescendo",
                                 "address": "0x27b2302520211b67",
-                                "dependency_pin_block_height": 0
-                            },
-                            {
-                                "network": "emulator",
-                                "address": "0xf8d6e0586b0a20c7",
                                 "dependency_pin_block_height": 0
                             }
                         ]

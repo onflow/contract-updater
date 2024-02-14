@@ -1,7 +1,7 @@
 {
     "f_type": "InteractionTemplate",
     "f_version": "1.1.0",
-    "id": "241090647c9c5c6367985b609ec8a3617acb900bc291b0c1865a0be89a8dcef6",
+    "id": "7352c90983e83f2477cb2b80a46ce57d0433b4f6f3719ac14d688741b18f59d5",
     "data": {
         "type": "transaction",
         "interface": "",
@@ -22,6 +22,18 @@
                         "contract": "MigrationContractStaging",
                         "networks": [
                             {
+                                "network": "testnet",
+                                "address": "0x2ceae959ed1a7e7a",
+                                "dependency_pin_block_height": 156164535,
+                                "dependency_pin": {
+                                    "pin": "3db75e59355d07498d1dbd1719a383a487562c7cf558450898103212109954cb",
+                                    "pin_self": "ebb923e929faf7299d117ff5159becccb54378c47b08bf30c6d0774f3ee21d61",
+                                    "pin_contract_name": "MigrationContractStaging",
+                                    "pin_contract_address": "0x2ceae959ed1a7e7a",
+                                    "imports": []
+                                }
+                            },
+                            {
                                 "network": "crescendo",
                                 "address": "0x27b2302520211b67",
                                 "dependency_pin_block_height": 0
@@ -30,18 +42,6 @@
                                 "network": "emulator",
                                 "address": "0xf8d6e0586b0a20c7",
                                 "dependency_pin_block_height": 0
-                            },
-                            {
-                                "network": "testnet",
-                                "address": "0x2ceae959ed1a7e7a",
-                                "dependency_pin_block_height": 156159267,
-                                "dependency_pin": {
-                                    "pin": "3db75e59355d07498d1dbd1719a383a487562c7cf558450898103212109954cb",
-                                    "pin_self": "ebb923e929faf7299d117ff5159becccb54378c47b08bf30c6d0774f3ee21d61",
-                                    "pin_contract_name": "MigrationContractStaging",
-                                    "pin_contract_address": "0x2ceae959ed1a7e7a",
-                                    "imports": []
-                                }
                             }
                         ]
                     }

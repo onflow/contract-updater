@@ -1,7 +1,7 @@
 import "MigrationContractStaging"
 
 #interaction (
-    version: "1.0.0",
+    version: "1.1.0",
     title: "Get All Staged Contract Code for Address",
     description: "Returns a mapping of all contract code staged for a given address indexed on the contract name.",
     language: "en-US",

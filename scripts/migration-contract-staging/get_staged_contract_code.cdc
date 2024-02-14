@@ -1,7 +1,7 @@
 import "MigrationContractStaging"
 
 #interaction (
-    version: "1.0.0",
+    version: "1.1.0",
     title: "Get Staged Contract Code",
     description: "Returns the Cadence code that has been staged for the given contract or nil if it is not yet staged.",
     language: "en-US",

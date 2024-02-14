@@ -1,7 +1,7 @@
 import "MigrationContractStaging"
 
 #interaction (
-    version: "1.0.0",
+    version: "1.1.0",
     title: "Is Contract Validated Query",
     description: "Returns whether a contract is staged and validated. Nil is returned if the contract is not staged.",
     language: "en-US",

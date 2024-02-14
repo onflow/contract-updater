@@ -1,7 +1,7 @@
 {
     "f_type": "InteractionTemplate",
     "f_version": "1.1.0",
-    "id": "7b48ee96a113d75f7fa0f567375a9adadaf93bf5fda1e6af1aac256f93a7c970",
+    "id": "611b50555e7ecf084af8553453d893b11afbbf99f650e2e1925c371c1ab1d8a9",
     "data": {
         "type": "transaction",
         "interface": "",
@@ -26,11 +26,11 @@
             }
         ],
         "cadence": {
-            "body": "import \"MigrationContractStaging\"\n\n#interaction (\n    version: \"1.0.0\",\n    title: \"Unstage Contract Update\",\n    description: \"Removes the staged contract code from the staging contract. Only the contract host can perform this action.\",\n    language: \"en-US\",\n)\n\n/// Unstages the given contract from the staging contract. Only the contract host can perform this action.\n/// After the transaction, the contract will no longer be staged for Cadence 1.0 migration.\n///\n/// For more context, see the repo - https://github.com/onflow/contract-updater\n///\ntransaction(contractName: String) {\n    let host: \u0026MigrationContractStaging.Host\n    \n    prepare(signer: AuthAccount) {\n        // Assign Host reference\n        self.host = signer.borrow\u003c\u0026MigrationContractStaging.Host\u003e(from: MigrationContractStaging.HostStoragePath)\n            ?? panic(\"Host was not found in storage\")\n    }\n\n    execute {\n        // Call staging contract, storing the contract code that will update during Cadence 1.0 migration\n        MigrationContractStaging.unstageContract(host: self.host, name: contractName)\n    }\n\n    post {\n        !MigrationContractStaging.isStaged(address: self.host.address(), name: contractName):\n            \"Problem while unstaging update\"\n    }\n}\n",
+            "body": "import \"MigrationContractStaging\"\n\n#interaction (\n    version: \"1.1.0\",\n    title: \"Unstage Contract Update\",\n    description: \"Removes the staged contract code from the staging contract. Only the contract host can perform this action.\",\n    language: \"en-US\",\n)\n\n/// Unstages the given contract from the staging contract. Only the contract host can perform this action.\n/// After the transaction, the contract will no longer be staged for Cadence 1.0 migration.\n///\n/// For more context, see the repo - https://github.com/onflow/contract-updater\n///\ntransaction(contractName: String) {\n    let host: \u0026MigrationContractStaging.Host\n    \n    prepare(signer: AuthAccount) {\n        // Assign Host reference\n        self.host = signer.borrow\u003c\u0026MigrationContractStaging.Host\u003e(from: MigrationContractStaging.HostStoragePath)\n            ?? panic(\"Host was not found in storage\")\n    }\n\n    execute {\n        // Call staging contract, storing the contract code that will update during Cadence 1.0 migration\n        MigrationContractStaging.unstageContract(host: self.host, name: contractName)\n    }\n\n    post {\n        !MigrationContractStaging.isStaged(address: self.host.address(), name: contractName):\n            \"Problem while unstaging update\"\n    }\n}\n",
             "network_pins": [
                 {
                     "network": "testnet",
-                    "pin_self": "00679aee1d74b4235f7882b3de6947d6b44b4ca1be0c1232cc05b3080e2c6a72"
+                    "pin_self": "c011cc3b9544d028d16098cd25c812d4bf19b9236d5a864b6f21b1f1f871bb1d"
                 }
             ]
         },
@@ -43,7 +43,7 @@
                             {
                                 "network": "testnet",
                                 "address": "0x2ceae959ed1a7e7a",
-                                "dependency_pin_block_height": 156159265,
+                                "dependency_pin_block_height": 156164532,
                                 "dependency_pin": {
                                     "pin": "3db75e59355d07498d1dbd1719a383a487562c7cf558450898103212109954cb",
                                     "pin_self": "ebb923e929faf7299d117ff5159becccb54378c47b08bf30c6d0774f3ee21d61",
