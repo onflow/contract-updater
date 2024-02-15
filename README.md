@@ -89,7 +89,16 @@ flow flix execute https://raw.githubusercontent.com/onflow/contract-updater/main
     --network <TARGET_NETWORK>
 ```
 
-This will execute the following transaction:
+To execute the transaction from this project's local transaction code, run:
+
+```sh
+flow transactions send ./transactions/migration-contract-staging/stage_contract.cdc \
+    <CONTRACT_NAME> "$(cat <CONTRACT_FILEPATH>)" \
+    --signer <YOUR_SIGNER_ALIAS> \
+    --network <TARGET_NETWORK>
+```
+
+Either of the above will execute the following transaction:
 
 ```cadence
 import "MigrationContractStaging"
@@ -139,11 +148,19 @@ with the Flow CLI command below.
 
 ```sh
 flow flix execute https://raw.githubusercontent.com/onflow/contract-updater/main/flix/get_staged_contract_code.cdc.flix.json \
-    <CONTRACT_NAME> \
+    <CONTRACT_ADDRESS> <CONTRACT_NAME> \
     --network <TARGET_NETWORK>
 ```
 
-Which runs the script:
+Alternatively, you can run the script from this project's local Cadence code with:
+
+```sh
+flow scripts execute ./scripts/migration-contract-staging/get_staged_contract_code.cdc \
+    <CONTRACT_ADDRESS> <CONTRACT_NAME> \
+    --network <TARGET_NETWORK>
+```
+
+Either of the above runs the script:
 
 ```cadence
 import "MigrationContractStaging"
