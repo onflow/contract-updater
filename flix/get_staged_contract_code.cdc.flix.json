@@ -1,0 +1,91 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "b2911804f716fb983faadaf3ca9cbb3a54dcc3c8424d5b6b6c9b41dbae680f69",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": [
+            {
+                "key": "title",
+                "i18n": [
+                    {
+                        "tag": "en-US",
+                        "translation": "Get Staged Contract Code"
+                    }
+                ]
+            },
+            {
+                "key": "description",
+                "i18n": [
+                    {
+                        "tag": "en-US",
+                        "translation": "Returns the Cadence code that has been staged for the given contract or nil if it is not yet staged."
+                    }
+                ]
+            }
+        ],
+        "cadence": {
+            "body": "import \"MigrationContractStaging\"\n\n#interaction (\n    version: \"1.1.0\",\n    title: \"Get Staged Contract Code\",\n    description: \"Returns the Cadence code that has been staged for the given contract or nil if it is not yet staged.\",\n    language: \"en-US\",\n)\n\n/// Returns the code as it is staged or nil if it not currently staged.\n///\naccess(all) fun main(contractAddress: Address, contractName: String): String? {\n    return MigrationContractStaging.getStagedContractCode(address: contractAddress, name: contractName)\n}\n",
+            "network_pins": [
+                {
+                    "network": "testnet",
+                    "pin_self": "c685e9090d3a92ef42cf1e52d499259ab301b147818d42999d8881b0cb96f98b"
+                }
+            ]
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "MigrationContractStaging",
+                        "networks": [
+                            {
+                                "network": "testnet",
+                                "address": "0x2ceae959ed1a7e7a",
+                                "dependency_pin_block_height": 156164550,
+                                "dependency_pin": {
+                                    "pin": "3db75e59355d07498d1dbd1719a383a487562c7cf558450898103212109954cb",
+                                    "pin_self": "ebb923e929faf7299d117ff5159becccb54378c47b08bf30c6d0774f3ee21d61",
+                                    "pin_contract_name": "MigrationContractStaging",
+                                    "pin_contract_address": "0x2ceae959ed1a7e7a",
+                                    "imports": []
+                                }
+                            },
+                            {
+                                "network": "crescendo",
+                                "address": "0x27b2302520211b67",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0xf8d6e0586b0a20c7",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "contractAddress",
+                "index": 0,
+                "type": "Address",
+                "messages": []
+            },
+            {
+                "label": "contractName",
+                "index": 1,
+                "type": "String",
+                "messages": []
+            }
+        ],
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "String?",
+            "messages": []
+        }
+    }
+}

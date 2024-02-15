@@ -1,0 +1,78 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "177036477cd12a2b30c54e841c690ed14fcee5f52174d30294debd3f3e264df0",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": [
+            {
+                "key": "title",
+                "i18n": [
+                    {
+                        "tag": "en-US",
+                        "translation": "Get All Staged Contract Hosts"
+                    }
+                ]
+            },
+            {
+                "key": "description",
+                "i18n": [
+                    {
+                        "tag": "en-US",
+                        "translation": "Returns an array containing the addresses of all contract hosting accounts that have staged contracts."
+                    }
+                ]
+            }
+        ],
+        "cadence": {
+            "body": "import \"MigrationContractStaging\"\n\n#interaction (\n    version: \"1.1.0\",\n    title: \"Get All Staged Contract Hosts\",\n    description: \"Returns an array containing the addresses of all contract hosting accounts that have staged contracts.\",\n    language: \"en-US\",\n)\n\n/// Returns the code for all staged contracts hosted by the given contract address.\n///\naccess(all) fun main(): [Address] {\n    return MigrationContractStaging.getAllStagedContractHosts()\n}\n",
+            "network_pins": [
+                {
+                    "network": "testnet",
+                    "pin_self": "93a15c87c9ac5bebb293094d1a7c96ea389a36331925065a0f15201c8804a3e0"
+                }
+            ]
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "MigrationContractStaging",
+                        "networks": [
+                            {
+                                "network": "testnet",
+                                "address": "0x2ceae959ed1a7e7a",
+                                "dependency_pin_block_height": 156164557,
+                                "dependency_pin": {
+                                    "pin": "3db75e59355d07498d1dbd1719a383a487562c7cf558450898103212109954cb",
+                                    "pin_self": "ebb923e929faf7299d117ff5159becccb54378c47b08bf30c6d0774f3ee21d61",
+                                    "pin_contract_name": "MigrationContractStaging",
+                                    "pin_contract_address": "0x2ceae959ed1a7e7a",
+                                    "imports": []
+                                }
+                            },
+                            {
+                                "network": "crescendo",
+                                "address": "0x27b2302520211b67",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0xf8d6e0586b0a20c7",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": null,
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "[Address]",
+            "messages": []
+        }
+    }
+}
