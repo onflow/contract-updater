@@ -31,8 +31,11 @@ transaction(hostCapabilityRecipient: Address?) {
         // Configure a private Host Capability & publish if a recipient is defined
         if hostCapabilityRecipient != nil {
             let hostIdentifier = "MigrationContractStagingHost_".concat(hostCapabilityRecipient!.toString())
+            let privatePath = PrivatePath(identifier: hostIdentifier)!
+
+            signer.unlink(privatePath)
             let hostCap = signer.link<&MigrationContractStaging.Host>(
-                PrivatePath(identifier: hostIdentifier)!,
+                privatePath,
                 target: MigrationContractStaging.HostStoragePath
             )
             assert(hostCap?.borrow() != nil, message: "Failed to link Host Capability")
