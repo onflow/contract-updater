@@ -2,6 +2,8 @@ import Test
 import BlockchainHelpers
 import "MigrationContractStaging"
 
+access(all) var snapshotHeight: UInt64 = 0
+
 // Contract hosts as defined in flow.json
 access(all) let adminAccount = Test.getAccount(0x0000000000000007)
 access(all) let fooAccount = Test.getAccount(0x0000000000000008)
@@ -70,6 +72,9 @@ access(all) fun testStagedNonExistentContractFails() {
 }
 
 access(all) fun testStageContractSucceeds() {
+    // Take snapshot as the following test case will stage this same transaction via Host Capability
+    snapshotHeight = getCurrentBlockHeight()
+
     let txResult = executeTransaction(
         "../transactions/migration-contract-staging/stage_contract.cdc",
         ["Foo", fooUpdateCadence],
@@ -100,6 +105,58 @@ access(all) fun testStageContractSucceeds() {
     Test.assertEqual(fooUpdateCadence, evt.code)
     Test.assertEqual("Foo", evt.contract)
     Test.assertEqual("stage", evt.action)
+}
+
+access(all) fun testStageContractViaHostCapabilitySucceeds() {
+    // Reset to snapshot taken in previous case so this case can cover using Host Capability
+    Test.reset(to: snapshotHeight)
+    assertIsStaged(contractAddress: fooAccount.address, contractName: "Foo", invert: true)
+
+    let hostReceiver = Test.createAccount()
+    let hostCapStoragePathIdentifier = "MigrationContractStagingHost_".concat(fooAccount.address.toString())
+    let setupHostTxResult = executeTransaction(
+        "../transactions/migration-contract-staging/delegated-staging/setup_host_optional_publish.cdc",
+        [hostReceiver.address],
+        fooAccount
+    )
+    Test.expect(setupHostTxResult, Test.beSucceeded())
+    let claimTxResult = executeTransaction(
+        "../transactions/migration-contract-staging/delegated-staging/claim_published_host_capability.cdc",
+        [fooAccount.address, hostCapStoragePathIdentifier],
+        hostReceiver
+    )
+    Test.expect(claimTxResult, Test.beSucceeded())
+    let stageTxResult = executeTransaction(
+        "../transactions/migration-contract-staging/delegated-staging/stage_contract_from_stored_host_capability.cdc",
+        [hostCapStoragePathIdentifier, "Foo", fooUpdateCadence],
+        hostReceiver
+    )
+    Test.expect(stageTxResult, Test.beSucceeded())
+
+    assertIsStaged(contractAddress: fooAccount.address, contractName: "Foo", invert: false)
+
+    let fooAccountStagedContractNames = getStagedContractNamesForAddress(fooAccount.address)
+    Test.assert(fooAccountStagedContractNames.length == 1, message: "Invalid number of staged contracts on fooAccount")
+
+    let allStagedContractHosts = getAllStagedContractHosts()
+    assertAddressArraysEqual([fooAccount.address], allStagedContractHosts)
+
+    let fooStagedContractCode = getStagedContractCode(contractAddress: fooAccount.address, contractName: "Foo")
+        ?? panic("Problem retrieving result of getStagedContractCode()")
+    Test.assertEqual(fooUpdateCadence, fooStagedContractCode)
+
+    let allStagedCodeForFooAccount = getAllStagedContractCodeForAddress(contractAddress: fooAccount.address)
+    assertStagedContractCodeEqual({ "Foo": fooUpdateCadence}, allStagedCodeForFooAccount)
+
+    let events = Test.eventsOfType(Type<MigrationContractStaging.StagingStatusUpdated>())
+    Test.assertEqual(1, events.length)
+
+    let evt = events[0] as! MigrationContractStaging.StagingStatusUpdated
+    Test.assertEqual(fooAccount.address, evt.address)
+    Test.assertEqual(fooUpdateCadence, evt.code)
+    Test.assertEqual("Foo", evt.contract)
+    Test.assertEqual("stage", evt.action)
+
 }
 
 access(all) fun testStageMultipleContractsSucceeds() {
