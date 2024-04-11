@@ -49,8 +49,9 @@
 			"aliases": {
 				"crescendo": "27b2302520211b67",
 				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "2ceae959ed1a7e7a",
-				"testing": "0000000000000007"
+				"mainnet": "56100d46aa9b0212",
+				"testing": "0000000000000007",
+				"testnet": "2ceae959ed1a7e7a"
 			}
 		},
 		"NonFungibleToken": {
@@ -110,19 +111,20 @@
 				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/migration-contract-staging-testnet/cryptoKeys/evm-storage-testnet-key/cryptoKeyVersions/1"
 			}
 		},
+		"migration-contract-staging-mainnet": {
+			"address": "56100d46aa9b0212",
+			"key": {
+				"type": "google-kms",
+				"hashAlgorithm": "SHA2_256",
+				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/migration-contract-staging-mainnet/cryptoKeys/evm-storage-mainnet-key/cryptoKeyVersions/1"
+			}
+		},
 		"migration-contract-staging-testnet": {
 			"address": "2ceae959ed1a7e7a",
 			"key": {
 				"type": "google-kms",
 				"hashAlgorithm": "SHA2_256",
 				"resourceID": "projects/dl-flow-admin/locations/global/keyRings/migration-contract-staging-testnet/cryptoKeys/evm-storage-testnet-key/cryptoKeyVersions/1"
-			}
-		},
-		"originator-crescendo": {
-			"address": "c3d589f831db1bb8",
-			"key": {
-				"type": "file",
-				"location": "crescendo-originator.pkey"
 			}
 		}
 	},
@@ -148,6 +150,11 @@
 			],
 			"foo": [
 				"Foo"
+			]
+		},
+		"mainnet": {
+			"migration-contract-staging-mainnet": [
+				"MigrationContractStaging"
 			]
 		},
 		"testnet": {
