@@ -7,10 +7,11 @@ import "MigrationContractStaging"
     language: "en-US",
 )
 
-/// This transaction is used to stage a contract update for Cadence 1.0 contract migrations.
+/// This transaction is used to stage a contract update for Cadence 1.0 contract migrations via stored Host Capability.
 ///
-/// Ensure that this transaction is signed by the account that owns the contract to be updated and that the contract
-/// has already been deployed to the signing account.
+/// Ensure that this transaction is signed by an account that has been granted and stores a Host Capability. The stored
+/// Capability should target a Host in the account that owns the contract to be updated and that the contract has
+/// already been deployed to the Host account.
 ///
 /// For more context, see the repo - https://github.com/onflow/contract-updater
 ///
