@@ -1,212 +1,342 @@
-# ContractUpdater
+# Onchain Contract Update Mechanisms
 
-> Enables pre-defined contract update deployments to a set of wrapped account at or beyond a specified block height. For
-> more details about the purpose of this mechanism, see [FLIP 179](https://github.com/onflow/flips/pull/179)
+![Tests](https://github.com/onflow/contract-updater/actions/workflows/ci.yml/badge.svg)
+[![codecov](https://codecov.io/gh/onflow/contract-updater/graph/badge.svg?token=TAIKIA95FU)](https://codecov.io/gh/onflow/contract-updater)
 
-## Simple Case Demo
+This repo contains contracts enabling onchain staging of contract updates, providing mechanisms to store code,
+delegate update capabilities, and execute staged updates.
 
-For this run through, we'll focus on the simple case where a single contract is deployed to a single account that can
-sign the setup & delegation transactions. 
+## Context
 
-This use case is enough to get the basic concepts involved in the `ContractUpdater` contract, but know that more
-advanced deployments are possible with support for multiple contract accounts and customized deployment configurations.
+Cadence 1.0 is a momentous milestone, introducing many advanced features to the language of Flow, the introduction of
+which will require changes to all contracts on the network. This makes crossing that milestone a coordinated effort,
+read on for how to prepare.
 
-### Setup
+Your contract's path to Cadence 1.0 can be broken down into the following four high-level phases:
 
-1. Start your local emulator:
+1. **Updated:** Update your code, validating refactored contracts, transactions and scripts via local testing and
+   emulated migration.
+2. **Staged:** Upload your Cadence 1.0 code to the `MigrationContractStaging` contract so your contract updates take
+   effect at the network-wide height coordinated upgrade (HCU). 
+3. **Validated:** This step is automated and serves as external feedback provided by Flow that your contract is good
+   as-is, indicating readiness for the network migration. If your contract fails validation, you will need to update
+   your code and stage it again.
+4. **Migrated:** all core and staged contracts are updated via state migration
 
-    ```sh
-    flow emulator
-    ```
+![Path to Cadence 1.0](./resources/path_to_cadence_1.png)
+ 
+Steps 1 & 2 require your effort and execution - you must update your contract and execute a transaction to stage it for
+migration. Step 3 is an asynchronous feedback loop between Flow and contract owners where staged contracts are migrated
+in an emulated environment offchain, the results of which will be submitted to the staging contract on a set interval
+(TBD). Step 4 will be completed by the network, executed as an HCU.
 
-1. Setup emulator environment - this creates our emulator accounts & deploys contracts:
+This process will need to be completed for all contracts on all networks, with a number of opportunities to collectively
+practice on Crescendo Migration Testnet (CMT) before the HCU on Testnet and Mainnet.
 
-    ```sh
-    sh setup.sh
-    ```
+> :mag: This repo addresses steps 2 & 3 above, providing a central coordination point for contract updates to be staged,
+> code and staging status to be retrieved, and offchain validation results to be committed, queried and broadcast. Focus
+> on reaching validated status across all of your contracts before the HCU, giving you confidence your contract updates
+> will be successful.
 
-### Walkthrough
+## Overview
 
-1. We can see that the `Foo` has been deployed, and call its only contract method `foo()`, getting back `"foo"`:
+> :information_source: This document proceeds with an emphasis on the `MigrationContractStaging` contract, which will be
+> used for the upcoming Cadence 1.0 network migration. Any contracts currently deployed on Testnet & Mainnet **WILL**
+> need to be updated via state migration on the Cadence 1.0 milestone. This means you **MUST** stage your contract
+> updates before the milestone for your contract to continue functioning. Keep reading to understand how to stage your
+> contract update.
 
-    ```sh
-    flow scripts execute ./scripts/foo.cdc
-    ```
+The `MigrationContractStaging` contract provides a mechanism for staging contract updates onchain in preparation for
+Cadence 1.0. Once you have refactored your existing contracts to be Cadence 1.0 compatible, you will need to stage your
+code in this contract for network state migrations to take effect and your contract to be updated with the Height
+Coordinated Upgrade.
 
-1. Configure `ContractUpdater.Updater`, passing the block height, contract name, and contract code in hex form (see
-   [`get_code_hex.py`](./src/get_code_hex.py) for simple script hexifying contract code):
-    - `setup_updater_single_account_and_contract.cdc`
-        1. `blockUpdateBoundary: UInt64`
-        1. `contractName: String`
-        1. `code: [String]`
+### `MigrationContractStaging` Deployments
 
-    ```sh
-    flow transactions send ./transactions/setup_updater_single_account_and_contract.cdc \
-        10 "Foo" 61636365737328616c6c2920636f6e747261637420466f6f207b0a2020202061636365737328616c6c2920766965772066756e20666f6f28293a20537472696e67207b0a202020202020202072657475726e2022626172220a202020207d0a7d \
-        --signer foo
-    ```
+> :information_source: The `MigrationContractStaging` contract is not yet deployed. Its deployment address will be added
+> here once it has been deployed.
 
-1. Simulate block creation, running transactions to iterate over blocks to the pre-configured block update height:
+| Network   | Address                                                                                                                   |
+| --------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Crescendo | [0x27b2302520211b67](https://crescendo.flowdiver.io/contract/A.27b2302520211b67.MigrationContractStaging?tab=deployments) |
+| Testnet   | [0x2ceae959ed1a7e7a](https://contractbrowser.com/A.2ceae959ed1a7e7a.MigrationContractStaging)                             |
+| Mainnet   | [56100d46aa9b0212](https://contractbrowser.com/A.56100d46aa9b0212.MigrationContractStaging)                               |
 
-    ```sh
-    sh tick_tock.sh
-    ```
+### Pre-Requisites
 
-1. We can get details from our `Updater` before updating:
+- An existing contract deployed to your target network. For example, if you're staging `A` in address `0x01`, you should
+  already have a contract named `A` deployed to `0x01`.
+- A Cadence 1.0 compatible contract serving as an update to your existing contract. Extending our example, if you're
+  staging `A` in address `0x01`, you should have a contract named `A` that is Cadence 1.0 compatible. See the references
+  below for more information on Cadence 1.0 language changes.
 
-    ```sh
-    flow scripts execute ./scripts/get_updater_info.cdc 0x01cf0e2f2f715450
-    ```
+### Staging Your Contract Update
 
-    ```sh
-    flow scripts execute ./scripts/get_updater_deployment.cdc 0x01cf0e2f2f715450
-    ```
+Armed with your pre-requisites, you're ready to stage your contract update. Simply run the [`stage_contract.cdc`
+transaction](./transactions/migration-contract-staging/stage_contract.cdc), passing your contract's name and Cadence
+code as arguments and signing as the contract host account.
 
-1. Next, we'll delegate the `Updater` Capability as `DelegatedUpdater` to the `Delegatee` stored in the `ContractUpdater`'s account.
+You can stage your contract using the [Flow Interaction Templates
+(FLIX)](https://developers.flow.com/tools/flow-cli/flix) and the following command to execute the staging transaction
+from [its interaction template](./flix/stage_contract.cdc.flix.json):
 
-    ```sh
-    flow transactions send ./transactions/delegate.cdc --signer foo
-    ```
+> :warning: Be sure to execute this transaction passing your contract's updated Cadence 1.0-compatible code
 
-1. Lastly, we'll run the updating transaction as the `Delegatee`:
-
-    ```sh
-    flow transactions send ./transactions/execute_delegated_updates.cdc
-    ```
-
-1. And we can validate the update has taken place by calling `Foo.foo()` again and seeing the return value is now
-   `"bar"`
-
-    ```sh
-    flow scripts execute ./scripts/foo.cdc
-    ```
-
-## Multi-Account Multi-Contract Deployment
-
-As mentioned above, `ContractUpdater` supports update deployments across any number of accounts & contracts.
-
-Developers with a number of owned contracts will find this helpful as they can specify the order in which an update
-should occur according to the contract set's dependency graph.
-
-In our example, our dependency graph will look like this:
-
-![flat dependency dag](./resources/dependency_dag.png)
-
-So the contracts should be updated in the following order:
-
-```
-[A, B, C]
+```sh
+flow flix execute https://raw.githubusercontent.com/onflow/contract-updater/main/flix/stage_contract.cdc.flix.json \
+    <CONTRACT_NAME> "$(cat <CONTRACT_FILEPATH>)" \
+    --signer <YOUR_SIGNER_ALIAS> \
+    --network <TARGET_NETWORK>
 ```
 
-This is because, assuming some breaking change prior to the update boundary, updating `C` before it's dependencies will
-result in a failed deployment as contracts `A` & `B` are still in a broken state and cannot be imported when `C` is
-updated.
+To execute the transaction from this project's local transaction code, run:
 
-However, since contract updates take effect **after** the updating transaction completes, we need to stage deployments
-among updating transactions based on the depth of each contract in its dependency tree. 
+```sh
+flow transactions send ./transactions/migration-contract-staging/stage_contract.cdc \
+    <CONTRACT_NAME> "$(cat <CONTRACT_FILEPATH>)" \
+    --signer <YOUR_SIGNER_ALIAS> \
+    --network <TARGET_NETWORK>
+```
 
-More concretely, if we try to update all three contracts in the same transaction as above - `[A, B, C]` in sequence -
-`B`'s dependency (`A`) will not have completed its update, causing `B`'s update attempt to fail.
+Either of the above will execute the following transaction:
 
-Consequently, we instead batch updates based on the contract's maximum depth in the dependency graph. In our case,
-instead of `[A, B, C]` we update `A` in one transaction, `B` in the next, and lastly `C` can be updated.
+```cadence
+import "MigrationContractStaging"
 
-![dependency graph with node depth](./resources/dependency_dag_with_depth.png)
+transaction(contractName: String, contractCode: String) {
+    let host: &MigrationContractStaging.Host
+    
+    prepare(signer: AuthAccount) {
+        // Configure Host resource if needed
+        if signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath) == nil {
+            signer.save(<-MigrationContractStaging.createHost(), to: MigrationContractStaging.HostStoragePath)
+        }
+        // Assign Host reference
+        self.host = signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath)!
+    }
 
-This concept can be extrapolated out for larger dependency graphs. For example, take the following:
+    execute {
+        // Call staging contract, storing the contract code that will update during Cadence 1.0 migration
+        // If code is already staged for the given contract, it will be overwritten.
+        MigrationContractStaging.stageContract(host: self.host, name: contractName, code: contractCode)
+    }
 
-![larger dag example](./resources/larger_dag.png)
+    post {
+        MigrationContractStaging.isStaged(address: self.host.address(), name: contractName):
+            "Problem while staging update"
+    }
+}
+```
 
-This group of contracts would be updated over the same three stages, with each stage including contracts according to
-their maximum depth in the dependency graph. In this case:
+At the end of this transaction, your contract will be staged in the `MigrationContractStaging` account. If you staged
+this contract's code previously, it will be overwritten by the code you provided in this transaction.
 
-- Stage 0: `[A, D]`
-- Stage 1: `[B, E]`
-- Stage 2: `[C]`
+> :warning: NOTE: Staging your contract successfully does not mean that your contract code is correct. Your testing and
+> validation processes should include testing your contract code against the Cadence 1.0 interpreter to ensure your
+> contract will function as expected.
 
-Let's continue into a walkthrough with contracts `A`, `B`, and `C` and see how `ContractUpdater` can be configured to
-execute these preconfigured updates.
+### Checking Staging Status
 
-### CLI Walkthrough
+You may later want to retrieve your contract's staged code. To do so, you can run the [`get_staged_contract_code.cdc`
+script](./scripts/migration-contract-staging/get_staged_contract_code.cdc), passing the address & name of the contract
+you're requesting and getting the Cadence code in return. This script can also help you get the staged code for your
+dependencies if the project owner has staged their code.
 
-For the following walkthrough, we'll assume `A` is deployed on its own account while `B` & `C` are in a different
-account.
+You can run this script from [its template](./flix/get_staged_contract_code.cdc.flix.json) using
+[FLIX](https://developers.flow.com/tools/flow-cli/flix) without the need to pull dependencies into your local project
+with the Flow CLI command below.
 
-:information_source: If you haven't already, perform the [setup steps above](#setup)
+```sh
+flow flix execute https://raw.githubusercontent.com/onflow/contract-updater/main/flix/get_staged_contract_code.cdc.flix.json \
+    <CONTRACT_ADDRESS> <CONTRACT_NAME> \
+    --network <TARGET_NETWORK>
+```
 
-1. Since we'll be configuring an update deployment across a number of contract accounts, we'll need to delegate access
-   to those accounts via Account Capabilities on each. Running the following transaction will link an Account
-   Capability on the signer's account and publish it for the account where our `Updater` will live.
+Alternatively, you can run the script from this project's local Cadence code with:
 
-    ```sh
-    flow transactions send ./transactions/publish_auth_account_capability.cdc \
-        0xf669cb8d41ce0c74 \
-        --signer a-account
-    ```
+```sh
+flow scripts execute ./scripts/migration-contract-staging/get_staged_contract_code.cdc \
+    <CONTRACT_ADDRESS> <CONTRACT_NAME> \
+    --network <TARGET_NETWORK>
+```
 
-    ```sh
-    flow transactions send ./transactions/publish_auth_account_capability.cdc \
-        0xf669cb8d41ce0c74 \
-        --signer bc-account
-    ```
+Either of the above runs the script:
 
-    :information_source: Note we perform a transaction for each account hosting contracts we will be updating. This
-    allows the `Updater` to perform updates for contracts across an arbitrary number of accounts.
+```cadence
+import "MigrationContractStaging"
 
-1. Next, we claim those published Account Capabilities and configure an `Updater` resource that contains them along
-   with our ordered deployment.
-    - `setup_updater_multi_account.cdc`
-        1. `blockUpdateBoundary: UInt64`
-        1. `contractAddresses: [Address]`
-        1. `deploymentConfig: [[{Address: {String: String}}]]`
+/// Returns the code as it is staged or nil if it not currently staged.
+///
+access(all) fun main(contractAddress: Address, contractName: String): String? {
+    return MigrationContractStaging.getStagedContractCode(address: contractAddress, name: contractName)
+}
+```
 
-    ```sh
-    flow transactions send transactions/setup_updater_multi_account.cdc \
-        --args-json "$(cat args.json)" \
-        --signer abc-updater
-    ```
+## `MigrationContractStaging` Contract Details
 
-    :information_source: Arguments are passed in Cadence JSON format since the values exceptionally long. Take a look at
-    the transaction and arguments to more deeply understand what's being passed around.
+### Developer Paths
 
-1. You'll see a number of events emitted, one of them being `UpdaterCreated` with your `Updater`'s UUID. This means the
-   resource was created, so let's query against the updater account to get its info.
+The basic interface to stage a contract is the same as deploying a contract - name + code. See the
+[`stage_contract`](./transactions/migration-contract-staging/stage_contract.cdc) &
+[`unstage_contract`](./transactions/migration-contract-staging/unstage_contract.cdc) transactions. Note that calling
+`stageContract()` again for the same contract will overwrite any existing staged code for that contract.
 
-    ```sh
-    flow scripts execute ./scripts/get_updater_info.cdc 0xf669cb8d41ce0c74
-    ```
+```cadence
+/// 1 - Create a host and save it in your contract-hosting account at MigrationContractStaging.HostStoragePath
+access(all) fun createHost(): @Host
+/// 2 - Call stageContract() with the host reference and contract name and contract code you wish to stage.
+/// NOTE: making updates to staged code resets validation status for that contract.
+access(all) fun stageContract(host: &Host, name: String, code: String)
+/// Removes the staged contract code from the staging environment.
+access(all) fun unstageContract(host: &Host, name: String)
+```
 
-    ```sh
-    flow scripts execute ./scripts/get_updater_deployment.cdc 0xf669cb8d41ce0c74
-    ```
+To stage a contract, the developer first saves a `Host` resource in their account which they pass as a reference along
+with the contract name and code they wish to stage. The `Host` reference simply serves as proof of authority that the
+caller has access to the contract-hosting account, which in the simplest case would be the signer of the staging
+transaction, though conceivably this could be delegated to some other account via Capability - possibly helpful for some
+multisig contract hosts.
 
-1. Now we'll delegate a Capability on the `Updater` to the `Delegatee`:
+```cadence
+/// Serves as identification for a caller's address.
+access(all) resource Host {
+    /// Returns the resource owner's address
+    access(all) view fun address(): Address
+}
+```
 
-    ```sh
-    flow transactions send ./transactions/delegate.cdc --signer abc-updater
-    ```
+Within the `MigrationContractStaging` contract account, code is saved on a contract-basis as a `ContractUpdate` struct
+within a `Capsule` resource and stored at a the derived path. The `Capsule` simply serves as a dedicated repository for
+staged contract code. (See [Validation Path](#validation-path) for more on how `isValidated()` is determined.)
 
-1. In the previous transaction we should see that the `UpdaterDelegationChanged` event includes the `Updater` UUID
-   previously emitted in the creation event and that the `delegated` value is `true`. Now, we'll act as the `Delegatee`
-   and execute the update.
+```cadence
+/// Represents contract and its corresponding code.
+access(all) struct ContractUpdate {
+    /// Address of the contract host
+    access(all) let address: Address
+    /// Name of the contract
+    access(all) let name: String
+    /// The updated Cadence 1.0 code
+    access(all) var code: String
+    /// Timestamp the code was last updated
+    access(all) var lastUpdated: UFix64
 
-    ```sh
-    flow transactions send ./transactions/execute_delegated_updates.cdc
-    ```
+    /// Validates that the named contract exists at the target address.
+    access(all) view fun exists(): Bool 
+    /// Serializes the address and name into a string of the form 0xADDRESS.NAME
+    access(all) view fun toString(): String
+    /// Serializes contact into its string identifier of the form A.ADDRESS.NAME where ADDRESS is lacks 0x
+    access(all) view fun identifier(): String
+    /// Returns whether this contract update passed the last emulated migration, validating the contained code.
+    /// NOTE: false could mean validation hasn't begun, the code wasn't included in emulation, or validation failed
+    access(all) view fun isValidated(): Bool {
+    /// Replaces the ContractUpdate code with that provided.
+    access(contract) fun replaceCode(_ code: String)
+}
 
-    This transaction calls `Updater.update()`, executing the first staged deployment, and updating contract `A`. Note
-    that the emitted event contains the name and address of the updated contracts and that the `updateComplete` field is
-    still `false`. This is because there are still incomplete deployment stages. Let's run the transaction again, this
-    time updating `B`.
+/// Resource that stores pending contract updates in a ContractUpdate struct.
+access(all) resource Capsule {
+    /// The address, name and code of the contract that will be updated.
+    access(self) let update: ContractUpdate
 
-    ```sh
-    flow transactions send ./transactions/execute_delegated_updates.cdc
-    ```
+    /// Returns the staged contract update in the form of a ContractUpdate struct.
+    access(all) view fun getContractUpdate(): ContractUpdate
+    /// Replaces the staged contract code with the given Cadence code.
+    access(contract) fun replaceCode(code: String)
+}
+```
 
-    Now we see `B` has been updated, but we still have one more stage to complete. Let's complete the staged update.
+To support monitoring staging progress across the network, the single `StagingStatusUpdated` event is emitted any time a
+contract is staged (`status == "stage"`), staged code is replaced (`status == "replace"`), or a contract is unstaged
+(`status == "unstage"`).
 
-    ```sh
-    flow transactions send ./transactions/execute_delegated_updates.cdc
-    ```
+```cadence
+access(all) event StagingStatusUpdated(
+    capsuleUUID: UInt64,
+    address: Address,
+    code: String,
+    contract: String,
+    action: String
+)
+```
 
-    And finally, we see that `C` was updated and `updateComplete` is now `true`.
+Included in the contact are methods for querying staging status and retrieval of staged code. This enables platforms to
+display the staging status of contracts on any given account should.
+
+```cadence
+/* --- Public Getters --- */
+//
+/// Returns true if the contract is currently staged.
+access(all) view fun isStaged(address: Address, name: String): Bool
+/// Returns true if the contract is currently validated and nil if it's not staged.
+access(all) view fun isValidated(address: Address, name: String): Bool?
+/// Returns the names of all staged contracts for the given address.
+access(all) view fun getStagedContractNames(forAddress: Address): [String]
+/// Returns the staged contract Cadence code for the given address and name.
+access(all) view fun getStagedContractCode(address: Address, name: String): String?
+/// Returns an array of all staged contract host addresses.
+access(all) view fun getAllStagedContractHosts(): [Address]
+/// Returns the ContractUpdate struct for the given contract if it's been staged.
+access(all) view fun getStagedContractUpdate(address: Address, name: String): ContractUpdate?
+/// Returns a dictionary of all staged contract code for the given address.
+access(all) view fun getAllStagedContractCode(forAddress: Address): {String: String}
+/// Returns all staged contracts as a mapping of address to an array of contract names
+access(all) view fun getAllStagedContracts(): {Address: [String]}
+```
+
+### Validation Path
+
+In addition to monitoring the number of staged contracts, it will also be important to monitor staged contracts that
+fail validation.
+
+The `EmulatedMigrationResult` event will be emitted whenever the `Admin` commits the result of offchain emulated migration.
+
+```cadence
+/// Emitted when emulated contract migrations have been completed, where failedContracts are named by their
+/// contract identifier - A.ADDRESS.NAME where ADDRESS is the host address without 0x
+access(all) event EmulatedMigrationResultCommitted(
+    snapshotTimestamp: UFix64,
+    committedTimestamp: UFix64,
+    failedContracts: [String]
+)
+```
+
+Emulated migration results will be saved as `MigrationContractStaging.lastEmulatedMigrationResult: EmulatedMigrationResult?`,
+the value of which will be `nil` until offchain emulation begins. `ContractUpdate.isValidated()` will check against
+this value to determine if the staged contract code has been validated.
+
+```cadence 
+access(all) struct EmulatedMigrationResult {
+    /// Timestamp that the migration snapshot was taken
+    access(all) let snapshot: UFix64
+    /// Timestamp that the migration results were committed
+    access(all) let committed: UFix64
+    /// Identifiers of the contracts that failed validation during the emulated migration
+    access(all) let failedContracts: [String]
+}
+```
+
+Finally, the the entities empowered with coordinating both contract validation and the HCU can perform admin
+functionalities via the `Admin` resource.
+
+```cadence
+access(all) resource Admin {
+    /// Sets the block height at which updates can no longer be staged
+    access(all) fun setStagingCutoff(at height: UInt64?)
+    /// Commits the results of an emulated contract migration
+    access(all) fun commitMigrationResults(snapshot: UFix64, failed: [String])
+}
+```
+
+## References
+
+> Please feel free to submit a PR with updated references as they become available!
+
+More tooling is slated to support Cadence 1.0 code changes and will be added as it arises. For any real-time help, be
+sure to join the [Flow discord](https://discord.com/invite/J6fFnh2xx6) (especially the developer channels) and the [Flow
+forum](https://forum.flow.com/).
+
+- [Cadence 1.0 contract migration plan](https://forum.flow.com/t/update-on-cadence-1-0-upgrade-plan/5597)
+- [Cadence 1.0 language update breakdown](https://forum.flow.com/t/update-on-cadence-1-0/5197)
+- [Cadence Language reference](https://cadence-lang.org/)
+- [Emerald City's Cadence 1.0 by Example](https://academy.ecdao.org/en/cadence-by-example)

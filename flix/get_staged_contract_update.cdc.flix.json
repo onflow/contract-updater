@@ -1,0 +1,91 @@
+{
+    "f_type": "InteractionTemplate",
+    "f_version": "1.1.0",
+    "id": "3fe2042876f764f9c8894aa0b8594657c42ebb5ce8a10f0a814b528b43e862a2",
+    "data": {
+        "type": "script",
+        "interface": "",
+        "messages": [
+            {
+                "key": "title",
+                "i18n": [
+                    {
+                        "tag": "en-US",
+                        "translation": "Get Staged ContractUpdate"
+                    }
+                ]
+            },
+            {
+                "key": "description",
+                "i18n": [
+                    {
+                        "tag": "en-US",
+                        "translation": "Returns the ContractUpdate struct containing the staged update info for the given contract name and address or nil if not yet staged"
+                    }
+                ]
+            }
+        ],
+        "cadence": {
+            "body": "import \"MigrationContractStaging\"\n\n#interaction (\n    version: \"1.1.0\",\n    title: \"Get Staged ContractUpdate\",\n    description:\n        \"Returns the ContractUpdate struct containing the staged update info for the given contract name and address or nil if not yet staged\",\n    language: \"en-US\",\n)\n\n/// Retrieves the ContractUpdate struct for the given contract name and address from MigrationContractStaging\n/// A return value of nil indicates that no update is staged for the given contract\n///\naccess(all) fun main(address: Address, name: String): MigrationContractStaging.ContractUpdate? {\n    return MigrationContractStaging.getStagedContractUpdate(address: address, name: name)\n}\n",
+            "network_pins": [
+                {
+                    "network": "testnet",
+                    "pin_self": "e312674e3af51aae52323cb88f60ff692c592fd59fff36ae4adae061bdc2965f"
+                }
+            ]
+        },
+        "dependencies": [
+            {
+                "contracts": [
+                    {
+                        "contract": "MigrationContractStaging",
+                        "networks": [
+                            {
+                                "network": "testnet",
+                                "address": "0x2ceae959ed1a7e7a",
+                                "dependency_pin_block_height": 156164558,
+                                "dependency_pin": {
+                                    "pin": "3db75e59355d07498d1dbd1719a383a487562c7cf558450898103212109954cb",
+                                    "pin_self": "ebb923e929faf7299d117ff5159becccb54378c47b08bf30c6d0774f3ee21d61",
+                                    "pin_contract_name": "MigrationContractStaging",
+                                    "pin_contract_address": "0x2ceae959ed1a7e7a",
+                                    "imports": []
+                                }
+                            },
+                            {
+                                "network": "crescendo",
+                                "address": "0x27b2302520211b67",
+                                "dependency_pin_block_height": 0
+                            },
+                            {
+                                "network": "emulator",
+                                "address": "0xf8d6e0586b0a20c7",
+                                "dependency_pin_block_height": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "parameters": [
+            {
+                "label": "address",
+                "index": 0,
+                "type": "Address",
+                "messages": []
+            },
+            {
+                "label": "name",
+                "index": 1,
+                "type": "String",
+                "messages": []
+            }
+        ],
+        "output": {
+            "label": "result",
+            "index": 0,
+            "type": "MigrationContractStaging.ContractUpdate?",
+            "messages": []
+        }
+    }
+}
