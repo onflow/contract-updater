@@ -6,8 +6,8 @@ transaction(snapshotTimestamp: UFix64, failedContracts: [String]) {
   
     let admin: &MigrationContractStaging.Admin
 
-    prepare(signer: AuthAccount) {
-        self.admin = signer.borrow<&MigrationContractStaging.Admin>(from: MigrationContractStaging.AdminStoragePath)
+    prepare(signer: auth(BorrowValue) &Account) {
+        self.admin = signer.storage.borrow<&MigrationContractStaging.Admin>(from: MigrationContractStaging.AdminStoragePath)
             ?? panic("Could not borrow Admin reference")
     }
 

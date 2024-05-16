@@ -18,28 +18,25 @@ import "MigrationContractStaging"
 ///
 transaction(hostCapabilityRecipient: Address?) {
 
-    prepare(signer: AuthAccount) {
+    prepare(signer: auth(BorrowValue, SaveValue, GetStorageCapabilityController, IssueStorageCapabilityController, PublishInboxCapability) &Account) {
         // Configure Host resource if needed
-        if signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath) == nil {
-            signer.save(<-MigrationContractStaging.createHost(), to: MigrationContractStaging.HostStoragePath)
+        if signer.storage.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath) == nil {
+            signer.storage.save(<-MigrationContractStaging.createHost(), to: MigrationContractStaging.HostStoragePath)
         }
         // Ensure Host resource is setup
         assert(
-            signer.type(at: MigrationContractStaging.HostStoragePath) == Type<@MigrationContractStaging.Host>(),
+            signer.storage.type(at: MigrationContractStaging.HostStoragePath) == Type<@MigrationContractStaging.Host>(),
             message: "Failed to setup Host resource"
         )
         // Configure a private Host Capability & publish if a recipient is defined
         if hostCapabilityRecipient != nil {
             let hostIdentifier = "MigrationContractStagingHost_".concat(hostCapabilityRecipient!.toString())
-            let privatePath = PrivatePath(identifier: hostIdentifier)!
-
-            signer.unlink(privatePath)
-            let hostCap = signer.link<&MigrationContractStaging.Host>(
-                privatePath,
-                target: MigrationContractStaging.HostStoragePath
+            let hostCap = signer.capabilities.storage.issue<&MigrationContractStaging.Host>(
+                MigrationContractStaging.HostStoragePath
             )
-            assert(hostCap?.borrow() != nil, message: "Failed to link Host Capability")
-            signer.inbox.publish(hostCap!, name: hostIdentifier, recipient: hostCapabilityRecipient!)
+            assert(hostCap.check(), message: "Failed to issue Host Capability")
+            signer.storage.save(hostCap, to: StoragePath(identifier: hostIdentifier)!)
+            signer.inbox.publish(hostCap, name: hostIdentifier, recipient: hostCapabilityRecipient!)
         }
     }
 }
