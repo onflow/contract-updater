@@ -78,20 +78,20 @@ access(all) contract MigrationContractStaging {
             self.stagedContracts.insert(key: host.address(), [name])
             // Create a new Capsule to store the staged code
             let capsule <- self.createCapsule(host: host, name: name, code: code)
-            self.account.save(<-capsule, to: capsulePath)
+            self.account.storage.save(<-capsule, to: capsulePath)
             return
         }
         // We've seen contracts from this host address before - check if the contract is already staged
         if let contractIndex = self.stagedContracts[host.address()]!.firstIndex(of: name) {
             // The contract is already staged - replace the code
-            let capsule = self.account.borrow<&Capsule>(from: capsulePath)
+            let capsule = self.account.storage.borrow<&Capsule>(from: capsulePath)
                 ?? panic("Could not borrow existing Capsule from storage for staged contract")
             capsule.replaceCode(code: code)
             return
         }
         // First time staging this contract - add the contract name to the list of contracts staged for host
         self.stagedContracts[host.address()]!.append(name)
-        self.account.save(<-self.createCapsule(host: host, name: name, code: code), to: capsulePath)
+        self.account.storage.save(<-self.createCapsule(host: host, name: name, code: code), to: capsulePath)
     }
 
     /// Removes the staged contract code from the staging environment.
@@ -160,7 +160,7 @@ access(all) contract MigrationContractStaging {
     ///
     access(all) view fun getStagedContractUpdate(address: Address, name: String): ContractUpdate? {
         let capsulePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
-        if let capsule = self.account.borrow<&Capsule>(from: capsulePath) {
+        if let capsule = self.account.storage.borrow<&Capsule>(from: capsulePath) {
             return capsule.getContractUpdate()
         } else {
             return nil
@@ -431,7 +431,7 @@ access(all) contract MigrationContractStaging {
     ///
     access(self) fun destroyCapsule(address: Address, name: String): UInt64? {
         let capsulePath = self.deriveCapsuleStoragePath(contractAddress: address, contractName: name)
-        if let capsule <- self.account.load<@Capsule>(from: capsulePath) {
+        if let capsule <- self.account.storage.load<@Capsule>(from: capsulePath) {
             let capsuleUUID = capsule.uuid
             destroy capsule
             return capsuleUUID
@@ -452,6 +452,6 @@ access(all) contract MigrationContractStaging {
         self.stagingCutoff = nil
         self.lastEmulatedMigrationResult = nil
 
-        self.account.save(<-create Admin(), to: self.AdminStoragePath)
+        self.account.storage.save(<-create Admin(), to: self.AdminStoragePath)
     }
 }
