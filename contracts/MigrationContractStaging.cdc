@@ -33,7 +33,7 @@ access(all) contract MigrationContractStaging {
         capsuleUUID: UInt64,
         address: Address,
         code: String,
-        contract: String,
+        contractIdentifier: String,
         action: String
     )
     /// Emitted when emulated contract migrations have been completed, where failedContracts are named by their
@@ -113,7 +113,7 @@ access(all) contract MigrationContractStaging {
             capsuleUUID: capsuleUUID,
             address: address,
             code: "",
-            contract: name,
+            contractIdentifier: name,
             action: "unstage"
         )
     }
@@ -122,13 +122,13 @@ access(all) contract MigrationContractStaging {
 
     /// Returns the last block height at which updates can be staged
     ///
-    access(all) fun getStagingCutoff(): UInt64? {
+    access(all) view fun getStagingCutoff(): UInt64? {
         return self.stagingCutoff
     }
 
     /// Returns whether the staging period is currently active
     ///
-    access(all) fun isStagingPeriodActive(): Bool {
+    access(all) view fun isStagingPeriodActive(): Bool {
         return self.stagingCutoff == nil || getCurrentBlock().height <= self.stagingCutoff!
     }
 
@@ -353,7 +353,7 @@ access(all) contract MigrationContractStaging {
                 capsuleUUID: self.uuid,
                 address: self.update.address,
                 code: code,
-                contract: self.update.name,
+                contractIdentifier: self.update.name,
                 action: "replace"
             )
         }
@@ -407,7 +407,7 @@ access(all) contract MigrationContractStaging {
             capsuleUUID: capsule.uuid,
             address: host.address(),
             code: code,
-            contract: name,
+            contractIdentifier: name,
             action: "stage"
         )
         return <- capsule
