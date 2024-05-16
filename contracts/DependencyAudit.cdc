@@ -21,12 +21,11 @@ access(all) contract DependencyAudit {
 
     // checkDependencies is called from the FlowServiceAccount contract
     access(self) fun checkDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
-        var numDependencies = dependenciesAddresses.length
-        var i = 0
-
         var unstagedDependenciesAddresses: [Address] = []
         var unstagedDependenciesNames: [String] = []
 
+        var numDependencies = dependenciesAddresses.length
+        var i = 0
         while i < numDependencies {
             let isExcluded = DependencyAudit.excludedAddresses[dependenciesAddresses[i]] ?? false
             if isExcluded {
@@ -88,6 +87,13 @@ access(all) contract DependencyAudit {
         access(all) fun setPanicOnUnstagedDependencies(shouldPanic: Bool) {
             DependencyAudit.panicOnUnstaged = shouldPanic
             emit PanicOnUnstagedDependenciesChanged(shouldPanic: shouldPanic)
+        }
+
+        // testCheckDependencies is used for testing purposes
+        // It will call the `checkDependencies` function with the provided dependencies
+        // `checkDependencies` is otherwise not callable from the outside
+        access(all) fun testCheckDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
+            return DependencyAudit.checkDependencies(dependenciesAddresses, dependenciesNames, authorizers)
         }
     }
 
