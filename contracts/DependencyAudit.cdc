@@ -1,7 +1,6 @@
 import "MigrationContractStaging"
 
-// This contract is intended to be deployed on the service account.
-// It is used by the FVM calling the `checkDependencies` function from a function of the same name and singature in the FlowServiceAccount contract,
+// This contract ist is used by the FVM calling the `checkDependencies` function from a function of the same name and singature in the FlowServiceAccount contract,
 // at the end of every transaction.
 // The `dependenciesAddresses` and `dependenciesNames` will be all the dependencies needded to run that transaction.
 //
@@ -21,7 +20,7 @@ access(all) contract DependencyAudit {
     access(all) event PanicOnUnstagedDependenciesChanged(shouldPanic: Bool)
 
     // checkDependencies is called from the FlowServiceAccount contract
-    access(all) fun checkDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
+    access(self) fun checkDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
         var numDependencies = dependenciesAddresses.length
         var i = 0
 
@@ -62,7 +61,7 @@ access(all) contract DependencyAudit {
 
                 // the transactions will fail with a message that looks like this: `error: panic: Found unstaged dependencies: A.0x2ceae959ed1a7e7a.MigrationContractStaging, A.0x2ceae959ed1a7e7a.DependencyAudit`
                 panic("Found unstaged dependencies: ".concat(unstagedDependenciesString))
-            }else{
+            } else {
                 emit UnstagedDependencies(dependenciesAddresses: unstagedDependenciesAddresses, dependenciesNames: unstagedDependenciesNames)
             }
         }
