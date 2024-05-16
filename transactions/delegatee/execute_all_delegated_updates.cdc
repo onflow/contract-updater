@@ -8,8 +8,8 @@ transaction {
 
     let delegatee: &StagedContractUpdates.Delegatee
 
-    prepare(signer: AuthAccount) {
-        self.delegatee = signer.borrow<&StagedContractUpdates.Delegatee>(from: StagedContractUpdates.DelegateeStoragePath)
+    prepare(signer: auth(BorrowValue) &Account) {
+        self.delegatee = signer.storage.borrow<&StagedContractUpdates.Delegatee>(from: StagedContractUpdates.DelegateeStoragePath)
             ?? panic("Could not borrow Delegatee reference from signer")
     }
 

@@ -1,6 +1,4 @@
-#allowAccountLinking
-
-import "MetadataViews"
+import "ViewResolver"
 
 import "StagedContractUpdates"
 
@@ -9,43 +7,57 @@ import "StagedContractUpdates"
 ///
 transaction(blockHeightBoundary: UInt64?, contractName: String, code: String) {
 
-    prepare(signer: AuthAccount) {
+    prepare(signer: auth(BorrowValue, CopyValue, SaveValue, IssueAccountCapabilityController, IssueStorageCapabilityController, ClaimInboxCapability, PublishCapability) &Account) {
 
         // Ensure Updater has not already been configured at expected path
         // Note: If one was already configured, we'd want to load & destroy, but such action should be taken explicitly
-        if signer.type(at: StagedContractUpdates.UpdaterStoragePath) != nil {
+        if signer.storage.type(at: StagedContractUpdates.UpdaterStoragePath) != nil {
             panic("Updater already configured at expected path!")
         }
         // Continue configuration...
 
-        let accountCapPrivatePath: PrivatePath = /private/StagedContractUpdatesAccountCap
-        let hostPrivatePath: PrivatePath = /private/StagedContractUpdatesHost
+        // Derive paths for AuthAccount & Host Capabilities, identifying the recipient on publishing
+        let accountCapStoragePath = StoragePath(
+                identifier: "StagedContractUpdatesAccountCap_".concat(signer.address.toString())
+            )!
+        let hostCapStoragePath = StoragePath(
+                identifier: "StagedContractUpdatesHostCap_".concat(signer.address.toString())
+            )!
 
+        var accountCap: Capability<auth(UpdateContract) &Account>? = nil
         // Setup Capability on underlying signing host account
-        if !signer.getCapability<&AuthAccount>(accountCapPrivatePath).check() {
-            signer.unlink(accountCapPrivatePath)
-            signer.linkAccount(accountCapPrivatePath)
+        if signer.storage.type(at: accountCapStoragePath) == nil {
+            accountCap = signer.capabilities.account.issue<auth(UpdateContract) &Account>()
+            signer.storage.save(accountCap, to: accountCapStoragePath)
+        } else {
+            accountCap = signer.storage.copy<Capability<auth(UpdateContract) &Account>>(from: accountCapStoragePath)
+                ?? panic("Invalid object retrieved from: ".concat(accountCapStoragePath.toString()))
         }
-        let accountCap = signer.getCapability<&AuthAccount>(accountCapPrivatePath)
 
         // Setup Host resource, wrapping the previously configured account capabaility
-        if signer.type(at: StagedContractUpdates.HostStoragePath) == nil {
-            signer.save(
-                <- StagedContractUpdates.createNewHost(accountCap: accountCap),
+        if signer.storage.type(at: StagedContractUpdates.HostStoragePath) == nil {
+            signer.storage.save(
+                <- StagedContractUpdates.createNewHost(accountCap: accountCap!),
                 to: StagedContractUpdates.HostStoragePath
             )
         }
-        if !signer.getCapability<&StagedContractUpdates.Host>(hostPrivatePath).check() {
-            signer.unlink(hostPrivatePath)
-            signer.link<&StagedContractUpdates.Host>(hostPrivatePath, target: StagedContractUpdates.HostStoragePath)
+        var hostCap: Capability<&StagedContractUpdates.Host>? = nil
+        if signer.storage.type(at: hostCapStoragePath) == nil {
+            signer.storage.save(
+                signer.capabilities.storage.issue<&StagedContractUpdates.Host>(StagedContractUpdates.HostStoragePath),
+                to: hostCapStoragePath
+            )
         }
-        let hostCap = signer.getCapability<&StagedContractUpdates.Host>(hostPrivatePath)
+        hostCap = signer.storage.copy<Capability<&StagedContractUpdates.Host>>(from: hostCapStoragePath)
+            ?? panic("Invalid object retrieved from: ".concat(hostCapStoragePath.toString()))
+
+        assert(hostCap != nil && hostCap!.check(), message: "Invalid Host Capability retrieved")
 
         // Create Updater resource, assigning the contract .blockUpdateBoundary to the new Updater
-        signer.save(
+        signer.storage.save(
             <- StagedContractUpdates.createNewUpdater(
                 blockUpdateBoundary: blockHeightBoundary ?? StagedContractUpdates.blockUpdateBoundary,
-                hosts: [hostCap],
+                hosts: [hostCap!],
                 deployments: [[
                     StagedContractUpdates.ContractUpdate(
                         address: signer.address,
@@ -56,10 +68,9 @@ transaction(blockHeightBoundary: UInt64?, contractName: String, code: String) {
             ),
             to: StagedContractUpdates.UpdaterStoragePath
         )
-        signer.unlink(StagedContractUpdates.UpdaterPublicPath)
-        signer.link<&{StagedContractUpdates.UpdaterPublic, MetadataViews.Resolver}>(
-            StagedContractUpdates.UpdaterPublicPath,
-            target: StagedContractUpdates.UpdaterStoragePath
+        let updaterCap = signer.capabilities.storage.issue<&{StagedContractUpdates.UpdaterPublic, ViewResolver.Resolver}>(
+            StagedContractUpdates.UpdaterStoragePath
         )
+        signer.capabilities.publish(updaterCap, at: StagedContractUpdates.UpdaterPublicPath)
     }
 }

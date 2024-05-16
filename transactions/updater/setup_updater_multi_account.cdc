@@ -1,4 +1,4 @@
-import "MetadataViews"
+import "ViewResolver"
 
 import "StagedContractUpdates"
 
@@ -14,9 +14,9 @@ import "StagedContractUpdates"
 ///
 transaction(blockHeightBoundary: UInt64?, contractAddresses: [Address], deploymentConfig: [[{Address: {String: String}}]]) {
 
-    prepare(signer: AuthAccount) {
+    prepare(signer: auth(BorrowValue, SaveValue, IssueStorageCapabilityController, ClaimInboxCapability, PublishCapability) &Account) {
         // Abort if Updater is already configured in signer's account
-        if signer.type(at: StagedContractUpdates.UpdaterStoragePath) != nil {
+        if signer.storage.type(at: StagedContractUpdates.UpdaterStoragePath) != nil {
             panic("Updater already configured at expected path!")
         }
 
@@ -43,14 +43,13 @@ transaction(blockHeightBoundary: UInt64?, contractAddresses: [Address], deployme
                 hosts: hostCaps,
                 deployments: deployments
             )
-        signer.save(
+        signer.storage.save(
             <-contractUpdater,
             to: StagedContractUpdates.UpdaterStoragePath
         )
-        signer.unlink(StagedContractUpdates.UpdaterPublicPath)
-        signer.link<&{StagedContractUpdates.UpdaterPublic, MetadataViews.Resolver}>(
-            StagedContractUpdates.UpdaterPublicPath,
-            target: StagedContractUpdates.UpdaterStoragePath
+        let updaterCap = signer.capabilities.storage.issue<&{StagedContractUpdates.UpdaterPublic, ViewResolver.Resolver}>(
+            StagedContractUpdates.UpdaterStoragePath
         )
+        signer.capabilities.publish(updaterCap, at: StagedContractUpdates.UpdaterPublicPath)
     }
 }

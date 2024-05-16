@@ -1,12 +1,11 @@
-import "MetadataViews"
+import "ViewResolver"
 
 import "StagedContractUpdates"
 
 /// Returns UpdaterInfo view from the Updater at the given address or nil if none is found
 ///
-pub fun main(address: Address): StagedContractUpdates.UpdaterInfo? {
-    return getAccount(address).getCapability<&{StagedContractUpdates.UpdaterPublic, MetadataViews.Resolver}>(
+access(all) fun main(address: Address): StagedContractUpdates.UpdaterInfo? {
+    return getAccount(address).capabilities.borrow<&{StagedContractUpdates.UpdaterPublic, ViewResolver.Resolver}>(
             StagedContractUpdates.UpdaterPublicPath
-        ).borrow()
-        ?.resolveView(Type<StagedContractUpdates.UpdaterInfo>()) as! StagedContractUpdates.UpdaterInfo?
+        )?.resolveView(Type<StagedContractUpdates.UpdaterInfo>()) as! StagedContractUpdates.UpdaterInfo?
 }
