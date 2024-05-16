@@ -180,6 +180,7 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
+	"DependencyAudit.cdc":          dependencyauditCdc,
 	"MigrationContractStaging.cdc": migrationcontractstagingCdc,
 }
 
@@ -229,6 +230,7 @@ type bintree struct {
 }
 
 var _bintree = &bintree{nil, map[string]*bintree{
+	"DependencyAudit.cdc": {dependencyauditCdc, map[string]*bintree{}},
 	"MigrationContractStaging.cdc": {migrationcontractstagingCdc, map[string]*bintree{}},
 }}
 

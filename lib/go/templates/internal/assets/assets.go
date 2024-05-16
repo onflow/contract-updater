@@ -1003,6 +1003,8 @@ var _bindata = map[string]func() (*asset, error){
 	"transactions/coordinator/set_block_update_boundary.cdc":                                                   transactionsCoordinatorSet_block_update_boundaryCdc,
 	"transactions/delegatee/execute_all_delegated_updates.cdc":                                                 transactionsDelegateeExecute_all_delegated_updatesCdc,
 	"transactions/delegatee/remove_delegated_updaters.cdc":                                                     transactionsDelegateeRemove_delegated_updatersCdc,
+	"transactions/dependency-audit/admin/set_unstaged_cause_panic.cdc":                                         transactionsDependencyAuditAdminSet_unstaged_cause_panicCdc,
+	"transactions/dependency-audit/admin/test_check_dependencies.cdc":                                          transactionsDependencyAuditAdminTest_check_dependenciesCdc,
 	"transactions/host/publish_host_capability.cdc":                                                            transactionsHostPublish_host_capabilityCdc,
 	"transactions/migration-contract-staging/admin/commit_migration_results.cdc":                               transactionsMigrationContractStagingAdminCommit_migration_resultsCdc,
 	"transactions/migration-contract-staging/admin/set_staging_cutoff.cdc":                                     transactionsMigrationContractStagingAdminSet_staging_cutoffCdc,
@@ -1104,6 +1106,12 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"delegatee": {nil, map[string]*bintree{
 			"execute_all_delegated_updates.cdc": {transactionsDelegateeExecute_all_delegated_updatesCdc, map[string]*bintree{}},
 			"remove_delegated_updaters.cdc": {transactionsDelegateeRemove_delegated_updatersCdc, map[string]*bintree{}},
+		}},
+		"dependency-audit": {nil, map[string]*bintree{
+			"admin": {nil, map[string]*bintree{
+				"set_unstaged_cause_panic.cdc": {transactionsDependencyAuditAdminSet_unstaged_cause_panicCdc, map[string]*bintree{}},
+				"test_check_dependencies.cdc": {transactionsDependencyAuditAdminTest_check_dependenciesCdc, map[string]*bintree{}},
+			}},
 		}},
 		"host": {nil, map[string]*bintree{
 			"publish_host_capability.cdc": {transactionsHostPublish_host_capabilityCdc, map[string]*bintree{}},
