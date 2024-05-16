@@ -229,7 +229,7 @@ access(all) struct ContractUpdate {
     access(all) view fun identifier(): String
     /// Returns whether this contract update passed the last emulated migration, validating the contained code.
     /// NOTE: false could mean validation hasn't begun, the code wasn't included in emulation, or validation failed
-    access(all) view fun isValidated(): Bool {
+    access(all) view fun isValidated(): Bool
     /// Replaces the ContractUpdate code with that provided.
     access(contract) fun replaceCode(_ code: String)
 }

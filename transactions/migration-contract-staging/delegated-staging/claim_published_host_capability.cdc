@@ -18,7 +18,7 @@ import "MigrationContractStaging"
 ///
 transaction(hostPublisher: Address, hostCapStoragePathIdentifier: String) {
     
-    prepare(signer: AuthAccount) {
+    prepare(signer: auth(ClaimInboxCapability, SaveValue) &Account) {
         // Claim the published Capability from the signer's inbox
         let inboxName = "MigrationContractStagingHost_".concat(signer.address.toString())
         let hostCap = signer.inbox.claim<&MigrationContractStaging.Host>(inboxName, provider: hostPublisher)
@@ -29,6 +29,6 @@ transaction(hostPublisher: Address, hostCapStoragePathIdentifier: String) {
         // Store the Host Capability in the signer's storage, deriving the storage path on the publisher's address
         let storagePath = StoragePath(identifier: hostCapStoragePathIdentifier)
             ?? panic("Failed to derive the storage path from the provided identifier")
-        signer.save(hostCap, to: storagePath)
+        signer.storage.save(hostCap, to: storagePath)
     }
 }

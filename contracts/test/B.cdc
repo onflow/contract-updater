@@ -1,14 +1,14 @@
 import "A"
 
-pub contract B : A {
+access(all) contract B : A {
     
-    pub resource R : A.I {
-        pub fun foo(): String {
+    access(all) resource R : A.R {
+        access(all) fun foo(): String {
             return "foo"
         }
     }
     
-    pub fun createR(): @R {
+    access(all) fun createR(): @R {
         return <-create R()
     }
 }

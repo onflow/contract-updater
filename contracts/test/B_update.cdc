@@ -2,7 +2,7 @@ import A from 0x0000000000000009
 
 access(all) contract B : A {
     
-    access(all) resource R : A.I {
+    access(all) resource R : A.R {
         access(all) fun foo(): String {
             return "foo"
         }

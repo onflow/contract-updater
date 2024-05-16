@@ -5,7 +5,7 @@ access(all) contract interface A {
         access(all) fun bar(): String
     }
 
-    access(all) resource R : I {
+    access(all) resource interface R : I {
         access(all) fun foo(): String {
             return "foo"
         }
