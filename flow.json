@@ -135,21 +135,8 @@
 			]
 		},
 		"emulator": {
-			"a-account": [
-				"A"
-			],
-			"bc-account": [
-				"B",
-				"C"
-			],
 			"emulator-account": [
 				"MigrationContractStaging"
-			],
-			"emulator-ft": [
-				"FungibleToken"
-			],
-			"foo": [
-				"Foo"
 			]
 		},
 		"mainnet": {
