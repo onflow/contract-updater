@@ -1,6 +1,6 @@
 import "MigrationContractStaging"
 
-// This contract ist is used by the FVM calling the `checkDependencies` function from a function of the same name and singature in the FlowServiceAccount contract,
+// This contract is is used by the FVM calling the `checkDependencies` function from a function of the same name and singnature in the FlowServiceAccount contract,
 // at the end of every transaction.
 // The `dependenciesAddresses` and `dependenciesNames` will be all the dependencies needded to run that transaction.
 //
@@ -15,14 +15,13 @@ access(all) contract DependencyAudit {
 
     access(all) var panicOnUnstaged: Bool
 
-    access(all) event UnstagedDependencies(dependenciesAddresses: [Address], dependenciesNames: [String])
+    access(all) event UnstagedDependencies(dependencies: [Dependency])
 
     access(all) event PanicOnUnstagedDependenciesChanged(shouldPanic: Bool)
 
     // checkDependencies is called from the FlowServiceAccount contract
     access(self) fun checkDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
-        var unstagedDependenciesAddresses: [Address] = []
-        var unstagedDependenciesNames: [String] = []
+        var unstagedDependencies: [Dependency] = []
 
         var numDependencies = dependenciesAddresses.length
         var i = 0
@@ -35,25 +34,24 @@ access(all) contract DependencyAudit {
 
             let staged = MigrationContractStaging.isStaged(address: dependenciesAddresses[i], name: dependenciesNames[i])
             if !staged {
-                unstagedDependenciesAddresses.append(dependenciesAddresses[i])
-                unstagedDependenciesNames.append(dependenciesNames[i])
+                unstagedDependencies.append(Dependency(address: dependenciesAddresses[i], name: dependenciesNames[i]))
             }
 
             i = i + 1
         }
 
-        if unstagedDependenciesAddresses.length > 0 {
+        if unstagedDependencies.length > 0 {
             if DependencyAudit.panicOnUnstaged {
                 // If `panicOnUnstaged` is set to true, the transaction will panic if there are any unstaged dependencies
                 // the panic message will include the unstaged dependencies
                 var unstagedDependenciesString = ""
-                var numUnstagedDependencies = unstagedDependenciesAddresses.length
+                var numUnstagedDependencies = unstagedDependencies.length
                 var j = 0
                 while j < numUnstagedDependencies {
                     if j > 0 {
                         unstagedDependenciesString = unstagedDependenciesString.concat(", ")
                     }
-                    unstagedDependenciesString = unstagedDependenciesString.concat("A.").concat(unstagedDependenciesAddresses[j].toString()).concat(".").concat(unstagedDependenciesNames[j])
+                    unstagedDependenciesString = unstagedDependenciesString.concat(unstagedDependencies[j].toString())
 
                     j = j + 1
                 }
@@ -61,7 +59,7 @@ access(all) contract DependencyAudit {
                 // the transactions will fail with a message that looks like this: `error: panic: Found unstaged dependencies: A.0x2ceae959ed1a7e7a.MigrationContractStaging, A.0x2ceae959ed1a7e7a.DependencyAudit`
                 panic("Found unstaged dependencies: ".concat(unstagedDependenciesString))
             } else {
-                emit UnstagedDependencies(dependenciesAddresses: unstagedDependenciesAddresses, dependenciesNames: unstagedDependenciesNames)
+                emit UnstagedDependencies(dependencies: unstagedDependencies)
             }
         }
     }
@@ -94,6 +92,20 @@ access(all) contract DependencyAudit {
         // `checkDependencies` is otherwise not callable from the outside
         access(all) fun testCheckDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
             return DependencyAudit.checkDependencies(dependenciesAddresses, dependenciesNames, authorizers)
+        }
+    }
+
+    access(all) struct Dependency {
+        access(all) let address: Address
+        access(all) let name: String
+
+        init(address: Address, name: String) {
+            self.address = address
+            self.name = name
+        }
+
+        access(all) fun toString(): String {
+            return "A.".concat(self.address.toString()).concat(".").concat(self.name)
         }
     }
 

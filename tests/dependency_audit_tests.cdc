@@ -111,10 +111,9 @@ access(all) fun testChekDependenciesWithUnstagedEntries() {
     Test.assertEqual(1, events.length)
 
     let evt = events[0] as! DependencyAudit.UnstagedDependencies
-    Test.assertEqual(1, evt.dependenciesAddresses.length)
-    Test.assertEqual(1, evt.dependenciesNames.length)
-    Test.assertEqual(fooAccount.address, evt.dependenciesAddresses[0])
-    Test.assertEqual("Foo", evt.dependenciesNames[0])
+    Test.assertEqual(1, evt.dependencies.length)
+    Test.assertEqual(fooAccount.address, evt.dependencies[0].address)
+    Test.assertEqual("Foo", evt.dependencies[0].name)
 }
 
 
@@ -135,10 +134,9 @@ access(all) fun testChekDependenciesWithStagedEntries() {
     events = Test.eventsOfType(Type<DependencyAudit.UnstagedDependencies>())
     Test.assertEqual(2, events.length)
     let evt = events[1] as! DependencyAudit.UnstagedDependencies
-    Test.assertEqual(1, evt.dependenciesAddresses.length)
-    Test.assertEqual(1, evt.dependenciesNames.length)
-    Test.assertEqual(aAccount.address, evt.dependenciesAddresses[0])
-    Test.assertEqual("A", evt.dependenciesNames[0])
+    Test.assertEqual(1, evt.dependencies.length)
+    Test.assertEqual(aAccount.address, evt.dependencies[0].address)
+    Test.assertEqual("A", evt.dependencies[0].name)
 
     let aStagingTxResult = executeTransaction(
         "../transactions/migration-contract-staging/stage_contract.cdc",
@@ -180,12 +178,11 @@ access(all) fun testChekDependenciesWithMixedEntries() {
         Test.assertEqual(3, events.length)
 
     let evt = events[2] as! DependencyAudit.UnstagedDependencies
-    Test.assertEqual(2, evt.dependenciesAddresses.length)
-    Test.assertEqual(2, evt.dependenciesNames.length)
-    Test.assertEqual(fooAccount.address, evt.dependenciesAddresses[0])
-    Test.assertEqual("Foo", evt.dependenciesNames[0])
-    Test.assertEqual(bcAccount.address, evt.dependenciesAddresses[1])
-    Test.assertEqual("B", evt.dependenciesNames[1])
+    Test.assertEqual(2, evt.dependencies.length)
+    Test.assertEqual(fooAccount.address, evt.dependencies[0].address)
+    Test.assertEqual("Foo", evt.dependencies[0].name)
+    Test.assertEqual(bcAccount.address, evt.dependencies[1].address)
+    Test.assertEqual("B", evt.dependencies[1].name)
 }
 
 access(all) fun testSetPanic() {
