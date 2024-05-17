@@ -6,11 +6,12 @@ import "StagedContractUpdates"
 ///
 transaction {
 
-    let delegatee: &StagedContractUpdates.Delegatee
+    let delegatee: auth(UpdateContract) &StagedContractUpdates.Delegatee
 
     prepare(signer: auth(BorrowValue) &Account) {
-        self.delegatee = signer.storage.borrow<&StagedContractUpdates.Delegatee>(from: StagedContractUpdates.DelegateeStoragePath)
-            ?? panic("Could not borrow Delegatee reference from signer")
+        self.delegatee = signer.storage.borrow<auth(UpdateContract) &StagedContractUpdates.Delegatee>(
+                from: StagedContractUpdates.DelegateeStoragePath
+            ) ?? panic("Could not borrow Delegatee reference from signer")
     }
 
     execute {

@@ -9,8 +9,8 @@ import "StagedContractUpdates"
 /// NOTES: deploymentConfig is ordered, and the order is used to determine the order of the contracts in the deployment.
 /// Each entry in the array must be exactly one key-value pair, where the key is the address of the associated contract
 /// name and code.
-/// This transaction also assumes that all contract hosting AuthAccount Capabilities have been published for the signer
-/// to claim.
+/// This transaction also assumes that all contract hosting Account Capabilities have been published for the signer to
+/// claim.
 ///
 transaction(blockHeightBoundary: UInt64?, contractAddresses: [Address], deploymentConfig: [[{Address: {String: String}}]]) {
 
@@ -21,13 +21,13 @@ transaction(blockHeightBoundary: UInt64?, contractAddresses: [Address], deployme
         }
 
         // Claim all Host Capabilities from contract addresses
-        let hostCaps: [Capability<&StagedContractUpdates.Host>] = []
+        let hostCaps: [Capability<auth(UpdateContract) &StagedContractUpdates.Host>] = []
         let seenAddresses: [Address] = []
         for address in contractAddresses {
             if seenAddresses.contains(address) {
                 continue
             }
-            let hostCap: Capability<&StagedContractUpdates.Host> = signer.inbox.claim<&StagedContractUpdates.Host>(
+            let hostCap = signer.inbox.claim<auth(UpdateContract) &StagedContractUpdates.Host>(
                 StagedContractUpdates.inboxHostCapabilityNamePrefix.concat(signer.address.toString()),
                 provider: address
             ) ?? panic("No Host Capability found in Inbox for signer at address: ".concat(address.toString()))

@@ -5,7 +5,7 @@ import "StagedContractUpdates"
 ///
 transaction {
     prepare(signer: auth(BorrowValue) &Account) {
-        signer.storage.borrow<&StagedContractUpdates.Updater>(from: StagedContractUpdates.UpdaterStoragePath)
+        signer.storage.borrow<auth(UpdateContract) &StagedContractUpdates.Updater>(from: StagedContractUpdates.UpdaterStoragePath)
             ?.update()
             ?? panic("Could not borrow Updater from signer's storage!")
     }

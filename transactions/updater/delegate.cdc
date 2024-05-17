@@ -5,7 +5,7 @@ import "StagedContractUpdates"
 transaction {
 
     let delegatee: &{StagedContractUpdates.DelegateePublic}
-    let updaterCap: Capability<&StagedContractUpdates.Updater>
+    let updaterCap: Capability<auth(UpdateContract) &StagedContractUpdates.Updater>
     let updaterID: UInt64
 
     prepare(signer: auth(BorrowValue, CopyValue, IssueStorageCapabilityController, PublishCapability, SaveValue) &Account) {
@@ -29,11 +29,11 @@ transaction {
         // Issue Updater Capability if needed, store & retrieve
         if signer.storage.type(at: updaterCapStoragePath) == nil {
             signer.storage.save(
-                signer.capabilities.storage.issue<&StagedContractUpdates.Updater>(StagedContractUpdates.UpdaterStoragePath),
+                signer.capabilities.storage.issue<auth(UpdateContract) &StagedContractUpdates.Updater>(StagedContractUpdates.UpdaterStoragePath),
                 to: updaterCapStoragePath
             )
         }
-        self.updaterCap = signer.storage.copy<Capability<&StagedContractUpdates.Updater>>(from: updaterCapStoragePath)
+        self.updaterCap = signer.storage.copy<Capability<auth(UpdateContract) &StagedContractUpdates.Updater>>(from: updaterCapStoragePath)
             ?? panic("Problem retrieving Updater Capability")
         assert(self.updaterCap.check(), message: "Invalid Updater Capability retrieved")
         self.updaterID = self.updaterCap.borrow()?.getID() ?? panic("Invalid Updater Capability retrieved from signer!")

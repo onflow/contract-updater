@@ -16,7 +16,7 @@ transaction(blockHeightBoundary: UInt64?, contractName: String, code: String) {
         }
         // Continue configuration...
 
-        // Derive paths for AuthAccount & Host Capabilities, identifying the recipient on publishing
+        // Derive paths for Account & Host Capabilities, identifying the recipient on publishing
         let accountCapStoragePath = StoragePath(
                 identifier: "StagedContractUpdatesAccountCap_".concat(signer.address.toString())
             )!
@@ -41,14 +41,14 @@ transaction(blockHeightBoundary: UInt64?, contractName: String, code: String) {
                 to: StagedContractUpdates.HostStoragePath
             )
         }
-        var hostCap: Capability<&StagedContractUpdates.Host>? = nil
+        var hostCap: Capability<auth(UpdateContract) &StagedContractUpdates.Host>? = nil
         if signer.storage.type(at: hostCapStoragePath) == nil {
             signer.storage.save(
-                signer.capabilities.storage.issue<&StagedContractUpdates.Host>(StagedContractUpdates.HostStoragePath),
+                signer.capabilities.storage.issue<auth(UpdateContract) &StagedContractUpdates.Host>(StagedContractUpdates.HostStoragePath),
                 to: hostCapStoragePath
             )
         }
-        hostCap = signer.storage.copy<Capability<&StagedContractUpdates.Host>>(from: hostCapStoragePath)
+        hostCap = signer.storage.copy<Capability<auth(UpdateContract) &StagedContractUpdates.Host>>(from: hostCapStoragePath)
             ?? panic("Invalid object retrieved from: ".concat(hostCapStoragePath.toString()))
 
         assert(hostCap != nil && hostCap!.check(), message: "Invalid Host Capability retrieved")

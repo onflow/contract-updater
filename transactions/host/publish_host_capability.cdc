@@ -2,14 +2,14 @@
 
 import "StagedContractUpdates"
 
-/// Links the signer's AuthAccount and encapsulates in a Host resource, publishing a Host Capability for the specified
+/// Links the signer's Account and encapsulates in a Host resource, publishing a Host Capability for the specified
 /// recipient. This would enable the recipient to execute arbitrary contract updates on the signer's behalf.
 ///
 transaction(publishFor: Address) {
 
     prepare(signer: auth(BorrowValue, CopyValue, IssueAccountCapabilityController, IssueStorageCapabilityController, PublishInboxCapability, SaveValue) &Account) {
 
-        // Derive paths for AuthAccount & Host Capabilities, identifying the recipient on publishing
+        // Derive paths for Account & Host Capabilities, identifying the recipient on publishing
         let accountCapStoragePath = StoragePath(
                 identifier: "StagedContractUpdatesAccountCap_".concat(signer.address.toString())
             )!
@@ -25,7 +25,7 @@ transaction(publishFor: Address) {
                 ?? panic("Invalid object retrieved from: ".concat(accountCapStoragePath.toString()))
         }
 
-        assert(accountCap != nil && accountCap!.check(), message: "Invalid AuthAccount Capability retrieved")
+        assert(accountCap != nil && accountCap!.check(), message: "Invalid Account Capability retrieved")
 
         // Setup Host resource, wrapping the previously configured account capabaility
         if signer.storage.type(at: StagedContractUpdates.HostStoragePath) == nil {
@@ -34,14 +34,14 @@ transaction(publishFor: Address) {
                 to: StagedContractUpdates.HostStoragePath
             )
         }
-        var hostCap: Capability<&StagedContractUpdates.Host>? = nil
+        var hostCap: Capability<auth(UpdateContract) &StagedContractUpdates.Host>? = nil
         if signer.storage.type(at: hostCapStoragePath) == nil {
             signer.storage.save(
-                signer.capabilities.storage.issue<&StagedContractUpdates.Host>(StagedContractUpdates.HostStoragePath),
+                signer.capabilities.storage.issue<auth(UpdateContract) &StagedContractUpdates.Host>(StagedContractUpdates.HostStoragePath),
                 to: hostCapStoragePath
             )
         }
-        hostCap = signer.storage.copy<Capability<&StagedContractUpdates.Host>>(from: hostCapStoragePath)
+        hostCap = signer.storage.copy<Capability<auth(UpdateContract) &StagedContractUpdates.Host>>(from: hostCapStoragePath)
             ?? panic("Invalid object retrieved from: ".concat(hostCapStoragePath.toString()))
 
         assert(hostCap != nil && hostCap!.check(), message: "Invalid Host Capability retrieved")
