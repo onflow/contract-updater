@@ -20,7 +20,7 @@ access(all) contract DependencyAudit {
     access(all) event PanicOnUnstagedDependenciesChanged(shouldPanic: Bool)
 
     // checkDependencies is called from the FlowServiceAccount contract
-    access(self) fun checkDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
+    access(contract) fun checkDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
         var unstagedDependencies: [Dependency] = []
 
         var numDependencies = dependenciesAddresses.length
@@ -56,7 +56,7 @@ access(all) contract DependencyAudit {
                     j = j + 1
                 }
 
-                // the transactions will fail with a message that looks like this: `error: panic: Found unstaged dependencies: A.0x2ceae959ed1a7e7a.MigrationContractStaging, A.0x2ceae959ed1a7e7a.DependencyAudit`
+                // the transactions will fail with a message that looks like this: `error: panic: Found unstaged dependencies: A.2ceae959ed1a7e7a.MigrationContractStaging, A.2ceae959ed1a7e7a.DependencyAudit`
                 panic("Found unstaged dependencies: ".concat(unstagedDependenciesString))
             } else {
                 emit UnstagedDependencies(dependencies: unstagedDependencies)
@@ -105,12 +105,15 @@ access(all) contract DependencyAudit {
         }
 
         access(all) fun toString(): String {
-            return "A.".concat(self.address.toString()).concat(".").concat(self.name)
+            var addressString = self.address.toString()
+            // remove 0x prefix
+            addressString = addressString.slice(from: 2, upTo: addressString.length)
+            return "A.".concat(addressString).concat(".").concat(self.name)
         }
     }
 
     // The admin resource is saved to the storage so that the admin can be accessed by the service account
-    // The `excludedAddresses` will be the addresses with the system contracracts.
+    // The `excludedAddresses` will be the addresses with the system contracts.
     init(excludedAddresses: [Address]) {
         self.excludedAddresses = {}
         self.panicOnUnstaged = false
