@@ -213,5 +213,5 @@ access(all) fun testChekDependenciesWithUnstagedEntriesPanics() {
     )
     Test.expect(commitResult, Test.beFailed())
     // not sure how to test this:
-    // Test.expect(commitResult.error!.message, Test.contain("panic: Found unstaged dependencies: A.0x0000000000000008.Foo") )
+    // Test.expect(commitResult.error!.message, Test.contain("panic: Found unstaged dependencies: A.0000000000000008.Foo") )
 }
