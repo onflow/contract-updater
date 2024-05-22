@@ -20,7 +20,7 @@ access(all) contract DependencyAudit {
     access(all) event PanicOnUnstagedDependenciesChanged(shouldPanic: Bool)
 
     // checkDependencies is called from the FlowServiceAccount contract
-    access(contract) fun checkDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
+    access(account) fun checkDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
         var unstagedDependencies: [Dependency] = []
 
         var numDependencies = dependenciesAddresses.length
@@ -57,7 +57,7 @@ access(all) contract DependencyAudit {
                 }
 
                 // the transactions will fail with a message that looks like this: `error: panic: Found unstaged dependencies: A.2ceae959ed1a7e7a.MigrationContractStaging, A.2ceae959ed1a7e7a.DependencyAudit`
-                panic("Found unstaged dependencies: ".concat(unstagedDependenciesString))
+                panic("This transaction is using dependencies not staged for Crescendo upgrade coming soon! Learn more: https://bit.ly/FLOWCRESCENDO. Dependencies not staged: ".concat(unstagedDependenciesString))
             } else {
                 emit UnstagedDependencies(dependencies: unstagedDependencies)
             }
