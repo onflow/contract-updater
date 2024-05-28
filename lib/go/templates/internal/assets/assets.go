@@ -24,6 +24,7 @@
 // transactions/coordinator/set_block_update_boundary.cdc (415B)
 // transactions/delegatee/execute_all_delegated_updates.cdc (687B)
 // transactions/delegatee/remove_delegated_updaters.cdc (567B)
+// transactions/dependency-audit/admin/add_excluded_addresses.cdc (341B)
 // transactions/dependency-audit/admin/set_unstaged_cause_panic.cdc (352B)
 // transactions/dependency-audit/admin/test_check_dependencies.cdc (440B)
 // transactions/host/publish_host_capability.cdc (2.303kB)
@@ -590,6 +591,26 @@ func transactionsDelegateeRemove_delegated_updatersCdc() (*asset, error) {
 	return a, nil
 }
 
+var _transactionsDependencyAuditAdminAdd_excluded_addressesCdc = "\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x7c\xcf\xc1\x4a\x03\x31\x10\x06\xe0\x7b\x9e\x62\xdc\x83\x6e\x2f\xfb\x00\x8b\xb8\x04\xf5\x2e\x78\x14\x0f\x63\x66\x6c\x03\xdd\x99\x30\x99\xa0\x22\x7d\x77\x29\xb1\x45\x3c\x34\xa7\x1f\xf2\x93\xff\x4b\x5e\x8b\x9a\xc3\xf0\xc0\x85\x85\x58\xd2\x57\x6c\x94\x7d\x08\xc1\x0d\xa5\x62\xf2\xac\x32\x22\x91\x71\xad\x5c\x67\x78\x89\x3d\xbf\x6e\xe0\x3b\x00\x00\x14\xe3\x82\xc6\x63\xcd\x5b\x61\x9b\x21\x36\xdf\xc5\x94\xb4\x89\x9f\x2a\xc7\xd3\xaf\xa7\x37\x35\xd3\x8f\xdb\xeb\x7f\x7b\x53\xa4\x35\x4b\xae\x6e\xe8\x6a\x77\xe3\xbb\xe9\x3a\xc3\xc5\xd2\xb3\xab\xe1\x96\x9f\xd0\x77\x9b\x65\x42\xa2\xc7\xcf\xb4\x6f\xc4\x14\x4f\xd8\xbf\xec\x73\xdc\x9c\x45\xcb\x02\x05\x25\xa7\x71\xb8\xd7\xb6\x27\x10\x75\xe8\xbc\xcb\xc3\x70\xc4\xfd\xfe\xe7\xa6\x42\xed\x8e\xab\xa1\xbf\x7c\x08\x87\xf0\x13\x00\x00\xff\xff\xc2\xb5\x55\x59\x55\x01\x00\x00"
+
+func transactionsDependencyAuditAdminAdd_excluded_addressesCdcBytes() ([]byte, error) {
+	return bindataRead(
+		_transactionsDependencyAuditAdminAdd_excluded_addressesCdc,
+		"transactions/dependency-audit/admin/add_excluded_addresses.cdc",
+	)
+}
+
+func transactionsDependencyAuditAdminAdd_excluded_addressesCdc() (*asset, error) {
+	bytes, err := transactionsDependencyAuditAdminAdd_excluded_addressesCdcBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "transactions/dependency-audit/admin/add_excluded_addresses.cdc", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x8e, 0x12, 0xbe, 0xf6, 0x7, 0x8e, 0xe6, 0x8e, 0x7a, 0xe2, 0xbf, 0x4e, 0x3, 0x50, 0x19, 0xbc, 0x3f, 0x48, 0x8, 0x4e, 0xb0, 0xdb, 0x7b, 0xcf, 0x73, 0xc0, 0xcb, 0x7c, 0x87, 0x7b, 0xe4, 0x79}}
+	return a, nil
+}
+
 var _transactionsDependencyAuditAdminSet_unstaged_cause_panicCdc = "\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x7c\xcf\x41\x4e\xc4\x30\x0c\x05\xd0\x7d\x4e\x61\xba\x80\x76\xd3\x03\x54\x88\xaa\xc0\x9e\x91\x10\x07\x08\x89\x69\x2d\x4d\xed\xc8\x76\x85\x10\x9a\xbb\xa3\x52\x18\xc1\x2c\x9a\x5d\xf2\x7f\x92\x67\x9a\x8b\xa8\x43\xf5\x88\x05\x39\x23\xa7\x8f\x61\xc9\xe4\x55\x08\xae\x91\x2d\x26\x27\xe1\xda\x26\x59\x8e\xf9\x10\x99\x52\x07\xf7\x22\xc7\x06\x3e\x03\x00\x40\x51\x2c\x51\xb1\x36\x1a\x19\xb5\x83\x61\xf1\x69\x48\x49\x16\xf6\xdf\xca\xba\xb6\xb8\x7d\x15\x55\x79\xbf\xbd\xbe\xf8\xac\x1d\xf2\x4c\x4c\xe6\x1a\x5d\xf4\xae\x7e\x53\x99\x3b\xd8\x2d\x3d\xbb\x68\x1c\xf1\x10\x7d\x6a\xfa\xd6\xd0\xbf\x6d\x4f\xfc\xc2\xe6\x71\xc4\x7c\xbe\x4c\x68\xff\xf5\x7f\x36\xcd\xd9\xd7\xf7\x50\xd6\x93\xba\x7a\x58\x53\x60\x71\xd8\xb0\xfb\x0c\x58\xa9\x3f\xd3\xdd\x18\xd8\xa6\xba\xaa\xb6\x97\x4f\xe1\x14\xbe\x02\x00\x00\xff\xff\x63\x20\x68\x33\x60\x01\x00\x00"
 
 func transactionsDependencyAuditAdminSet_unstaged_cause_panicCdcBytes() ([]byte, error) {
@@ -1045,6 +1066,7 @@ var _bindata = map[string]func() (*asset, error){
 	"transactions/coordinator/set_block_update_boundary.cdc":                                                   transactionsCoordinatorSet_block_update_boundaryCdc,
 	"transactions/delegatee/execute_all_delegated_updates.cdc":                                                 transactionsDelegateeExecute_all_delegated_updatesCdc,
 	"transactions/delegatee/remove_delegated_updaters.cdc":                                                     transactionsDelegateeRemove_delegated_updatersCdc,
+	"transactions/dependency-audit/admin/add_excluded_addresses.cdc":                                           transactionsDependencyAuditAdminAdd_excluded_addressesCdc,
 	"transactions/dependency-audit/admin/set_unstaged_cause_panic.cdc":                                         transactionsDependencyAuditAdminSet_unstaged_cause_panicCdc,
 	"transactions/dependency-audit/admin/test_check_dependencies.cdc":                                          transactionsDependencyAuditAdminTest_check_dependenciesCdc,
 	"transactions/host/publish_host_capability.cdc":                                                            transactionsHostPublish_host_capabilityCdc,
@@ -1151,6 +1173,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"dependency-audit": {nil, map[string]*bintree{
 			"admin": {nil, map[string]*bintree{
+				"add_excluded_addresses.cdc": {transactionsDependencyAuditAdminAdd_excluded_addressesCdc, map[string]*bintree{}},
 				"set_unstaged_cause_panic.cdc": {transactionsDependencyAuditAdminSet_unstaged_cause_panicCdc, map[string]*bintree{}},
 				"test_check_dependencies.cdc": {transactionsDependencyAuditAdminTest_check_dependenciesCdc, map[string]*bintree{}},
 			}},
