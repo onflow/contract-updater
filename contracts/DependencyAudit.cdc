@@ -125,6 +125,6 @@ access(all) contract DependencyAudit {
         }
 
         let admin <- create Administrator()
-        self.account.save(<-admin, to: self.AdministratorStoragePath)
+        self.account.storage.save(<-admin, to: self.AdministratorStoragePath)
     }
 }

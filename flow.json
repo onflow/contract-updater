@@ -70,6 +70,13 @@
         "testnet": "631e88ae7f1d7c20"
       }
     },
+    "DependencyAudit": {
+      "source": "./contracts/DependencyAudit.cdc",
+      "aliases": {
+        "emulator": "f8d6e0586b0a20c7",
+        "testing": "0000000000000007"
+      }
+    },
     "StagedContractUpdates": {
       "source": "./contracts/staged-contract-updates/StagedContractUpdates.cdc",
       "aliases": {
@@ -150,7 +157,7 @@
       "migration-contract-staging-crescendo": ["MigrationContractStaging"]
     },
     "emulator": {
-      "emulator-account": ["MigrationContractStaging"]
+      "emulator-account": ["MigrationContractStaging", "DependencyAudit"]
     },
     "mainnet": {
       "migration-contract-staging-mainnet": ["MigrationContractStaging"]
