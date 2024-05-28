@@ -185,6 +185,37 @@ access(all) fun testChekDependenciesWithMixedEntries() {
     Test.assertEqual("B", evt.dependencies[1].name)
 }
 
+access(all) fun testSetExcludedAddresses() {
+    var addresses: [Address] = [bcAccount.address]
+    var commitResult = executeTransaction(
+        "../transactions/dependency-audit/admin/add_excluded_addresses.cdc",
+        [addresses],
+        adminAccount
+    )
+    Test.expect(commitResult, Test.beSucceeded())
+
+    var events = Test.eventsOfType(Type<DependencyAudit.UnstagedDependencies>())
+    Test.assertEqual(3, events.length)
+
+    addresses = [adminAccount.address, fooAccount.address, aAccount.address, bcAccount.address]
+    let names: [String] = ["DependencyAudit", "Foo", "A", "B"]
+    let authorizers: [Address] = []
+    commitResult = executeTransaction(
+        "../transactions/dependency-audit/admin/test_check_dependencies.cdc",
+        [addresses, names, authorizers],
+        adminAccount
+    )
+    Test.expect(commitResult, Test.beSucceeded())
+
+    events = Test.eventsOfType(Type<DependencyAudit.UnstagedDependencies>())
+        Test.assertEqual(4, events.length)
+
+    let evt = events[3] as! DependencyAudit.UnstagedDependencies
+    Test.assertEqual(1, evt.dependencies.length)
+    Test.assertEqual(fooAccount.address, evt.dependencies[0].address)
+    Test.assertEqual("Foo", evt.dependencies[0].name)
+}
+
 access(all) fun testSetPanic() {
     let shouldPanic: Bool = true
     var commitResult = executeTransaction(

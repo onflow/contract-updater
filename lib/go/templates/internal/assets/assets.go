@@ -1003,6 +1003,7 @@ var _bindata = map[string]func() (*asset, error){
 	"transactions/coordinator/set_block_update_boundary.cdc":                                                   transactionsCoordinatorSet_block_update_boundaryCdc,
 	"transactions/delegatee/execute_all_delegated_updates.cdc":                                                 transactionsDelegateeExecute_all_delegated_updatesCdc,
 	"transactions/delegatee/remove_delegated_updaters.cdc":                                                     transactionsDelegateeRemove_delegated_updatersCdc,
+	"transactions/dependency-audit/admin/add_excluded_addresses.cdc":                                           transactionsDependencyAuditAdminAdd_excluded_addressesCdc,
 	"transactions/dependency-audit/admin/set_unstaged_cause_panic.cdc":                                         transactionsDependencyAuditAdminSet_unstaged_cause_panicCdc,
 	"transactions/dependency-audit/admin/test_check_dependencies.cdc":                                          transactionsDependencyAuditAdminTest_check_dependenciesCdc,
 	"transactions/host/publish_host_capability.cdc":                                                            transactionsHostPublish_host_capabilityCdc,
@@ -1109,6 +1110,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		}},
 		"dependency-audit": {nil, map[string]*bintree{
 			"admin": {nil, map[string]*bintree{
+				"add_excluded_addresses.cdc": {transactionsDependencyAuditAdminAdd_excluded_addressesCdc, map[string]*bintree{}},
 				"set_unstaged_cause_panic.cdc": {transactionsDependencyAuditAdminSet_unstaged_cause_panicCdc, map[string]*bintree{}},
 				"test_check_dependencies.cdc": {transactionsDependencyAuditAdminTest_check_dependenciesCdc, map[string]*bintree{}},
 			}},
