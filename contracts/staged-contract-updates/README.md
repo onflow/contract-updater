@@ -1,6 +1,6 @@
 # StagedContractUpdates
 
-> :warning: This contract is general purpose and is not supporting Cadence 1.0 contract staging! Please refer to the
+> :warning: This contract is general purpose and is not supporting Cadence 1.0 contract staging! Please refer to
 > `MigrationContractStaging` for reference on staging your contract for the network-wide coordinated update.
 
 Enables pre-defined contract update deployments to a set of wrapped account at or beyond a specified block height. For
@@ -93,7 +93,7 @@ should occur according to the contract set's dependency graph.
 
 In our example, our dependency graph will look like this:
 
-![flat dependency dag](./resources/dependency_dag.png)
+![flat dependency dag](../../resources/dependency_dag.png)
 
 So the contracts should be updated in the following order:
 
@@ -114,11 +114,11 @@ More concretely, if we try to update all three contracts in the same transaction
 Consequently, we instead batch updates based on the contract's maximum depth in the dependency graph. In our case,
 instead of `[A, B, C]` we update `A` in one transaction, `B` in the next, and lastly `C` can be updated.
 
-![dependency graph with node depth](./resources/dependency_dag_with_depth.png)
+![dependency graph with node depth](../../resources/dependency_dag_with_depth.png)
 
 This concept can be extrapolated out for larger dependency graphs. For example, take the following:
 
-![larger dag example](./resources/larger_dag.png)
+![larger dag example](../../resources/larger_dag.png)
 
 This group of contracts would be updated over the same three stages, with each stage including contracts according to
 their maximum depth in the dependency graph. In this case:
