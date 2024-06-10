@@ -246,3 +246,66 @@ access(all) fun testChekDependenciesWithUnstagedEntriesPanics() {
     // not sure how to test this:
     // Test.expect(commitResult.error!.message, Test.contain("panic: This transaction is using dependencies not staged for Crescendo upgrade coming soon! Learn more: https://bit.ly/FLOWCRESCENDO. Dependencies not staged: A.0000000000000008.Foo") )
 }
+
+access(all) fun testBoundaries() {
+    var commitResult = executeTransaction(
+        "../transactions/dependency-audit/admin/set_start_end_block.cdc",
+        [100 as UInt64, 200 as UInt64],
+        adminAccount
+    )
+    Test.expect(commitResult, Test.beSucceeded())
+
+    var addresses: [Address] = [fooAccount.address]
+    var names: [String] = ["Foo"]
+    var authorizers: [Address] = []
+    commitResult = executeTransaction(
+        "../transactions/dependency-audit/admin/test_check_dependencies.cdc",
+        [addresses, names, authorizers],
+        adminAccount
+    )
+    Test.expect(commitResult, Test.beSucceeded())
+
+    commitResult = executeTransaction(
+        "../transactions/dependency-audit/admin/set_start_end_block.cdc",
+        [1 as UInt64, 2 as UInt64],
+        adminAccount
+    )
+    Test.expect(commitResult, Test.beSucceeded())
+
+    addresses = [fooAccount.address]
+    names = ["Foo"]
+    authorizers = []
+    commitResult = executeTransaction(
+        "../transactions/dependency-audit/admin/test_check_dependencies.cdc",
+        [addresses, names, authorizers],
+        adminAccount
+    )
+    Test.expect(commitResult, Test.beFailed())
+
+    // The block height is 42 at this point
+
+    commitResult = executeTransaction(
+        "../transactions/dependency-audit/admin/set_start_end_block.cdc",
+        [0 as UInt64, 100 as UInt64],
+        adminAccount
+    )
+    Test.expect(commitResult, Test.beSucceeded())
+
+    var i = 0
+    var failCount = 0
+    while i < 10 {
+        commitResult = executeTransaction(
+            "../transactions/dependency-audit/admin/test_check_dependencies.cdc",
+            [addresses, names, authorizers],
+            adminAccount
+        )
+        if commitResult.error != nil {
+            failCount = failCount + 1
+        }
+        i = i + 1
+    }
+
+    // expect 2-8 failures in 10 attempts
+    Test.expect(failCount, Test.beGreaterThan(1))
+    Test.expect(failCount, Test.beLessThan(9))
+}
