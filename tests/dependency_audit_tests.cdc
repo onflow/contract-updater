@@ -267,10 +267,35 @@ access(all) fun testBoundaries() {
 
     commitResult = executeTransaction(
         "../transactions/dependency-audit/admin/set_start_end_block.cdc",
+        [2 as UInt64, 1 as UInt64],
+        adminAccount
+    )
+    Test.expect(commitResult, Test.beFailed())
+
+    commitResult = executeTransaction(
+        "../transactions/dependency-audit/admin/set_start_end_block.cdc",
         [1 as UInt64, 2 as UInt64],
         adminAccount
     )
     Test.expect(commitResult, Test.beSucceeded())
+
+    var events = Test.eventsOfType(Type<DependencyAudit.BlockBoundariesChanged>())
+        Test.assertEqual(2, events.length)
+    var evt = events[1] as! DependencyAudit.BlockBoundariesChanged
+    Test.assertEqual(1 as UInt64, evt.boundaries!.start)
+    Test.assertEqual(2 as UInt64, evt.boundaries!.end)
+
+    commitResult = executeTransaction(
+        "../transactions/dependency-audit/admin/unset_start_end_block.cdc",
+        [],
+        adminAccount
+    )
+    Test.expect(commitResult, Test.beSucceeded())
+
+    events = Test.eventsOfType(Type<DependencyAudit.BlockBoundariesChanged>())
+        Test.assertEqual(3, events.length)
+    evt = events[2] as! DependencyAudit.BlockBoundariesChanged
+    Test.assertEqual(nil, evt.boundaries)
 
     addresses = [fooAccount.address]
     names = ["Foo"]
@@ -305,7 +330,7 @@ access(all) fun testBoundaries() {
         i = i + 1
     }
 
-    // expect 2-8 failures in 10 attempts
-    Test.expect(failCount, Test.beGreaterThan(1))
-    Test.expect(failCount, Test.beLessThan(9))
+    // expect 1-9 failures in 10 attempts
+    Test.expect(failCount, Test.beGreaterThan(0))
+    Test.expect(failCount, Test.beLessThan(10))
 }

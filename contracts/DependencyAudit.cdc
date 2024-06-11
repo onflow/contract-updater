@@ -19,6 +19,8 @@ access(all) contract DependencyAudit {
 
     access(all) event PanicOnUnstagedDependenciesChanged(shouldPanic: Bool)
 
+    access(all) event BlockBoundariesChanged(boundaries: Boundaries?)
+
     // checkDependencies is called from the FlowServiceAccount contract
     access(account) fun checkDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
         var unstagedDependencies: [Dependency] = []
@@ -49,12 +51,8 @@ access(all) contract DependencyAudit {
 
     access(self) fun maybePanicOnUnstagedDependencies(_ unstagedDependencies: [Dependency]) {
         // If `panicOnUnstaged` is set to false, the function will return without panicking
-        if !DependencyAudit.panicOnUnstaged {
-            return
-        }
-
-        // check if we should panic randomly
-        if !self.shouldPanicRandomly() {
+        // Then check if we should panic randomly
+        if !DependencyAudit.panicOnUnstaged || !self.shouldPanicRandomly() {
             return
         }
 
@@ -101,6 +99,7 @@ access(all) contract DependencyAudit {
         let currentBlock: UInt64 = getCurrentBlock().height
 
         if startBlock >= endBlock {
+            // this should never happen becuse we validate the boundaries when setting them
             // if settings are invalid use default behaviour: panic true
             return true
         }
@@ -161,13 +160,19 @@ access(all) contract DependencyAudit {
 
         // setStartEndBlock sets the start and end block heights for the `shouldPanicRandomly` function
         access(all) fun setStartEndBlock(start: UInt64, end: UInt64) {
+            pre {
+                start < end: "Start block height must be less than end block height"
+            }
+
             let boundaries = Boundaries(start: start, end: end)
             DependencyAudit.setBoundaries(boundaries: boundaries)
+            emit BlockBoundariesChanged(boundaries: boundaries)
         }
 
         // unsetStartEndBlock unsets the start and end block heights for the `shouldPanicRandomly` function
         access(all) fun unsetStartEndBlock() {
             DependencyAudit.unsetBoundaries()
+            emit BlockBoundariesChanged(boundaries: nil)
         }
 
         // testCheckDependencies is used for testing purposes
