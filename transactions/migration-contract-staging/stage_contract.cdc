@@ -20,13 +20,13 @@ import "MigrationContractStaging"
 transaction(contractName: String, contractCode: String) {
     let host: &MigrationContractStaging.Host
     
-    prepare(signer: AuthAccount) {
+    prepare(signer: auth(BorrowValue, SaveValue) &Account) {
         // Configure Host resource if needed
-        if signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath) == nil {
-            signer.save(<-MigrationContractStaging.createHost(), to: MigrationContractStaging.HostStoragePath)
+        if signer.storage.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath) == nil {
+            signer.storage.save(<-MigrationContractStaging.createHost(), to: MigrationContractStaging.HostStoragePath)
         }
         // Assign Host reference
-        self.host = signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath)!
+        self.host = signer.storage.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath)!
     }
 
     execute {

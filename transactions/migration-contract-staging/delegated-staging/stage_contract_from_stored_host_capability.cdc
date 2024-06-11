@@ -23,11 +23,11 @@ import "MigrationContractStaging"
 transaction(hostCapStoragePathIdentifier: String, contractName: String, contractCode: String) {
     let host: &MigrationContractStaging.Host
     
-    prepare(signer: AuthAccount) {
+    prepare(signer: auth(CopyValue) &Account) {
         // Copy the Capability from storage
         let storagePath = StoragePath(identifier: hostCapStoragePathIdentifier)
             ?? panic("Failed to derive the storage path from the provided identifier")
-        let hostCap = signer.copy<Capability<&MigrationContractStaging.Host>>(from: storagePath)
+        let hostCap = signer.storage.copy<Capability<&MigrationContractStaging.Host>>(from: storagePath)
             ?? panic("Missing Host capability in storage")
         self.host = hostCap.borrow() ?? panic("Host Cap in storage is invalid")
     }

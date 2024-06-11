@@ -4,11 +4,12 @@ import "StagedContractUpdates"
 ///
 transaction(removeIDs: [UInt64]) {
     
-    let delegatee: &StagedContractUpdates.Delegatee
+    let delegatee: auth(Remove) &StagedContractUpdates.Delegatee
     
-    prepare(signer: AuthAccount) {
-        self.delegatee = signer.borrow<&StagedContractUpdates.Delegatee>(from: StagedContractUpdates.DelegateeStoragePath)
-            ?? panic("Could not borrow Delegatee reference from signer")
+    prepare(signer: auth(BorrowValue) &Account) {
+        self.delegatee = signer.storage.borrow<auth(Remove) &StagedContractUpdates.Delegatee>(
+                from: StagedContractUpdates.DelegateeStoragePath
+            ) ?? panic("Could not borrow Delegatee reference from signer")
     }
 
     execute {

@@ -58,7 +58,6 @@ Coordinated Upgrade.
 
 | Network   | Address                                                                                                                   |
 | --------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Crescendo | [0x27b2302520211b67](https://crescendo.flowdiver.io/contract/A.27b2302520211b67.MigrationContractStaging?tab=deployments) |
 | Testnet   | [0x2ceae959ed1a7e7a](https://contractbrowser.com/A.2ceae959ed1a7e7a.MigrationContractStaging)                             |
 | Mainnet   | [56100d46aa9b0212](https://contractbrowser.com/A.56100d46aa9b0212.MigrationContractStaging)                               |
 
@@ -106,13 +105,13 @@ import "MigrationContractStaging"
 transaction(contractName: String, contractCode: String) {
     let host: &MigrationContractStaging.Host
     
-    prepare(signer: AuthAccount) {
+    prepare(signer: auth(BorrowValue, SaveValue) &Account) {
         // Configure Host resource if needed
-        if signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath) == nil {
-            signer.save(<-MigrationContractStaging.createHost(), to: MigrationContractStaging.HostStoragePath)
+        if signer.storage.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath) == nil {
+            signer.storage.save(<-MigrationContractStaging.createHost(), to: MigrationContractStaging.HostStoragePath)
         }
         // Assign Host reference
-        self.host = signer.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath)!
+        self.host = signer.storage.borrow<&MigrationContractStaging.Host>(from: MigrationContractStaging.HostStoragePath)!
     }
 
     execute {
@@ -229,7 +228,7 @@ access(all) struct ContractUpdate {
     access(all) view fun identifier(): String
     /// Returns whether this contract update passed the last emulated migration, validating the contained code.
     /// NOTE: false could mean validation hasn't begun, the code wasn't included in emulation, or validation failed
-    access(all) view fun isValidated(): Bool {
+    access(all) view fun isValidated(): Bool
     /// Replaces the ContractUpdate code with that provided.
     access(contract) fun replaceCode(_ code: String)
 }
@@ -255,7 +254,7 @@ access(all) event StagingStatusUpdated(
     capsuleUUID: UInt64,
     address: Address,
     code: String,
-    contract: String,
+    contractIdentifier: String,
     action: String
 )
 ```

@@ -4,12 +4,14 @@ import "StagedContractUpdates"
 /// Should fail on Updater.init() due to empty hosts and deployments arrays
 ///
 transaction {
-    prepare(signer: AuthAccount) {
+    prepare(signer: auth(SaveValue) &Account) {
+        let hosts: [Capability<&StagedContractUpdates.Host>] = []
+        let deployments: [[StagedContractUpdates.ContractUpdate]] = []
         let updater <- StagedContractUpdates.createNewUpdater(
             blockUpdateBoundary: StagedContractUpdates.blockUpdateBoundary,
-            hosts: [],
-            deployments: []
+            hosts: hosts,
+            deployments: deployments
         )
-        signer.save(<-updater, to: StagedContractUpdates.UpdaterStoragePath)
+        signer.storage.save(<-updater, to: StagedContractUpdates.UpdaterStoragePath)
     }
 }

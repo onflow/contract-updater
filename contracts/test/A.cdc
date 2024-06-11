@@ -1,11 +1,11 @@
-pub contract interface A {
+access(all) contract interface A {
     
-    pub resource interface I {
-        pub fun foo(): String
+    access(all) resource interface I {
+        access(all) fun foo(): String
     }
 
-    pub resource R : I {
-        pub fun foo(): String {
+    access(all) resource interface R : I {
+        access(all) fun foo(): String {
             return "foo"
         }
     }

@@ -5,13 +5,13 @@ import "StagedContractUpdates"
 transaction {
 
     let delegatee: &{StagedContractUpdates.DelegateePublic}
-    let updaterCap: Capability<&StagedContractUpdates.Updater>
+    let updaterCap: Capability<auth(UpdateContract) &StagedContractUpdates.Updater>
     let updaterID: UInt64
 
-    prepare(signer: AuthAccount) {
+    prepare(signer: auth(BorrowValue, CopyValue, IssueStorageCapabilityController, PublishCapability, SaveValue) &Account) {
 
         // Revert if the signer doesn't already have an Updater configured
-        if signer.type(at: StagedContractUpdates.UpdaterStoragePath) == nil {
+        if signer.storage.type(at: StagedContractUpdates.UpdaterStoragePath) == nil {
             panic("Signer does not have an Updater configured")
         }
         // Continue...
@@ -20,21 +20,22 @@ transaction {
         self.delegatee = StagedContractUpdates.getContractDelegateeCapability().borrow()
             ?? panic("Could not borrow Delegatee reference")
 
-        let updaterPrivatePath = PrivatePath(
-                identifier: "StagedContractUpdatesUpdater_".concat(
+        let updaterCapStoragePath = StoragePath(
+                identifier: "StagedContractUpdatesUpdaterCapability_".concat(
                     self.delegatee.owner?.address?.toString() ?? panic("Problem referencing contract's DelegateePublic owner address")
                 )
             )!
 
-        // Link Updater Capability in private if needed & retrieve
-        if !signer.getCapability<&StagedContractUpdates.Updater>(updaterPrivatePath).check() {
-            signer.unlink(updaterPrivatePath)
-            signer.link<&StagedContractUpdates.Updater>(
-                updaterPrivatePath,
-                target: StagedContractUpdates.UpdaterStoragePath
+        // Issue Updater Capability if needed, store & retrieve
+        if signer.storage.type(at: updaterCapStoragePath) == nil {
+            signer.storage.save(
+                signer.capabilities.storage.issue<auth(UpdateContract) &StagedContractUpdates.Updater>(StagedContractUpdates.UpdaterStoragePath),
+                to: updaterCapStoragePath
             )
         }
-        self.updaterCap = signer.getCapability<&StagedContractUpdates.Updater>(updaterPrivatePath)
+        self.updaterCap = signer.storage.copy<Capability<auth(UpdateContract) &StagedContractUpdates.Updater>>(from: updaterCapStoragePath)
+            ?? panic("Problem retrieving Updater Capability")
+        assert(self.updaterCap.check(), message: "Invalid Updater Capability retrieved")
         self.updaterID = self.updaterCap.borrow()?.getID() ?? panic("Invalid Updater Capability retrieved from signer!")
     }
 

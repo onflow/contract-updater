@@ -1,9 +1,9 @@
 import "StagedContractUpdates"
 
-pub struct ContractUpdateReadable {
-    pub let address: Address
-    pub let name: String
-    pub let code: String
+access(all) struct ContractUpdateReadable {
+    access(all) let address: Address
+    access(all) let name: String
+    access(all) let code: String
 
     init(
         address: Address,
@@ -18,9 +18,9 @@ pub struct ContractUpdateReadable {
 
 /// Returns values of the Updater at the given Address
 ///
-pub fun main(address: Address): [[ContractUpdateReadable]]? {
+access(all) fun main(address: Address): [[ContractUpdateReadable]]? {
     
-    let account = getAuthAccount(address)
+    let account = getAuthAccount<auth(Storage) &Account>(address)
      
     if let updater = account.borrow<&StagedContractUpdates.Updater>(from: StagedContractUpdates.UpdaterStoragePath) {
 
