@@ -282,8 +282,8 @@ access(all) fun testBoundaries() {
     var events = Test.eventsOfType(Type<DependencyAudit.BlockBoundariesChanged>())
         Test.assertEqual(2, events.length)
     var evt = events[1] as! DependencyAudit.BlockBoundariesChanged
-    Test.assertEqual(1 as UInt64, evt.boundaries!.start)
-    Test.assertEqual(2 as UInt64, evt.boundaries!.end)
+    Test.assertEqual(1 as UInt64, evt.start!)
+    Test.assertEqual(2 as UInt64, evt.end!)
 
     commitResult = executeTransaction(
         "../transactions/dependency-audit/admin/unset_start_end_block.cdc",
@@ -295,7 +295,8 @@ access(all) fun testBoundaries() {
     events = Test.eventsOfType(Type<DependencyAudit.BlockBoundariesChanged>())
         Test.assertEqual(3, events.length)
     evt = events[2] as! DependencyAudit.BlockBoundariesChanged
-    Test.assertEqual(nil, evt.boundaries)
+    Test.assertEqual(nil, evt.start)
+    Test.assertEqual(nil, evt.end)
 
     addresses = [fooAccount.address]
     names = ["Foo"]

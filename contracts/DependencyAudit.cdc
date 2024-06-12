@@ -19,7 +19,7 @@ access(all) contract DependencyAudit {
 
     access(all) event PanicOnUnstagedDependenciesChanged(shouldPanic: Bool)
 
-    access(all) event BlockBoundariesChanged(boundaries: Boundaries?)
+    access(all) event BlockBoundariesChanged(start: UInt64?, end: UInt64?)
 
     // checkDependencies is called from the FlowServiceAccount contract
     access(account) fun checkDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
@@ -166,13 +166,13 @@ access(all) contract DependencyAudit {
 
             let boundaries = Boundaries(start: start, end: end)
             DependencyAudit.setBoundaries(boundaries: boundaries)
-            emit BlockBoundariesChanged(boundaries: boundaries)
+            emit BlockBoundariesChanged(start: start, end: end)
         }
 
         // unsetStartEndBlock unsets the start and end block heights for the `shouldPanicRandomly` function
         access(all) fun unsetStartEndBlock() {
             DependencyAudit.unsetBoundaries()
-            emit BlockBoundariesChanged(boundaries: nil)
+            emit BlockBoundariesChanged(start: nil, end: nil)
         }
 
         // testCheckDependencies is used for testing purposes
