@@ -25,8 +25,10 @@
 // transactions/delegatee/execute_all_delegated_updates.cdc (687B)
 // transactions/delegatee/remove_delegated_updaters.cdc (567B)
 // transactions/dependency-audit/admin/add_excluded_addresses.cdc (341B)
+// transactions/dependency-audit/admin/set_start_end_block.cdc (345B)
 // transactions/dependency-audit/admin/set_unstaged_cause_panic.cdc (352B)
 // transactions/dependency-audit/admin/test_check_dependencies.cdc (440B)
+// transactions/dependency-audit/admin/unset_start_end_block.cdc (299B)
 // transactions/host/publish_host_capability.cdc (2.303kB)
 // transactions/migration-contract-staging/admin/commit_migration_results.cdc (809B)
 // transactions/migration-contract-staging/admin/set_staging_cutoff.cdc (606B)
@@ -611,6 +613,26 @@ func transactionsDependencyAuditAdminAdd_excluded_addressesCdc() (*asset, error)
 	return a, nil
 }
 
+var _transactionsDependencyAuditAdminSet_start_end_blockCdc = "\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x7c\xcf\xcf\x4a\xc4\x30\x10\x06\xf0\x7b\x9e\x62\xec\x41\x5b\x90\x9e\xc4\x43\x11\x4b\xfd\x73\xf0\x26\x2c\x3e\xc0\x98\x8c\xbb\xc1\xed\x4c\x98\x4c\x10\x91\x7d\x77\xa9\xd9\x7a\xd8\xc3\xe6\x12\x42\x3e\xe6\xfb\x4d\x9c\x93\xa8\x41\xf3\x44\x89\x38\x10\xfb\xef\xa9\x84\x68\x8d\x73\xa6\xc8\x19\xbd\x45\xe1\x36\x1b\xaa\x0d\xf0\xf6\xc2\x76\x7b\x73\x0d\xc4\x61\x7d\x74\xf0\xe3\x00\x00\x92\x52\x42\xa5\x36\xc7\x2d\x93\x0e\x30\x15\xdb\x4d\xde\x4b\x61\x5b\x23\xcb\xa9\xdf\xfd\xbb\xa8\xca\xd7\xdd\xe5\x49\x6b\x3f\x85\x39\x72\xcc\xa6\x68\xa2\xf7\xed\x87\xca\x3c\xc0\xd9\xd0\xc6\x44\x71\x4b\xaf\x68\xbb\x6e\xec\x33\xd9\x66\xa1\x3e\x73\x78\xd8\x8b\xff\x5c\xe1\x7f\xd7\xd1\x4d\x1c\xba\x7f\xcf\x38\x42\x42\x8e\xbe\x6d\x1e\xa5\xec\x03\xb0\x18\x54\xdc\xf9\x5a\x58\x68\xc7\x6d\xae\x32\xe4\xaa\xb8\x68\xea\xe4\x83\x3b\xb8\xdf\x00\x00\x00\xff\xff\x28\xf0\x8b\x80\x59\x01\x00\x00"
+
+func transactionsDependencyAuditAdminSet_start_end_blockCdcBytes() ([]byte, error) {
+	return bindataRead(
+		_transactionsDependencyAuditAdminSet_start_end_blockCdc,
+		"transactions/dependency-audit/admin/set_start_end_block.cdc",
+	)
+}
+
+func transactionsDependencyAuditAdminSet_start_end_blockCdc() (*asset, error) {
+	bytes, err := transactionsDependencyAuditAdminSet_start_end_blockCdcBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "transactions/dependency-audit/admin/set_start_end_block.cdc", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x35, 0xa0, 0x10, 0x93, 0xe9, 0x18, 0x86, 0xf1, 0x3e, 0xdf, 0x9c, 0xb1, 0x5, 0xbb, 0xa2, 0x9c, 0xe2, 0x4c, 0x4c, 0x80, 0x75, 0xe, 0x9d, 0x9b, 0xb4, 0xf1, 0x64, 0x46, 0x34, 0xa9, 0xff, 0x43}}
+	return a, nil
+}
+
 var _transactionsDependencyAuditAdminSet_unstaged_cause_panicCdc = "\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x7c\xcf\x41\x4e\xc4\x30\x0c\x05\xd0\x7d\x4e\x61\xba\x80\x76\xd3\x03\x54\x88\xaa\xc0\x9e\x91\x10\x07\x08\x89\x69\x2d\x4d\xed\xc8\x76\x85\x10\x9a\xbb\xa3\x52\x18\xc1\x2c\x9a\x5d\xf2\x7f\x92\x67\x9a\x8b\xa8\x43\xf5\x88\x05\x39\x23\xa7\x8f\x61\xc9\xe4\x55\x08\xae\x91\x2d\x26\x27\xe1\xda\x26\x59\x8e\xf9\x10\x99\x52\x07\xf7\x22\xc7\x06\x3e\x03\x00\x40\x51\x2c\x51\xb1\x36\x1a\x19\xb5\x83\x61\xf1\x69\x48\x49\x16\xf6\xdf\xca\xba\xb6\xb8\x7d\x15\x55\x79\xbf\xbd\xbe\xf8\xac\x1d\xf2\x4c\x4c\xe6\x1a\x5d\xf4\xae\x7e\x53\x99\x3b\xd8\x2d\x3d\xbb\x68\x1c\xf1\x10\x7d\x6a\xfa\xd6\xd0\xbf\x6d\x4f\xfc\xc2\xe6\x71\xc4\x7c\xbe\x4c\x68\xff\xf5\x7f\x36\xcd\xd9\xd7\xf7\x50\xd6\x93\xba\x7a\x58\x53\x60\x71\xd8\xb0\xfb\x0c\x58\xa9\x3f\xd3\xdd\x18\xd8\xa6\xba\xaa\xb6\x97\x4f\xe1\x14\xbe\x02\x00\x00\xff\xff\x63\x20\x68\x33\x60\x01\x00\x00"
 
 func transactionsDependencyAuditAdminSet_unstaged_cause_panicCdcBytes() ([]byte, error) {
@@ -648,6 +670,26 @@ func transactionsDependencyAuditAdminTest_check_dependenciesCdc() (*asset, error
 
 	info := bindataFileInfo{name: "transactions/dependency-audit/admin/test_check_dependencies.cdc", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x1e, 0x86, 0xa7, 0xd0, 0xea, 0x8d, 0xb3, 0xf0, 0xf9, 0xc8, 0xa2, 0xad, 0x64, 0x33, 0x95, 0xf, 0x14, 0x3b, 0x93, 0xeb, 0xcc, 0xbf, 0x44, 0x28, 0xdc, 0x19, 0x7c, 0xff, 0x38, 0xe5, 0xd7, 0x49}}
+	return a, nil
+}
+
+var _transactionsDependencyAuditAdminUnset_start_end_blockCdc = "\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x7c\x8e\x4d\x4e\x03\x31\x0c\x46\xf7\x39\x85\xc9\x02\x32\x9b\x39\x40\x85\x18\x85\x9f\x3d\x52\x4f\x60\x12\xd3\x46\x74\xec\xc8\x71\x84\x10\xea\xdd\x51\x15\x60\xd1\xc5\x78\xeb\x4f\xef\xbd\xb2\x56\x51\x03\xff\x4c\x95\x38\x13\xa7\xaf\xd8\x73\x31\xef\x9c\x29\x72\xc3\x64\x45\x38\x4c\xf0\xed\x00\x00\xaa\x52\x45\xa5\xd0\xca\x81\x49\x77\x10\xbb\x1d\x63\x4a\xd2\xd9\xfe\x26\x97\x1b\xef\xf9\x4d\x54\xe5\xf3\xfe\xf6\x8a\x3d\xc7\xbc\x16\x2e\xcd\x14\x4d\xf4\x21\xbc\xab\xac\x3b\xd8\x1c\xed\x4d\x14\x0f\xf4\x8a\x76\x9c\x96\xb9\x73\x23\xdb\x1b\xaa\xbd\x70\x7e\x3c\x49\xfa\x08\xd3\xbf\x7b\x59\xa0\x22\x97\x14\xfc\x93\xf4\x53\x06\x16\x83\x11\xb2\xad\x80\x4b\xc6\x6f\xf9\x5d\x83\x36\x8c\x37\x7e\x90\xcf\xee\xec\x7e\x02\x00\x00\xff\xff\xbd\x3e\x87\xbb\x2b\x01\x00\x00"
+
+func transactionsDependencyAuditAdminUnset_start_end_blockCdcBytes() ([]byte, error) {
+	return bindataRead(
+		_transactionsDependencyAuditAdminUnset_start_end_blockCdc,
+		"transactions/dependency-audit/admin/unset_start_end_block.cdc",
+	)
+}
+
+func transactionsDependencyAuditAdminUnset_start_end_blockCdc() (*asset, error) {
+	bytes, err := transactionsDependencyAuditAdminUnset_start_end_blockCdcBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "transactions/dependency-audit/admin/unset_start_end_block.cdc", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xa0, 0x7a, 0x3e, 0xba, 0x10, 0xdf, 0x67, 0x91, 0xb6, 0xbe, 0xb5, 0xc2, 0x70, 0x95, 0xd1, 0x6, 0x5d, 0x65, 0xce, 0x1b, 0xa3, 0xa0, 0x45, 0x70, 0x8d, 0x28, 0x94, 0xcd, 0xbb, 0x60, 0x29, 0x81}}
 	return a, nil
 }
 
@@ -1067,8 +1109,10 @@ var _bindata = map[string]func() (*asset, error){
 	"transactions/delegatee/execute_all_delegated_updates.cdc":                                                 transactionsDelegateeExecute_all_delegated_updatesCdc,
 	"transactions/delegatee/remove_delegated_updaters.cdc":                                                     transactionsDelegateeRemove_delegated_updatersCdc,
 	"transactions/dependency-audit/admin/add_excluded_addresses.cdc":                                           transactionsDependencyAuditAdminAdd_excluded_addressesCdc,
+	"transactions/dependency-audit/admin/set_start_end_block.cdc":                                              transactionsDependencyAuditAdminSet_start_end_blockCdc,
 	"transactions/dependency-audit/admin/set_unstaged_cause_panic.cdc":                                         transactionsDependencyAuditAdminSet_unstaged_cause_panicCdc,
 	"transactions/dependency-audit/admin/test_check_dependencies.cdc":                                          transactionsDependencyAuditAdminTest_check_dependenciesCdc,
+	"transactions/dependency-audit/admin/unset_start_end_block.cdc":                                            transactionsDependencyAuditAdminUnset_start_end_blockCdc,
 	"transactions/host/publish_host_capability.cdc":                                                            transactionsHostPublish_host_capabilityCdc,
 	"transactions/migration-contract-staging/admin/commit_migration_results.cdc":                               transactionsMigrationContractStagingAdminCommit_migration_resultsCdc,
 	"transactions/migration-contract-staging/admin/set_staging_cutoff.cdc":                                     transactionsMigrationContractStagingAdminSet_staging_cutoffCdc,
@@ -1174,8 +1218,10 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"dependency-audit": {nil, map[string]*bintree{
 			"admin": {nil, map[string]*bintree{
 				"add_excluded_addresses.cdc": {transactionsDependencyAuditAdminAdd_excluded_addressesCdc, map[string]*bintree{}},
+				"set_start_end_block.cdc": {transactionsDependencyAuditAdminSet_start_end_blockCdc, map[string]*bintree{}},
 				"set_unstaged_cause_panic.cdc": {transactionsDependencyAuditAdminSet_unstaged_cause_panicCdc, map[string]*bintree{}},
 				"test_check_dependencies.cdc": {transactionsDependencyAuditAdminTest_check_dependenciesCdc, map[string]*bintree{}},
+				"unset_start_end_block.cdc": {transactionsDependencyAuditAdminUnset_start_end_blockCdc, map[string]*bintree{}},
 			}},
 		}},
 		"host": {nil, map[string]*bintree{

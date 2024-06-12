@@ -19,6 +19,8 @@ access(all) contract DependencyAudit {
 
     access(all) event PanicOnUnstagedDependenciesChanged(shouldPanic: Bool)
 
+    access(all) event BlockBoundariesChanged(start: UInt64?, end: UInt64?)
+
     // checkDependencies is called from the FlowServiceAccount contract
     access(account) fun checkDependencies(_ dependenciesAddresses: [Address], _ dependenciesNames: [String], _ authorizers: [Address]) {
         var unstagedDependencies: [Dependency] = []
@@ -41,27 +43,96 @@ access(all) contract DependencyAudit {
         }
 
         if unstagedDependencies.length > 0 {
-            if DependencyAudit.panicOnUnstaged {
-                // If `panicOnUnstaged` is set to true, the transaction will panic if there are any unstaged dependencies
-                // the panic message will include the unstaged dependencies
-                var unstagedDependenciesString = ""
-                var numUnstagedDependencies = unstagedDependencies.length
-                var j = 0
-                while j < numUnstagedDependencies {
-                    if j > 0 {
-                        unstagedDependenciesString = unstagedDependenciesString.concat(", ")
-                    }
-                    unstagedDependenciesString = unstagedDependenciesString.concat(unstagedDependencies[j].toString())
+            self.maybePanicOnUnstagedDependencies(unstagedDependencies)
 
-                    j = j + 1
-                }
-
-                // the transactions will fail with a message that looks like this: `error: panic: Found unstaged dependencies: A.2ceae959ed1a7e7a.MigrationContractStaging, A.2ceae959ed1a7e7a.DependencyAudit`
-                panic("This transaction is using dependencies not staged for Crescendo upgrade coming soon! Learn more: https://bit.ly/FLOWCRESCENDO. Dependencies not staged: ".concat(unstagedDependenciesString))
-            } else {
-                emit UnstagedDependencies(dependencies: unstagedDependencies)
-            }
+            emit UnstagedDependencies(dependencies: unstagedDependencies)
         }
+    }
+
+    access(self) fun maybePanicOnUnstagedDependencies(_ unstagedDependencies: [Dependency]) {
+        // If `panicOnUnstaged` is set to false, the function will return without panicking
+        // Then check if we should panic randomly
+        if !DependencyAudit.panicOnUnstaged || !self.shouldPanicRandomly() {
+            return
+        }
+
+        var unstagedDependenciesString = ""
+        var numUnstagedDependencies = unstagedDependencies.length
+        var j = 0
+        while j < numUnstagedDependencies {
+            if j > 0 {
+                unstagedDependenciesString = unstagedDependenciesString.concat(", ")
+            }
+            unstagedDependenciesString = unstagedDependenciesString.concat(unstagedDependencies[j].toString())
+
+            j = j + 1
+        }
+
+        // the transactions will fail with a message that looks like this: `error: panic: Found unstaged dependencies: A.2ceae959ed1a7e7a.MigrationContractStaging, A.2ceae959ed1a7e7a.DependencyAudit`
+        panic("This transaction is using dependencies not staged for Crescendo upgrade coming soon! Learn more: https://bit.ly/FLOWCRESCENDO. Dependencies not staged: ".concat(unstagedDependenciesString))
+    }
+
+    // shouldPanicRandomly is used to randomly panic on unstaged dependencies
+    // The probability of panicking is based on the current block height and the start and end block heights
+    // If the start block height is greater than or equal to the end block height, the function will return true
+    // The function will always return true if the current block is more than the end block height
+    // The function will always return false if the current block is less than the start block height
+    // The function will return true if a random number between the start and end block heights is less than the current block height
+    // This means the probability of panicking increases linearly as the current block height approaches the end block height
+    access(self) fun shouldPanicRandomly(): Bool {
+        // get start block height or true
+        // get end block height or true
+        // get current block height
+        // get random number between start and end
+        // if random number is less than current block return true
+        // else return false
+
+        let maybeBoundaries = self.getBoundaries()
+        if maybeBoundaries == nil {
+            // if settings are invalid use default behaviour: panic true
+            return true
+        }
+        let boundaries = maybeBoundaries!
+
+        let startBlock: UInt64 = boundaries.start
+        let endBlock: UInt64 = boundaries.end
+        let currentBlock: UInt64 = getCurrentBlock().height
+
+        if startBlock >= endBlock {
+            // this should never happen becuse we validate the boundaries when setting them
+            // if settings are invalid use default behaviour: panic true
+            return true
+        }
+
+        let dif = endBlock - startBlock
+        var rnd = revertibleRandom() % dif
+        rnd = rnd + startBlock
+
+        // fail if the random number is less than the current block
+        return rnd < currentBlock
+    }
+
+    access(all) struct Boundaries {
+        access(all) let start: UInt64
+        access(all) let end: UInt64
+
+        init(start: UInt64, end: UInt64) {
+            self.start = start
+            self.end = end
+        }
+    }
+
+    access(self) fun getBoundaries(): Boundaries? {
+        return self.account.copy<Boundaries>(from: /storage/flowDependencyAuditBoundaries)
+    }
+
+    access(self) fun setBoundaries(boundaries: Boundaries) {
+        self.account.load<Boundaries>(from: /storage/flowDependencyAuditBoundaries)
+        self.account.save(boundaries, to: /storage/flowDependencyAuditBoundaries)
+    }
+
+    access(self) fun unsetBoundaries() {
+        self.account.load<Boundaries>(from: /storage/flowDependencyAuditBoundaries)
     }
 
     // The Administrator resorce can be used to add or remove addresses from the excludedAddresses dictionary
@@ -85,6 +156,23 @@ access(all) contract DependencyAudit {
         access(all) fun setPanicOnUnstagedDependencies(shouldPanic: Bool) {
             DependencyAudit.panicOnUnstaged = shouldPanic
             emit PanicOnUnstagedDependenciesChanged(shouldPanic: shouldPanic)
+        }
+
+        // setStartEndBlock sets the start and end block heights for the `shouldPanicRandomly` function
+        access(all) fun setStartEndBlock(start: UInt64, end: UInt64) {
+            pre {
+                start < end: "Start block height must be less than end block height"
+            }
+
+            let boundaries = Boundaries(start: start, end: end)
+            DependencyAudit.setBoundaries(boundaries: boundaries)
+            emit BlockBoundariesChanged(start: start, end: end)
+        }
+
+        // unsetStartEndBlock unsets the start and end block heights for the `shouldPanicRandomly` function
+        access(all) fun unsetStartEndBlock() {
+            DependencyAudit.unsetBoundaries()
+            emit BlockBoundariesChanged(start: nil, end: nil)
         }
 
         // testCheckDependencies is used for testing purposes
