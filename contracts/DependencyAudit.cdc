@@ -122,8 +122,40 @@ access(all) contract DependencyAudit {
         }
     }
 
-    access(self) fun getBoundaries(): Boundaries? {
+    access(all) fun getBoundaries(): Boundaries? {
         return self.account.copy<Boundaries>(from: /storage/flowDependencyAuditBoundaries)
+    }
+
+    access(all) fun getCurrentFailureProbability(): UFix64 {
+        if !DependencyAudit.panicOnUnstaged {
+            return 0.0 as UFix64
+        }
+
+        let maybeBoundaries = self.getBoundaries()
+        if maybeBoundaries == nil {
+            return 1.0 as UFix64
+        }
+
+        let boundaries = maybeBoundaries!
+
+        let startBlock: UInt64 = boundaries.start
+        let endBlock: UInt64 = boundaries.end
+        let currentBlock: UInt64 = getCurrentBlock().height
+
+        if startBlock >= endBlock {
+            return 1.0 as UFix64
+        }
+        if currentBlock >= endBlock {
+            return 1.0 as UFix64
+        }
+        if currentBlock < startBlock {
+            return 0.0 as UFix64
+        }
+
+        let dif = endBlock - startBlock
+        let currentDif = currentBlock - startBlock
+
+        return UFix64(currentDif) / UFix64(dif)
     }
 
     access(self) fun setBoundaries(boundaries: Boundaries) {

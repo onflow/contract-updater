@@ -317,6 +317,15 @@ access(all) fun testBoundaries() {
     )
     Test.expect(commitResult, Test.beSucceeded())
 
+    let probability = (executeScript(
+        "../scripts/dependency-audit/get_failure_probability.cdc",
+        []
+    ).returnValue as! UFix64?)!
+
+    // depends on the block, so its better to check the range
+    Test.expect(probability, Test.beGreaterThan(0.5))
+    Test.expect(probability, Test.beLessThan(0.7))
+
     var i = 0
     var failCount = 0
     while i < 10 {
